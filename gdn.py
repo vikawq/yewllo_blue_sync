@@ -99,14 +99,26 @@ def _normalize_prefill_query_start_loc(
     device: torch.device,
 ) -> torch.Tensor | None:
     query_start_loc = _host_ints_to_device_tensor(values, device)
+    if total_tokens <= 0:
+        return query_start_loc
     if query_start_loc is None:
-        if cache_indices is not None and cache_indices.numel() == 1:
+        if cache_indices is not None and cache_indices.numel() > 0:
             return torch.tensor([0, total_tokens], dtype=torch.int64, device=device)
         return None
 
-    if query_start_loc.numel() >= 2 and int(query_start_loc[-1].item()) == total_tokens:
-        return query_start_loc
-    if cache_indices is not None and cache_indices.numel() == 1:
+    query_start_loc_cpu = query_start_loc.detach().cpu()
+    if (
+        query_start_loc_cpu.numel() >= 2
+        and int(query_start_loc_cpu[0].item()) == 0
+        and int(query_start_loc_cpu[-1].item()) == total_tokens
+    ):
+        total_positions = torch.nonzero(query_start_loc_cpu == total_tokens, as_tuple=False).flatten()
+        first_total_pos = int(total_positions[0].item()) if total_positions.numel() > 0 else query_start_loc.numel() - 1
+        if first_total_pos > 0:
+            return query_start_loc[: first_total_pos + 1]
+    if query_start_loc_cpu.numel() <= 2:
+        return torch.tensor([0, total_tokens], dtype=torch.int64, device=device)
+    if int(query_start_loc_cpu[0].item()) == 0 and not torch.any(query_start_loc_cpu[1:] > 0).item():
         return torch.tensor([0, total_tokens], dtype=torch.int64, device=device)
     return query_start_loc
 

@@ -11,6 +11,7 @@ from vllm.model_executor.layers.fla.ops import index as _fla_index
 from vllm.v1.attention.backend import CommonAttentionMetadata
 from vllm.v1.kv_cache_interface import MambaSpec
 
+from vllm_ascend._310p.ops.causal_conv1d import causal_conv1d_fn as causal_conv1d_fn_pytorch
 from vllm_ascend.ops import gdn_attn_builder as ascend_gdn_attn_builder
 from vllm_ascend.ops.gdn import (
     AscendGatedDeltaNetAttention,
@@ -72,13 +73,40 @@ def test_gdn_runtime_fallback_error_classification():
 
 def test_prefill_query_start_loc_fallback_repairs_single_request():
     repaired = _normalize_prefill_query_start_loc(
-        (0,),
-        torch.tensor([7], dtype=torch.int64),
+        (0, 0, 0, 0),
+        torch.tensor([7, 8, 9, 10], dtype=torch.int64),
         42,
         torch.device("cpu"),
     )
 
     assert torch.equal(repaired, torch.tensor([0, 42], dtype=torch.int64))
+
+    trimmed = _normalize_prefill_query_start_loc(
+        (0, 42, 42, 42),
+        torch.tensor([7, 8, 9, 10], dtype=torch.int64),
+        42,
+        torch.device("cpu"),
+    )
+
+    assert torch.equal(trimmed, torch.tensor([0, 42], dtype=torch.int64))
+
+
+def test_causal_conv1d_fallback_repairs_zero_length_single_request():
+    x = torch.arange(8, dtype=torch.float32).reshape(2, 4)
+    weight = torch.ones((2, 2), dtype=torch.float32)
+    conv_states = torch.zeros((1, 2, 1), dtype=torch.float32)
+
+    out = causal_conv1d_fn_pytorch(
+        x,
+        weight,
+        activation=None,
+        conv_states=conv_states,
+        has_initial_state=torch.tensor([False]),
+        cache_indices=torch.tensor([0], dtype=torch.int64),
+        query_start_loc=torch.tensor([0, 0], dtype=torch.int64),
+    )
+
+    assert out.shape == x.shape
 
 
 @dataclass
