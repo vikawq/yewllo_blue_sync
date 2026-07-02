@@ -109,6 +109,18 @@ def test_causal_conv1d_fallback_repairs_zero_length_single_request():
     assert out.shape == x.shape
 
 
+def test_clear_ssm_states_falls_back_without_triton(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(fla_utils, "HAS_TRITON", False)
+    states = torch.ones((3, 2, 2), dtype=torch.float32)
+    has_initial_state = torch.tensor([True, False, True])
+
+    fla_utils.clear_ssm_states(states, has_initial_state)
+
+    assert torch.equal(states[0], torch.ones_like(states[0]))
+    assert torch.equal(states[1], torch.zeros_like(states[1]))
+    assert torch.equal(states[2], torch.ones_like(states[2]))
+
+
 @dataclass
 class BatchSpec:
     seq_lens: list[int]
