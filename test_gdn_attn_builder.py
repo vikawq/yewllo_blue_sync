@@ -12,10 +12,13 @@ from vllm.v1.attention.backend import CommonAttentionMetadata
 from vllm.v1.kv_cache_interface import MambaSpec
 
 from vllm_ascend._310p.ops.causal_conv1d import causal_conv1d_fn as causal_conv1d_fn_pytorch
+from vllm_ascend.ops import gdn as ascend_gdn
 from vllm_ascend.ops import gdn_attn_builder as ascend_gdn_attn_builder
 from vllm_ascend.ops.gdn import (
     AscendGatedDeltaNetAttention,
     _is_missing_aclnn_causal_conv1d,
+    _is_triton_launch_unavailable,
+    _l2norm_fwd_or_fallback,
     _normalize_prefill_query_start_loc,
     _should_fallback_chunk_gated_delta_rule,
     _should_fallback_recurrent_gated_delta_rule,
@@ -58,6 +61,9 @@ def test_gdn_runtime_fallback_error_classification():
         RuntimeError("aclnnCausalConv1d or aclnnCausalConv1dGetWorkspaceSize not in libopapi.so")
     )
     assert not _is_missing_aclnn_causal_conv1d(RuntimeError("shape mismatch"))
+
+    assert _is_triton_launch_unavailable(TypeError("'function' object is not subscriptable"))
+    assert not _is_triton_launch_unavailable(RuntimeError("invalid shape"))
 
     assert _should_fallback_chunk_gated_delta_rule(TypeError("'function' object is not subscriptable"))
     assert _should_fallback_chunk_gated_delta_rule(
@@ -119,6 +125,30 @@ def test_clear_ssm_states_falls_back_without_triton(monkeypatch: pytest.MonkeyPa
     assert torch.equal(states[0], torch.ones_like(states[0]))
     assert torch.equal(states[1], torch.zeros_like(states[1]))
     assert torch.equal(states[2], torch.ones_like(states[2]))
+
+
+def test_gdn_l2norm_falls_back_without_triton(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(ascend_gdn, "HAS_TRITON", False)
+    x = torch.tensor([[[[3.0, 4.0], [0.0, 5.0]]]], dtype=torch.float32)
+
+    out = _l2norm_fwd_or_fallback(x)
+
+    expected_norm = torch.ones_like(torch.linalg.vector_norm(out, dim=-1))
+    assert torch.allclose(torch.linalg.vector_norm(out, dim=-1), expected_norm, atol=1e-6)
+    assert out.dtype == x.dtype
+
+
+def test_gdn_l2norm_falls_back_when_triton_launcher_is_unavailable(monkeypatch: pytest.MonkeyPatch):
+    def raise_launcher_error(x: torch.Tensor) -> torch.Tensor:
+        raise TypeError("'function' object is not subscriptable")
+
+    monkeypatch.setattr(ascend_gdn, "HAS_TRITON", True)
+    monkeypatch.setattr(ascend_gdn, "l2norm_fwd", raise_launcher_error)
+    x = torch.tensor([[[[6.0, 8.0]]]], dtype=torch.float32)
+
+    out = _l2norm_fwd_or_fallback(x)
+
+    assert torch.allclose(out, torch.tensor([[[[0.6, 0.8]]]], dtype=torch.float32), atol=1e-6)
 
 
 @dataclass

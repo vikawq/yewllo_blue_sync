@@ -16,6 +16,7 @@
 #
 
 import torch
+import torch.nn.functional as F
 import torch_npu
 from einops import rearrange
 from vllm.distributed import get_pcp_group
@@ -61,11 +62,33 @@ def _is_missing_aclnn_causal_conv1d(exc: RuntimeError) -> bool:
     return "aclnnCausalConv1d" in msg and ("libopapi" in msg or "not found" in msg or "not in" in msg)
 
 
-def _should_fallback_chunk_gated_delta_rule(exc: BaseException) -> bool:
+def _is_triton_launch_unavailable(exc: BaseException) -> bool:
     msg = str(exc)
     if "function' object is not subscriptable" in msg:
         return True
     if "Device properties not initialized" in msg:
+        return True
+    return False
+
+
+def _l2norm_fwd_pytorch(x: torch.Tensor) -> torch.Tensor:
+    return F.normalize(x.to(torch.float32), p=2, dim=-1, eps=1e-6).to(x.dtype)
+
+
+def _l2norm_fwd_or_fallback(x: torch.Tensor) -> torch.Tensor:
+    if not HAS_TRITON:
+        return _l2norm_fwd_pytorch(x)
+    try:
+        return l2norm_fwd(x)
+    except (RuntimeError, TypeError) as exc:
+        if not _is_triton_launch_unavailable(exc):
+            raise
+        return _l2norm_fwd_pytorch(x)
+
+
+def _should_fallback_chunk_gated_delta_rule(exc: BaseException) -> bool:
+    msg = str(exc)
+    if _is_triton_launch_unavailable(exc):
         return True
     return (
         ("aclnnChunkGatedDeltaRuleFwdH" in msg or "aclnnChunkFwdO" in msg)
@@ -926,8 +949,8 @@ class AscendGatedDeltaNetAttention(GatedDeltaNetAttention):
         if spec_sequence_masks is not None:
             cu_seqlens = spec_query_start_loc[: attn_metadata.num_spec_decodes + 1]
             actual_seq_lengths = torch.cat([cu_seqlens[:1], cu_seqlens[1:] - cu_seqlens[:-1]])
-            query_spec = l2norm_fwd(query_spec)
-            key_spec = l2norm_fwd(key_spec)
+            query_spec = _l2norm_fwd_or_fallback(query_spec)
+            key_spec = _l2norm_fwd_or_fallback(key_spec)
             # Prefer the vllm-ascend AscendC operator. Fall back only when the
             # runtime libopapi/custom OPP does not expose the required symbol.
             core_attn_out_spec = _npu_recurrent_gated_delta_rule_or_fallback(
@@ -970,8 +993,8 @@ class AscendGatedDeltaNetAttention(GatedDeltaNetAttention):
         elif attn_metadata.num_decodes > 0:
             cu_seqlens = non_spec_query_start_loc[: attn_metadata.num_decodes + 1]
             actual_seq_lengths = torch.cat([cu_seqlens[:1], cu_seqlens[1:] - cu_seqlens[:-1]])
-            query_non_spec = l2norm_fwd(query_non_spec)
-            key_non_spec = l2norm_fwd(key_non_spec)
+            query_non_spec = _l2norm_fwd_or_fallback(query_non_spec)
+            key_non_spec = _l2norm_fwd_or_fallback(key_non_spec)
             # Prefer the vllm-ascend AscendC operator. Fall back only when the
             # runtime libopapi/custom OPP does not expose the required symbol.
             core_attn_out_non_spec = _npu_recurrent_gated_delta_rule_or_fallback(
