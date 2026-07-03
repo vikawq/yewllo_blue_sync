@@ -98,6 +98,12 @@ def _should_fallback_chunk_gated_delta_rule(exc: BaseException) -> bool:
 
 def _should_fallback_recurrent_gated_delta_rule(exc: RuntimeError) -> bool:
     msg = str(exc)
+    if (
+        "aclnnRecurrentGatedDeltaRule" in msg
+        and "params.state not implemented for DT_FLOAT" in msg
+        and "DT_BFLOAT16" in msg
+    ):
+        return True
     return (
         "aclnnRecurrentGatedDeltaRule" in msg
         and ("libopapi" in msg or "not found" in msg or "not in" in msg)

@@ -74,6 +74,13 @@ def test_gdn_runtime_fallback_error_classification():
     assert _should_fallback_recurrent_gated_delta_rule(
         RuntimeError("aclnnRecurrentGatedDeltaRule or aclnnRecurrentGatedDeltaRuleGetWorkspaceSize not in libopapi.so")
     )
+    assert _should_fallback_recurrent_gated_delta_rule(
+        RuntimeError(
+            "call aclnnRecurrentGatedDeltaRule failed, detail:"
+            "Tensor params.state not implemented for DT_FLOAT, "
+            "should be in dtype support list [DT_BFLOAT16,]."
+        )
+    )
     assert not _should_fallback_recurrent_gated_delta_rule(RuntimeError("invalid recurrent shape"))
 
 
