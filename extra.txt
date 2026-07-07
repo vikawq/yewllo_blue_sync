@@ -1,0 +1,359 @@
+cat > /tmp/extract_grpc_final.sh <<'BASH'
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
+
+REPO="$(pwd)"
+PATCH="$REPO/../grpc_server_for_all_operators.patch"
+OUT="$REPO/../grpc_patch_extract"
+
+count_lines()
+{
+    wc -l < "$1" | tr -d ' '
+}
+
+if ! git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "ERROR: $REPO is not a Git repository"
+    exit 1
+fi
+
+if [ ! -f "$PATCH" ]; then
+    echo "ERROR: patch not found:"
+    echo "$PATCH"
+    exit 1
+fi
+
+echo "Repository:"
+echo "  $REPO"
+
+echo "Patch:"
+echo "  $PATCH"
+
+echo "Output:"
+echo "  $OUT"
+
+rm -rf "$OUT"
+
+mkdir -p \
+    "$OUT/mails" \
+    "$OUT/patch_only" \
+    "$OUT/exact" \
+    "$OUT/logs/patch_only" \
+    "$OUT/logs/port_candidate"
+
+###############################################################################
+# 1. Split mailbox
+###############################################################################
+
+echo
+echo "[1/7] Splitting patch series..."
+
+git mailsplit \
+    -o"$OUT/mails" \
+    "$PATCH" \
+    > "$OUT/mailsplit.log"
+
+MAIL_COUNT=$(
+    find "$OUT/mails" \
+        -maxdepth 1 \
+        -type f \
+        | wc -l \
+        | tr -d ' '
+)
+
+echo "Mail patches: $MAIL_COUNT"
+
+if [ "$MAIL_COUNT" -ne 20 ]; then
+    echo "WARNING: expected 20 patches, got $MAIL_COUNT"
+fi
+
+###############################################################################
+# 2. Extract expected final blob for each path
+###############################################################################
+
+echo
+echo "[2/7] Extracting final blob IDs..."
+
+awk '
+/^diff --git a\// {
+    path=$4
+    sub(/^b\//, "", path)
+}
+
+/^index [0-9a-f]+\.\.[0-9a-f]+/ {
+    split($2, ids, "\\.\\.")
+    final[path]=ids[2]
+}
+
+END {
+    for (p in final)
+        print p, final[p]
+}
+' "$PATCH" \
+| sort \
+> "$OUT/final_blobs.txt"
+
+TOTAL_PATHS=$(count_lines "$OUT/final_blobs.txt")
+
+echo "Final paths: $TOTAL_PATHS"
+
+###############################################################################
+# Helpers
+###############################################################################
+
+apply_series()
+{
+    local tree="$1"
+    local label="$2"
+    local result_file="$OUT/${label}_apply_status.tsv"
+
+    : > "$result_file"
+
+    for mail in "$OUT"/mails/*; do
+        local n
+        local subject
+        local result
+
+        n=$(basename "$mail")
+
+        subject=$(
+            sed -n 's/^Subject: //p' "$mail" \
+            | head -n 1 \
+            | tr '\t' ' '
+        )
+
+        echo "[$label] $n  $subject"
+
+        if (
+            cd "$tree" &&
+            git apply \
+                --reject \
+                --whitespace=nowarn \
+                "$mail" \
+                > "$OUT/logs/$label/$n.stdout" \
+                2> "$OUT/logs/$label/$n.stderr"
+        ); then
+            result="CLEAN"
+        else
+            result="REJECT"
+        fi
+
+        printf '%s\t%s\t%s\n' \
+            "$n" \
+            "$result" \
+            "$subject" \
+            >> "$result_file"
+    done
+}
+
+compare_tree()
+{
+    local tree="$1"
+    local prefix="$2"
+
+    : > "$OUT/${prefix}_match.txt"
+    : > "$OUT/${prefix}_deleted_match.txt"
+    : > "$OUT/${prefix}_differ.txt"
+    : > "$OUT/${prefix}_missing.txt"
+    : > "$OUT/${prefix}_should_delete.txt"
+
+    while read -r path expected; do
+
+        if [[ "$expected" =~ ^0+$ ]]; then
+
+            if [ ! -e "$tree/$path" ]; then
+                echo "$path" \
+                    >> "$OUT/${prefix}_deleted_match.txt"
+            else
+                echo "$path" \
+                    >> "$OUT/${prefix}_should_delete.txt"
+            fi
+
+            continue
+        fi
+
+        if [ ! -f "$tree/$path" ]; then
+            echo "$path" \
+                >> "$OUT/${prefix}_missing.txt"
+
+            continue
+        fi
+
+        current=$(
+            git hash-object -- "$tree/$path"
+        )
+
+        case "$current" in
+            "$expected"*)
+                echo "$path" \
+                    >> "$OUT/${prefix}_match.txt"
+                ;;
+            *)
+                echo "$path" \
+                    >> "$OUT/${prefix}_differ.txt"
+                ;;
+        esac
+
+    done < "$OUT/final_blobs.txt"
+}
+
+###############################################################################
+# 3. Replay patch series into an empty tree
+###############################################################################
+
+echo
+echo "[3/7] Replaying patch series into empty tree..."
+
+git -C "$OUT/patch_only" init -q
+
+apply_series \
+    "$OUT/patch_only" \
+    "patch_only"
+
+###############################################################################
+# 4. Compare patch-only tree with expected final blobs
+###############################################################################
+
+echo
+echo "[4/7] Checking exact reconstructed files..."
+
+compare_tree \
+    "$OUT/patch_only" \
+    "patch_only"
+
+PATCH_ONLY_MATCH=$(count_lines "$OUT/patch_only_match.txt")
+PATCH_ONLY_DELETED=$(count_lines "$OUT/patch_only_deleted_match.txt")
+PATCH_ONLY_DIFFER=$(count_lines "$OUT/patch_only_differ.txt")
+PATCH_ONLY_MISSING=$(count_lines "$OUT/patch_only_missing.txt")
+PATCH_ONLY_SHOULD_DELETE=$(count_lines "$OUT/patch_only_should_delete.txt")
+
+###############################################################################
+# 5. Export only exact reconstructed files
+###############################################################################
+
+echo
+echo "[5/7] Exporting exact final files..."
+
+while IFS= read -r path; do
+
+    [ -f "$OUT/patch_only/$path" ] || continue
+
+    mkdir -p \
+        "$OUT/exact/$(dirname "$path")"
+
+    cp -p \
+        "$OUT/patch_only/$path" \
+        "$OUT/exact/$path"
+
+done < "$OUT/patch_only_match.txt"
+
+###############################################################################
+# 6. Create best-effort port candidate from current HEAD
+###############################################################################
+
+echo
+echo "[6/7] Creating port candidate from current HEAD..."
+
+git clone \
+    --no-hardlinks \
+    -q \
+    "$REPO" \
+    "$OUT/port_candidate"
+
+apply_series \
+    "$OUT/port_candidate" \
+    "port_candidate"
+
+compare_tree \
+    "$OUT/port_candidate" \
+    "candidate"
+
+CANDIDATE_MATCH=$(count_lines "$OUT/candidate_match.txt")
+CANDIDATE_DELETED=$(count_lines "$OUT/candidate_deleted_match.txt")
+CANDIDATE_DIFFER=$(count_lines "$OUT/candidate_differ.txt")
+CANDIDATE_MISSING=$(count_lines "$OUT/candidate_missing.txt")
+CANDIDATE_SHOULD_DELETE=$(count_lines "$OUT/candidate_should_delete.txt")
+
+find "$OUT/port_candidate" \
+    -path "$OUT/port_candidate/.git" -prune \
+    -o \
+    -type f -name '*.rej' -print \
+| sed "s#^$OUT/port_candidate/##" \
+| sort \
+> "$OUT/rejected_files.txt"
+
+git -C "$OUT/port_candidate" status --short \
+    > "$OUT/port_candidate_status.txt"
+
+{
+    cat "$OUT/candidate_differ.txt"
+    cat "$OUT/candidate_missing.txt"
+    cat "$OUT/candidate_should_delete.txt"
+
+    sed 's/\.rej$//' \
+        "$OUT/rejected_files.txt"
+
+} \
+| sort -u \
+> "$OUT/manual_targets.txt"
+
+###############################################################################
+# 7. Summary
+###############################################################################
+
+echo
+echo "[7/7] Writing summary..."
+
+{
+    echo "grpc patch extraction summary"
+    echo
+    echo "PATCH SERIES"
+    echo "MAIL_COUNT              $MAIL_COUNT"
+    echo "FINAL_PATHS             $TOTAL_PATHS"
+    echo
+    echo "PATCH_ONLY"
+    echo "MATCH                   $PATCH_ONLY_MATCH"
+    echo "DELETED_MATCH           $PATCH_ONLY_DELETED"
+    echo "DIFFER                  $PATCH_ONLY_DIFFER"
+    echo "MISSING                 $PATCH_ONLY_MISSING"
+    echo "SHOULD_DELETE           $PATCH_ONLY_SHOULD_DELETE"
+    echo
+    echo "PORT_CANDIDATE"
+    echo "MATCH                   $CANDIDATE_MATCH"
+    echo "DELETED_MATCH           $CANDIDATE_DELETED"
+    echo "DIFFER                  $CANDIDATE_DIFFER"
+    echo "MISSING                 $CANDIDATE_MISSING"
+    echo "SHOULD_DELETE           $CANDIDATE_SHOULD_DELETE"
+    echo
+    echo "REJECTED_FILES          $(count_lines "$OUT/rejected_files.txt")"
+    echo "MANUAL_TARGETS          $(count_lines "$OUT/manual_targets.txt")"
+} \
+> "$OUT/summary.txt"
+
+echo
+echo "============================================================"
+cat "$OUT/summary.txt"
+echo "============================================================"
+
+echo
+echo "Output directories:"
+echo
+echo "Exact reconstructed files:"
+echo "  $OUT/exact"
+echo
+echo "Patch-only reconstruction:"
+echo "  $OUT/patch_only"
+echo
+echo "Best-effort port candidate:"
+echo "  $OUT/port_candidate"
+echo
+echo "Manual adaptation list:"
+echo "  $OUT/manual_targets.txt"
+echo
+echo "Rejected patch files:"
+echo "  $OUT/rejected_files.txt"
+echo
+echo "Summary:"
+echo "  $OUT/summary.txt"
+BASH
