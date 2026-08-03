@@ -212,6 +212,845 @@ D:\workspaces\vLLM-ascend_for_lingqu
   曾用于核对 `aclnnCausalConv1dV310` 路径；现有证据只表明它被检查过，不表明该文件已修改
   或 V310 路径已成为最终方案。
 
+### 5.6 启动阶段代码对照
+
+本节与 5.2 的 `Sxx` 编号一一对应。标为“当前源码原样”的代码来自当前 Windows
+工作区 diff；标为“历史修复核心”的代码来自早期运行目录和排查记录，表示当时实际采用
+的关键改法，不保证行号仍与当前分支一致。代码中的 `...` 表示只省略了无关上下文。
+
+#### S01：兼容 image preprocess 参数名
+
+地址：
+
+```text
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/
+vllm_ascend/patch/worker/patch_qwen3vl_image_preprocess.py
+```
+
+旧调用方传入 `resample`，patch 后的处理器期望 `interpolation`。历史修复核心如下：
+
+```python
+_ORIGINAL_PATCHED_QWEN3VL_PREPROCESS = _patched_preprocess
+
+
+def _patched_preprocess_compat(self, *args, **kwargs):
+    if "interpolation" not in kwargs and "resample" in kwargs:
+        kwargs["interpolation"] = kwargs.pop("resample")
+    return _ORIGINAL_PATCHED_QWEN3VL_PREPROCESS(self, *args, **kwargs)
+
+
+Qwen2VLImageProcessorFast._preprocess = _patched_preprocess_compat
+```
+
+#### S02-S03：移除 gated LayerNorm 对不可启动 Triton kernel 的硬依赖
+
+地址：
+
+```text
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/
+vllm_ascend/ops/triton/layernorm_gated.py
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/
+vllm_ascend/ops/layernorm.py
+```
+
+`S02` 先把 helper 改到稳定位置：
+
+```python
+# 旧代码依赖 vllm.triton_utils.triton.next_power_of_2。
+from vllm.utils.math_utils import next_power_of_2
+```
+
+但 helper 修复后，`kernel[grid]` 仍然不可启动。因此 `S03` 的最终可执行路径是 PyTorch
+fallback；历史修复核心如下：
+
+```python
+def _rms_norm_gated_torch_fallback(
+    x, z, weight, eps, group_size=None, norm_before_gate=False
+):
+    orig_dtype = x.dtype
+    x = x.float()
+    weight = weight.float()
+    gate = None
+
+    if z is not None:
+        gate = F.silu(z.float())
+        if not norm_before_gate:
+            x = x * gate
+
+    if group_size is None:
+        variance = x.pow(2).mean(dim=-1, keepdim=True)
+        out = x * torch.rsqrt(variance + eps)
+    else:
+        orig_shape = x.shape
+        x_group = x.reshape(*orig_shape[:-1], -1, group_size)
+        variance = x_group.pow(2).mean(dim=-1, keepdim=True)
+        out = (x_group * torch.rsqrt(variance + eps)).reshape(orig_shape)
+
+    out = out * weight
+    if gate is not None and norm_before_gate:
+        out = out * gate
+    return out.to(orig_dtype)
+
+
+def forward_oot(self, x, z=None):
+    return _rms_norm_gated_torch_fallback(
+        x,
+        z,
+        self.weight,
+        self.eps,
+        self.group_size,
+        self.norm_before_gate,
+    )
+```
+
+#### S04-S05：MoE 的空 expert map 和缺失 import
+
+地址：
+
+```text
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/
+vllm_ascend/ops/fused_moe/token_dispatcher.py
+```
+
+历史修复核心：
+
+```python
+import torch_npu
+
+# ...
+expert_map = token_dispatch_input.routing.expert_map
+if expert_map is not None:
+    expert_map = expert_map.npu()
+```
+
+这里不能写成无条件 `expert_map.npu()`，因为单卡或不启用 expert remap 时该值合法地为
+`None`。
+
+#### S06-S08：Qwen3.5 patch 的注册和调用边界
+
+地址：
+
+```text
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/
+vllm_ascend/patch/worker/patch_qwen3_5.py
+```
+
+`S06` 通过 import 触发自定义 op 注册：
+
+```python
+import vllm_ascend.ops.triton.linearnorm.split_qkv_rmsnorm_mrope
+```
+
+`S07` 曾尝试初始化 vectorcore 属性和使用环境变量绕过属性读取，但不能解决
+`kernel[grid]` 本身不可启动。最终 `S08` 不再覆盖上游 attention forward：
+
+```python
+# 保留 GDN 等仍需使用的 patch。
+# 不再强制把 Qwen3NextAttention 切到不可启动的 fused Triton 路径。
+# Qwen3NextAttention.forward = AscendQwen3NextAttention.forward
+```
+
+这不是永久删除 fused attention，而是限定本阶段成功边界。恢复该赋值前必须先验证对应
+Triton/custom kernel 在目标环境可启动且数值正确。
+
+#### S09：把 causal-conv schema 和 NPU kernel 注册移出条件编译
+
+地址：
+
+```text
+/data/xuy/workspace/qwen/vLLM-ascend_for_lingqu/csrc/torch_binding.cpp
+```
+
+历史修复核心：
+
+```cpp
+ops.def(
+    "npu_causal_conv1d_custom(Tensor output, Tensor x, "
+    "Tensor weight, Tensor conv_state, Tensor? bias_opt, "
+    "int[] query_start_loc_opt, int[] cache_indices_opt, "
+    "int[] initial_state_mode_opt, int[] num_accepted_tokens_opt, "
+    "int activation_mode, int pad_slot_id, int run_mode) "
+    "-> (Tensor output)");
+ops.impl(
+    "npu_causal_conv1d_custom",
+    torch::kPrivateUse1,
+    &vllm_ascend::npu_causal_conv1d_custom);
+```
+
+以上注册放在 `VLLM_ENABLE_ATB_AND_DIRECT_KERNELS` 条件外；本阶段没有全局打开该宏。
+
+#### S10：兼容不同 vLLM 版本的 logger import
+
+当前源码原样，地址：
+
+```text
+D:\workspaces\vLLM-ascend_for_lingqu\vllm_ascend\logger.py
+```
+
+```python
+try:
+    from vllm.logging_utils import ColoredFormatter, NewLineFormatter
+except ImportError:
+    try:
+        from vllm.logger import ColoredFormatter, NewLineFormatter
+    except ImportError:
+
+        class NewLineFormatter(logging.Formatter):
+
+            def format(self, record):
+                if not hasattr(record, "fileinfo"):
+                    record.fileinfo = record.filename
+                formatted = super().format(record)
+                if record.message:
+                    header = formatted.split(record.message, maxsplit=1)[0]
+                    formatted = formatted.replace("\n", "\n" + header)
+                return formatted
+
+        class ColoredFormatter(NewLineFormatter):
+            pass
+```
+
+#### S11-S12：构建环境和 text-only eager 启动边界
+
+构建或静态检查时取消 mock preload，避免它污染工具链：
+
+```bash
+env -u LD_PRELOAD <build-or-check-command>
+```
+
+服务进程仍加载 vAscend 所需的 mock 库；两者不能混为一条通用环境配置。当前首 token
+验证还要求 eager 和 text-only：
+
+```bash
+vllm serve /data/xuy/models/Qwen3.5-35B-A3B \
+  --served-model-name qwen3.5 \
+  --trust-remote-code \
+  --enforce-eager \
+  --max-model-len 2048 \
+  --limit-mm-per-prompt '{"image":0,"video":0,"audio":0}'
+```
+
+实际启动命令如还包含端口、内存比例或其他部署参数，应原样附在交接记录中；上面只列
+与 `S12` 直接相关的限制项。
+
+### 5.7 推理与 GDN 代码对照
+
+本节与 5.3 的 `Gxx` 编号对应。除特别说明外，代码均为当前 Windows 工作区 diff 的
+原样摘录。
+
+#### G01：UT 显式关闭 backend autoload 时走 mock NPU
+
+地址：
+
+```text
+D:\workspaces\vLLM-ascend_for_lingqu\tests\ut\conftest.py
+```
+
+```python
+if os.getenv("TORCH_DEVICE_BACKEND_AUTOLOAD") == "0":
+    _npu_available = False
+else:
+    try:
+        subprocess.run(["npu-smi", "info"], capture_output=True, check=True)
+        _npu_available = True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        _npu_available = False
+```
+
+该变量只用于 CPU/mock UT。真实 vLLM serve 需要 NPU backend 自动加载，不能照搬。
+
+#### G02：causal conv 只对已知缺符号错误回退
+
+地址：
+
+```text
+D:\workspaces\vLLM-ascend_for_lingqu\vllm_ascend\ops\gdn.py
+```
+
+错误分类和调用框架：
+
+```python
+def _is_missing_aclnn_causal_conv1d(exc: RuntimeError) -> bool:
+    msg = str(exc)
+    return "aclnnCausalConv1d" in msg and (
+        "libopapi" in msg or "not found" in msg or "not in" in msg
+    )
+
+
+def _npu_causal_conv1d_custom_or_fallback(..., allow_fallback=True, ...):
+    try:
+        return torch.ops._C_ascend.npu_causal_conv1d_custom(...)
+    except RuntimeError as exc:
+        if not allow_fallback or not _is_missing_aclnn_causal_conv1d(exc):
+            raise
+
+    if run_mode == 0:
+        fallback_out = causal_conv1d_fn_pytorch(...)
+    else:
+        fallback_out = causal_conv1d_update_pytorch(...)
+
+    output.copy_(fallback_out)
+    return output
+```
+
+省略号只隐藏了参数透传。关键约束是 graph capture 调用明确传入：
+
+```python
+_npu_causal_conv1d_custom_or_fallback(
+    ...,
+    allow_fallback=False,
+)
+```
+
+因此 Python fallback 只用于 eager 路径，不会被误录进 graph。
+
+#### G03-G04：规范 query 起点并修复 zero split
+
+`G03` 位于 `vllm_ascend/ops/gdn.py`。核心规则是把单请求全零起点修为
+`[0, total_tokens]`，并裁剪重复终点：
+
+```python
+def _normalize_prefill_query_start_loc(
+    values, cache_indices, total_tokens, device
+):
+    query_start_loc = _host_ints_to_device_tensor(values, device)
+    if total_tokens <= 0:
+        return query_start_loc
+    if query_start_loc is None:
+        if cache_indices is not None and cache_indices.numel() > 0:
+            return torch.tensor(
+                [0, total_tokens], dtype=torch.int64, device=device
+            )
+        return None
+
+    query_start_loc_cpu = query_start_loc.detach().cpu()
+    if (
+        query_start_loc_cpu.numel() >= 2
+        and int(query_start_loc_cpu[0].item()) == 0
+        and int(query_start_loc_cpu[-1].item()) == total_tokens
+    ):
+        total_positions = torch.nonzero(
+            query_start_loc_cpu == total_tokens, as_tuple=False
+        ).flatten()
+        first_total_pos = int(total_positions[0].item())
+        if first_total_pos > 0:
+            return query_start_loc[: first_total_pos + 1]
+
+    if query_start_loc_cpu.numel() <= 2:
+        return torch.tensor([0, total_tokens], dtype=torch.int64, device=device)
+    if (
+        int(query_start_loc_cpu[0].item()) == 0
+        and not torch.any(query_start_loc_cpu[1:] > 0).item()
+    ):
+        return torch.tensor([0, total_tokens], dtype=torch.int64, device=device)
+    return query_start_loc
+```
+
+`G04` 位于 `vllm_ascend/_310p/ops/causal_conv1d.py`：
+
+```python
+seqlens = (query_start_loc[1:] - query_start_loc[:-1]).tolist()
+total_tokens = x.shape[-1]
+if sum(seqlens) != total_tokens and total_tokens > 0:
+    if len(seqlens) <= 1 or all(seq_len <= 0 for seq_len in seqlens):
+        seqlens = [total_tokens]
+splits = torch.split(x, seqlens, dim=-1)
+```
+
+#### G05-G06：SSM clear 和 gating 的 PyTorch fallback
+
+`G05` 位于 `vllm_ascend/ops/triton/fla/utils.py`：
+
+```python
+def _clear_ssm_states_pytorch(ssm_states, has_initial_state):
+    keep_mask = has_initial_state.to(dtype=ssm_states.dtype)
+    keep_mask = keep_mask.view(
+        (keep_mask.numel(),) + (1,) * (ssm_states.ndim - 1)
+    )
+    ssm_states.mul_(keep_mask)
+
+
+if not HAS_TRITON:
+    _clear_ssm_states_pytorch(ssm_states, has_initial_state)
+    return
+
+try:
+    _clear_ssm_states_kernel[grid](...)
+except (RuntimeError, TypeError) as exc:
+    msg = str(exc)
+    if (
+        "function' object is not subscriptable" not in msg
+        and "Device properties not initialized" not in msg
+    ):
+        raise
+    _clear_ssm_states_pytorch(ssm_states, has_initial_state)
+```
+
+`G06` 位于 `vllm_ascend/device/device_op.py`：
+
+```python
+@staticmethod
+def fused_gdn_gating(A_log, a, b, dt_bias):
+    if not HAS_TRITON:
+        return fused_gdn_gating_pytorch(A_log, a, b, dt_bias)
+    try:
+        return fused_gdn_gating_patch(A_log, a, b, dt_bias)
+    except (RuntimeError, TypeError) as exc:
+        if not _is_triton_launch_unavailable(exc):
+            raise
+        return fused_gdn_gating_pytorch(A_log, a, b, dt_bias)
+```
+
+#### G07-G09：chunk、L2 norm 和 recurrent GDN fallback
+
+三项都位于 `vllm_ascend/ops/gdn.py`。先集中定义“允许回退”的错误，不吞掉未知错误：
+
+```python
+def _should_fallback_chunk_gated_delta_rule(exc):
+    msg = str(exc)
+    if _is_triton_launch_unavailable(exc):
+        return True
+    return (
+        (
+            "aclnnChunkGatedDeltaRuleFwdH" in msg
+            or "aclnnChunkFwdO" in msg
+        )
+        and ("libopapi" in msg or "not found" in msg or "not in" in msg)
+    )
+
+
+def _should_fallback_recurrent_gated_delta_rule(exc):
+    msg = str(exc)
+    if (
+        "aclnnRecurrentGatedDeltaRule" in msg
+        and "params.state not implemented for DT_FLOAT" in msg
+        and "DT_BFLOAT16" in msg
+    ):
+        return True
+    return (
+        "aclnnRecurrentGatedDeltaRule" in msg
+        and ("libopapi" in msg or "not found" in msg or "not in" in msg)
+    )
+```
+
+`G08` 的 L2 norm fallback 保留 float32 中间精度：
+
+```python
+def _l2norm_fwd_pytorch(x):
+    return F.normalize(
+        x.to(torch.float32), p=2, dim=-1, eps=1e-6
+    ).to(x.dtype)
+
+
+def _l2norm_fwd_or_fallback(x):
+    if not HAS_TRITON:
+        return _l2norm_fwd_pytorch(x)
+    try:
+        return l2norm_fwd(x)
+    except (RuntimeError, TypeError) as exc:
+        if not _is_triton_launch_unavailable(exc):
+            raise
+        return _l2norm_fwd_pytorch(x)
+```
+
+`G09` recurrent fallback 必须同时处理 state 的布局和 dtype 回写：
+
+```python
+state_for_fallback = state.transpose(-1, -2).contiguous()
+fallback_out, fallback_state = fused_recurrent_gated_delta_rule_pytorch(
+    q=query,
+    k=key,
+    v=value,
+    g=g,
+    beta=beta,
+    initial_state=state_for_fallback,
+    inplace_final_state=True,
+    cu_seqlens=cu_seqlens,
+    ssm_state_indices=(
+        fallback_state_indices
+        if fallback_state_indices is not None
+        else ssm_state_indices
+    ),
+    num_accepted_tokens=num_accepted_tokens,
+    use_qk_l2norm_in_kernel=use_qk_l2norm_in_kernel,
+)
+state.copy_(
+    fallback_state.transpose(-1, -2).contiguous().to(state.dtype)
+)
+return fallback_out
+```
+
+#### G10：回归测试入口
+
+地址：
+
+```text
+D:\workspaces\vLLM-ascend_for_lingqu\tests\ut\ops\test_gdn_attn_builder.py
+```
+
+运行方式：
+
+```bash
+TORCH_DEVICE_BACKEND_AUTOLOAD=0 pytest -sv \
+  tests/ut/ops/test_gdn_attn_builder.py
+```
+
+测试必须至少覆盖以下断言语义：
+
+```python
+assert _is_missing_aclnn_causal_conv1d(missing_symbol_error)
+assert not _is_missing_aclnn_causal_conv1d(unrelated_error)
+assert normalized_query_start_loc.tolist() == [0, total_tokens]
+torch.testing.assert_close(pytorch_l2norm, expected_l2norm)
+torch.testing.assert_close(updated_ssm_state, expected_ssm_state)
+```
+
+### 5.8 vAscend 生成器和算子代码对照
+
+本节与 5.4 的 `Rxx` 编号对应。vAscend 不在当前 Windows 仓库中，以下代码来自用户提供
+的 Linux 源码、生成结果和 runner 注册输出；路径以真实 Linux 环境为准。
+
+#### R01：no-stream 模式先执行 saved op 再返回
+
+地址：
+
+```text
+/data/xuy/workspaces/vAscend/src/op_cpu_mock/common/autogen.py
+```
+
+修复后的宏核心：
+
+```cpp
+#define REGISTER_NNOP_EXEC(opName)                                      \
+    __attribute__((visibility("default"))) aclnnStatus opName(         \
+        void *workspace, uint64_t workspaceSize,                       \
+        aclOpExecutor *executor, const aclrtStream stream)              \
+    {                                                                   \
+        const bool isRealCalc =                                         \
+            simulator::ConfigManagerRealCalc::GetInstance()             \
+                .IsForRealCalc(#opName);                                \
+        const bool isBadOrigin =                                        \
+            simulator::ConfigManagerRealCalc::GetInstance()             \
+                .IsBadOriginFunc(#opName);                              \
+        const bool streamEnabled =                                      \
+            simulator::ConfigManager::GetInstance().GetBoolConfig(      \
+                simulator::OP_CPU_STREAM_ENABLE);                       \
+        if (isRealCalc && streamEnabled) {                              \
+            CLAIM_OP_TO_THREAD(executor);                               \
+        }                                                               \
+        aclnnStatus ret = OK;                                           \
+        if (!isBadOrigin) {                                             \
+            CALL_ORIGIN_OP(opName, ret);                                \
+        }                                                               \
+        if (isRealCalc && !streamEnabled) {                             \
+            EXECUTE_SAVED_OP(executor);                                 \
+        }                                                               \
+        return ret;                                                     \
+    }
+```
+
+关键不是宏的排版，而是 `CALL_ORIGIN_OP` 不再导致提前返回，`EXECUTE_SAVED_OP` 必须发生
+在最终 `return ret` 之前。
+
+#### R02：按函数名稳定覆盖旧 ABI
+
+旧逻辑：
+
+```python
+all_functions.append(factory.create_generation(declaration))
+# ...
+all_functions = list(set(all_functions))
+```
+
+修复核心：
+
+```python
+generation = factory.create_generation(declaration)
+all_functions[generation.name] = generation
+```
+
+扫描顺序保持主 include 在前、`extra.txt` 在后，因此同名声明最终由 `extra.txt` 覆盖。
+
+#### R03-R04：输出识别和 optional string 序列化
+
+旧输出识别过于宽泛：
+
+```python
+if "acltensor" in arg.lower():
+    self.outputs.append(index)
+```
+
+修复后的生成语义是只注册非 const tensor，并为 V5 固定输出索引：
+
+```python
+if "aclTensor" in argument.arg_type and not argument.is_const:
+    self.outputs.append(index)
+
+if self.name == "aclnnFusedInferAttentionScoreV5":
+    self.outputs = [46, 47]
+```
+
+上面是生成器最终语义的精简表示；实际实现可能分别位于 `FunctionGenerator`、
+`GRPCFunctionGenerator` 和 `VAscendFunctionGenerator`。生成客户端时：
+
+```python
+if "aclTensorList" in arg.arg_type:
+    output_lines.append(f"runner->SetTensorListOutput({arg.name});")
+elif "aclTensor" in arg.arg_type and not arg.is_const:
+    output_lines.append(f"runner->SetDynamicOutput({arg.name});")
+```
+
+`char *` 则统一做空指针保护：
+
+```python
+if re.match(r"(const\s+)?char\s*\*", self.arg_type):
+    return (
+        f'runner->AddString({self.name} == nullptr '
+        f'? "" : {self.name});'
+    )
+```
+
+#### R05：让 extra 声明变更触发重新生成
+
+地址：
+
+```text
+/data/xuy/workspaces/vAscend/src/op_cpu_mock/cust_op/src/CMakeLists.txt
+```
+
+```cmake
+add_custom_command(
+    OUTPUT ${GENERATED_FILES}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${GEN_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${GEN_SCRIPT}
+            --m vascend ${GENERATED_FILES} -e ${EXTRA_FILE}
+    DEPENDS ${GEN_SCRIPT} ${EXTRA_FILE}
+    COMMENT "Running Python code generator"
+    VERBATIM
+)
+```
+
+#### R06-R07：Unique 和 ReduceSum 输出注册
+
+Unique runner 的确切注册：
+
+```cpp
+{"aclnnUniqueConsecutive",
+ ExecuteInfo{
+     .aclnnOperator =
+         &AclUtils::ExecuteOnNpu<
+             aclTensor *, bool, bool, int64_t, aclTensor *,
+             aclTensor *, aclTensor *>,
+     .outputIndexes = {4, 5, 6}}},
+```
+
+生成客户端对三个非 const 输出使用动态输出：
+
+```cpp
+runner->SetDynamicOutput(valueOut);
+runner->SetDynamicOutput(inverseOut);
+runner->SetDynamicOutput(countsOut);
+```
+
+ReduceSum runner 注册：
+
+```cpp
+{"aclnnReduceSum",
+ ExecuteInfo{
+     .aclnnOperator =
+         &AclUtils::ExecuteOnNpu<
+             aclTensor *, aclIntArray *, bool, aclDataType, aclTensor *>,
+     .outputIndexes = {4}}},
+```
+
+#### R08-R10：Scatter 的完整 ABI、format 转换和 runner 注册
+
+三项修改的职责边界如下：
+
+- `R08` 修复客户端 GetWorkspace 的 12 参数 ABI。
+- `R09` 只处理当前 vAscend base-format 链路中的 `PA_NZ -> Norm` 语义转换。
+- `R10` 修复真实 runner 的参数类型表和 `{1, 4}` 输出索引。
+
+`extra.txt` 中必须是 CANN 9.1 的完整 GetWorkspace 声明：
+
+```cpp
+__attribute__((visibility("default"))) aclnnStatus
+aclnnScatterPaKvCacheGetWorkspaceSize(
+    const aclTensor *key,
+    aclTensor *keyCacheRef,
+    const aclTensor *slotMapping,
+    const aclTensor *value,
+    aclTensor *valueCacheRef,
+    const aclTensor *compressLensOptional,
+    const aclTensor *compressSeqOffsetOptional,
+    const aclTensor *seqLensOptional,
+    char *cacheModeOptional,
+    char *scatterModeOptional,
+    const aclIntArray *stridesOptional,
+    const aclIntArray *offsetsOptional,
+    uint64_t *workspaceSize,
+    aclOpExecutor **executor);
+```
+
+生成客户端的四个新增参数以及 base-format 特例：
+
+```cpp
+runner->AddString(
+    cacheModeOptional != nullptr &&
+            std::string(cacheModeOptional) == "PA_NZ"
+        ? "Norm"
+        : (cacheModeOptional == nullptr ? "" : cacheModeOptional));
+runner->AddString(
+    scatterModeOptional == nullptr ? "" : scatterModeOptional);
+runner->AddIntArray(stridesOptional);
+runner->AddIntArray(offsetsOptional);
+```
+
+runner 注册必须与这 12 个算子参数完全同序：
+
+```cpp
+{"aclnnScatterPaKvCache",
+ ExecuteInfo{
+     .aclnnOperator =
+         &AclUtils::ExecuteOnNpu<
+             aclTensor *, aclTensor *, aclTensor *, aclTensor *,
+             aclTensor *, aclTensor *, aclTensor *, aclTensor *,
+             char *, char *, aclIntArray *, aclIntArray *>,
+     .outputIndexes = {1, 4}}},
+```
+
+#### R11-R12：V5 的声明来源、客户端输出和 runner 注册
+
+V5 声明的权威来源：
+
+```text
+/usr/local/Ascend/ascend-toolkit/latest/opp/include/aclnnop/
+aclnn_fused_infer_attention_score_v5.h
+```
+
+完整声明有 48 个算子参数，随后才是 `workspaceSize` 和 `executor`。为避免在交接文档里
+复制一份容易漂移的 50 参数声明，`extra.txt` 应直接以该头文件内容为准；这里保留最关键
+的尾部 ABI 和输出位置：
+
+```cpp
+// ... qStartIdxOptional, kvStartIdxOptional and scalar attributes ...
+const aclTensor *attentionOut,  // operator argument index 46
+const aclTensor *softmaxLse,    // operator argument index 47
+uint64_t *workspaceSize,
+aclOpExecutor **executor);
+```
+
+生成客户端因为原 ABI 将两个输出声明为 const，需要显式注册实际输出 tensor：
+
+```cpp
+runner->SetOutput(const_cast<aclTensor *>(attentionOut));
+runner->SetOutput(const_cast<aclTensor *>(softmaxLse));
+```
+
+runner 表项必须保留完整 48 参数模板列表；其不可省略的输出定义是：
+
+```cpp
+{"aclnnFusedInferAttentionScoreV5",
+ ExecuteInfo{
+     .aclnnOperator =
+         &AclUtils::ExecuteOnNpu<
+             /* 与 V5 头文件逐项同序的 48 个 ACL 参数类型 */>,
+     .outputIndexes = {46, 47}}},
+```
+
+注释不能直接复制进实际模板参数列表；实际 `NpuWorkerOperators.cpp` 中必须展开全部 48 个
+类型。此处只为说明索引关系，完整类型表以该源码文件为准。
+
+### 5.9 配置、构建和部署代码对照
+
+本节覆盖 `R13-R15`，同时给出同事可以直接执行的核验命令。
+
+#### R13：修改真实生效的配置文件
+
+地址：
+
+```text
+/root/vascend_nostream/simulator/config/custom_op.json
+```
+
+配置值在实际文件中是逗号分隔字符串。下面只截取本阶段新增的成员，不表示要删除原有
+算子：
+
+```json
+{
+  "real_calculation": "...,aclnnUniqueConsecutive,aclnnScatterPaKvCache,aclnnFusedInferAttentionScoreV5",
+  "bad_origin": "...,aclnnUniqueConsecutive,aclnnScatterPaKvCache,aclnnFusedInferAttentionScoreV5"
+}
+```
+
+修改后不要只目测，用 Python 精确检查成员：
+
+```bash
+python3 - <<'PY'
+import json
+
+path = "/root/vascend_nostream/simulator/config/custom_op.json"
+with open(path, encoding="utf-8") as f:
+    config = json.load(f)
+
+for field in ("real_calculation", "bad_origin"):
+    members = set(filter(None, config[field].split(",")))
+    for op in (
+        "aclnnUniqueConsecutive",
+        "aclnnScatterPaKvCache",
+        "aclnnFusedInferAttentionScoreV5",
+    ):
+        print(field, op, op in members)
+PY
+```
+
+#### R14：同步并确认真正加载的客户端 SO
+
+```bash
+sha256sum \
+  /root/simulator/custom_op/op_api/lib/libcust_opapi.so \
+  /usr/local/lib/libcust_opapi.so \
+  /data/xuy/qwen/libcust_opapi.so
+
+nm -D /root/simulator/custom_op/op_api/lib/libcust_opapi.so | \
+  grep -E 'aclnn(ScatterPaKvCache|FusedInferAttentionScoreV5)'
+
+# 对正在运行的 EngineCore 再检查一次实际映射。
+grep libcust_opapi /proc/<ENGINE_CORE_PID>/maps
+```
+
+只有构建产物存在并不代表运行进程加载了它；`/proc/<pid>/maps` 是最终判据。
+
+#### R15：从工程根重建客户端和 runner
+
+推荐继续使用可重复的全量构建：
+
+```bash
+cd /data/xuy/workspaces/vAscend
+bash build.sh --build=Debug -g=False --build_op_mock
+```
+
+不要在一个没有完成 CMake 配置的 `cmake-build-debug/cpp_server` 空子目录直接执行
+`gmake`。构建完成后记录实际启动文件：
+
+```bash
+cd <runner-deploy-directory>
+readlink -f ./runner
+sha256sum ./runner
+stat ./runner
+strings ./runner | grep -x 'aclnnScatterPaKvCache'
+strings ./runner | grep -x 'aclnnFusedInferAttentionScoreV5'
+```
+
+生成文件只用于检查，不能作为持久修改点：
+
+```text
+/data/xuy/workspaces/vAscend/cmake-build-debug/src/op_cpu_mock/
+cust_op/src/generated-vascend/libcust_opapi.cpp
+```
+
+持久修改必须落在 `autogen.py`、`extra.txt`、CMake 源文件或 runner 源码中。
+
 ## 6. vLLM Ascend 侧修改
 
 ### 6.1 GDN 运行时 fallback
@@ -581,7 +1420,8 @@ V5 GetWorkspace 共 50 个参数：
 
 - 活动 SO 已导出 V5 GetWorkspace 和执行符号。
 - 修正实际配置文件后，本地 tiling-key fatal error 不再出现。
-- 最新完整推理持续执行，没有出现新的 V5 错误。
+- 最新 `max_tokens=1` 请求已完成真实 NPU 首 token、HTTP 200 和流式收尾，期间没有出现
+  新的 V5 错误。
 
 ## 9. 真实 NPU runner 修改
 
