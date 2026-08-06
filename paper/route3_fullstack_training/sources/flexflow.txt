@@ -1,0 +1,1733 @@
+===== PDF PAGE 1 =====
+Beyond Data and Model Parallelism for Deep Neural Networks
+Zhihao Jia Matei Zaharia
+Stanford University
+Alex Aiken
+Abstract
+The computational requirements for training deep neu-
+ral networks (DNNs) have grown to the point that it is
+now standard practice to parallelize training. Existing
+deep learning systems commonly use data or model par-
+allelism, but unfortunately, these strategies often result in
+suboptimal parallelization performance.
+In this paper, we deﬁne a more comprehensive search
+space of parallelization strategies for DNNs called SOAP,
+which includes strategies to parallelize a DNN in the
+Sample, Operation, Attribute, and Parameter dimensions.
+We also propose FlexFlow, a deep learning framework
+that uses guided randomized search of the SOAP space
+to ﬁnd a fast parallelization strategy for a speciﬁc parallel
+machine. To accelerate this search, FlexFlow introduces
+a novel execution simulator that can accurately predict a
+parallelization strategy’s performance and is three orders
+of magnitude faster than prior approaches that have to
+execute each strategy. We evaluate FlexFlow with six
+real-world DNN benchmarks on two GPU clusters and
+show that FlexFlow can increase training throughput by
+up to 3.8× over state-of-the-art approaches, even when
+including its search time, and also improves scalability.
+1 Introduction
+Over the past few years, deep neural networks (DNNs)
+have driven advances in many practical problems, such as
+image classiﬁcation [28, 38], speech recognition [20, 8],
+machine translation [42, 9], and game playing [37]. Be-
+cause sophisticated DNN models [23, 40] and larger train-
+ing datasets [ 16, 11] have increased the computational
+requirements to train DNN models, it is now standard
+practice to parallelize training across distributed hetero-
+geneous clusters [7, 15].
+Although DNN applications and the clusters used to
+parallelize them are increasingly complex, the strate-
+gies used by today’s deep learning systems (e.g., Ten-
+sorFlow [7], PyTorch [ 6], Caffe2 [ 2], MXNet [ 12]) to
+parallelize training remain simple. The most common
+parallelization technique is data parallelism [28], which
+places a replica of the entire neural network on each de-
+vice, so that each device processes a subset of the training
+data and synchronizes network parameters in different
+replicas at the end of an iteration. Data parallelism is efﬁ-
+cient for compute-intensive DNN operations with a few
+trainable parameters (e.g., convolution) but achieves sub-
+optimal parallelization performance for operations with a
+large number of parameters (e.g., matrix-multiplication).
+Another common parallelization strategy is model par-
+allelism [15], which assigns disjoint subsets of a neural
+network each to a dedicated device. Model parallelism
+eliminates parameter synchronization between devices
+but requires data transfers between operations and disal-
+lows parallelism within an operation.
+Previous work [27, 42] has proposed expert-designed
+strategies that manually optimize parallelization based on
+human experts’ domain knowledge and intuitions. For
+example, [ 27] uses data parallelism for convolutional
+and pooling layers and switches to model parallelism for
+fully-connected layers to accelerate training convolutional
+neural networks. Expert-designed strategies achieve im-
+proved performance compared to data and model paral-
+lelism but still result in suboptimal behaviors. Section 8
+shows that we are able to ﬁnd parallelization strategies
+that are up to 2.3× faster than expert-designed strategies.
+In addition to these manually designed parallelization
+strategies, recent work has proposed automated frame-
+works [33, 25] for ﬁnding efﬁcient parallelization strate-
+gies in a limited search space. For example, REIN-
+FORCE [33] uses a reinforcement learning model to learn
+efﬁcient operation assignments for model parallelism
+by running diverse strategies on real devices. As an-
+other example, OptCNN [25] is designed for parallelizing
+DNNs with linear computation graphs (e.g., AlexNet [28],
+VGG [38]) and automatically ﬁnds strategies that exploit
+parallelism within each DNN operation. Existing auto-
+mated frameworks only explore either parallelism across
+different operations (e.g., REINFORCE) or parallelism
+within a single operation (e.g., OptCNN) and therefore
+miss faster strategies that use parallelism in both dimen-
+sions. We show that exploring a broader search space
+discovers parallelization strategies 1.2-3.8× faster than
+existing automated frameworks (see Section 8).
+In this paper, we present FlexFlow, a deep learning
+framework that automatically ﬁnds fast parallelization
+strategies over a signiﬁcantly broader search space than
+previous systems. To formalize the problem, we ﬁrst de-
+ﬁne theSOAP (Sample-Operation-Attribute-Parameter)
+search space of parallelization strategies for DNNs. The
+operation dimension describes how different operations
+in a DNN are parallelized. In addition, for a single DNN
+operation, the sample and parameter dimensions indi-
+cate how training samples and model parameters are dis-
+arXiv:1807.05358v1  [cs.DC]  14 Jul 2018
+
+===== PDF PAGE 2 =====
+tributed across devices. Finally, the attribute dimension
+deﬁnes how different attributes within a sample are par-
+titioned. Compared to existing systems that parallelize
+DNNs in a subset of SOAP dimensions, FlexFlow con-
+siders parallelizing DNNs in all these dimensions and
+therefore deﬁnes a more comprehensive search space that
+includes existing approaches as special cases.
+A key challenge with the much larger SOAP search
+space is effectively evaluating candidate parallelization
+strategies to ﬁnd an efﬁcient one. Prior work such as RE-
+INFORCE [33] relies on executing each parallelization
+strategy on the hardware for one iteration to measure its
+execution time. Unfortunately, this approach becomes
+prohibitively expensive with the multiple orders of mag-
+nitude larger SOAP search space.
+To address this problem, FlexFlow introduces a novel
+execution simulator that is accurate for predicting the per-
+formance of a parallelization strategy and is three orders
+of magnitude faster than proﬁling real executions. The
+challenge in designing the simulator is how to accurately
+estimate the execution time of different DNN operators
+(e.g., convolution and matrix multiplication), which scale
+non-linearly in a hardware-dependent way with the data.
+The FlexFlow simulator relies on the following two facts:
+(1) many DNN models use a small number of distinct
+operators (e.g., a neural machine translation model [42]
+with hundreds of operators only uses four distinct opera-
+tors); and (2) the execution time of each DNN operator
+is typically low-variance and largely independent of the
+contents of the input data.
+The FlexFlow simulator measures the execution time
+of an operation once for each input size and uses the mea-
+sured time to predict all operations with the same type,
+which only takes tens of milliseconds. These estimates
+are then used to predict the performance of a wide variety
+of parallelization strategies. In addition, the execution
+simulator uses a delta simulation algorithm that simu-
+lates a new strategy using incremental updates to previous
+simulations. Compared to existing approaches [ 33, 32]
+that measure the performance from real executions, our
+approach has two advantages. First, the FlexFlow simula-
+tor is much faster. As a comparison, REINFORCE [33]
+requires 12-27 hours to ﬁnd an efﬁcient operation as-
+signment for model parallelism on 4 GPUs, while the
+FlexFlow simulator enables exploring a more comprehen-
+sive search space and ﬁnding better parallelization strate-
+gies (with 3.4-3.8x higher throughput than REINFORCE)
+in 14-40 seconds. Furthermore, REINFORCE uses 160
+compute nodes (with 4 GPUs on each node) to ﬁnd an
+efﬁcient strategy in tens of hours, while our experiments
+use only a single compute node for the simulator.
+The execution simulator also achieves high accuracy
+for predicting parallelization performance. We evaluate
+the simulator with six real-world DNNs on two differ-
+ent GPU clusters and show that, for all the measured
+executions, the relative difference between the real and
+simulated execution time is less than 30%. Most impor-
+tantly for the search, we test different strategies for a given
+DNN application and show that their simulated execution
+time preserves real execution time ordering.
+Using the execution simulator as an oracle, the
+FlexFlow execution optimizer uses a general Markov
+Chain Monte Carlo (MCMC) search algorithm (other
+search strategies could also be used) to explore the SOAP
+search space and iteratively propose candidate strategies
+based on the simulated performance of previous candi-
+dates. When the search procedure is ﬁnished, the execu-
+tion optimizer returns the best strategy it has discovered.
+We evaluate FlexFlow on a variety of real-world DNN
+benchmarks including image classiﬁcation [28, 22, 40],
+text classiﬁcation [26], language modeling [43], and neu-
+ral machine translation [ 42]. Compared to data/model
+parallelism and expert-designed parallelization strate-
+gies [ 27, 42], FlexFlow increases training throughput
+by up to 3.3×, reduces communication costs by up to
+5×, and achieves signiﬁcantly better scaling. In addition,
+FlexFlow also outperforms the strategies found by REIN-
+FORCE by 3.4-3.8× on the same hardware conﬁguration
+evaluated in REINFORCE, and outperforms OptCNN by
+1.2-1.6×, by supporting a broader search space.
+To summarize, our contributions are:
+• We deﬁne the SOAP search space for parallelizing
+DNN applications, which includes strategies that par-
+allelize in any combination of the sample, operation,
+attribute, and parameter dimensions.
+• We show that under reasonable assumptions it is
+possible to reliably predict the execution time of
+parallelized DNNs using a simulator that is three
+orders of magnitude faster than actually running the
+DNNs directly on the hardware.
+• We describe FlexFlow, a deep learning framework
+that can search for and execute strategies from the
+entire SOAP space to accelerate DNN training.
+• We show that FlexFlow can increase training
+throughput by up to 3.8× over state-of-the-art paral-
+lelization approaches while improving scalability.
+2 Related Work
+Data and model parallelism have been widely used by
+existing deep learning systems (e.g., TensorFlow [ 7],
+Caffe2 [2], and PyTorch [ 6]) to distribute the training
+process across devices. Data parallelism [ 28] keeps a
+2
+
+===== PDF PAGE 3 =====
+Parallelization 
+Approach 
+Parallelism 
+Dimensions 
+Hybrid 
+Parallelism 
+Supported 
+DNNs 
+Data Parallelism S all 
+Model Parallelism O, P all 
+Expert-Designed [27, 42] S, O, P all 
+REINFORCE O all 
+OptCNN S, A, P ✓ linear 
+FlexFlow S, O, A, P ✓ all 
+Figure 1: The parallelism dimensions explored by dif-
+ferent approaches. S, O, A, and P indicate parallelism
+in the Sample, Operation, Attribute, and Parameter di-
+mensions (see Section 4). Hybrid parallelism shows if an
+approach supports parallelizing an operation in a combi-
+nation of the sample, attribute, and parameter dimensions
+(see FIgure 3). OptCNN is designed for DNNs with linear
+computation graphs.
+copy of an entire DNN on each device, which is inefﬁ-
+cient for operations with a large number of parameters
+(e.g., densely-connected layers) and becomes a scalability
+bottleneck in large scale distributed training. Model paral-
+lelism [9, 15] splits a DNN into disjoint subsets and trains
+each subset on a dedicated device, which reduces commu-
+nication costs for synchronizing network parameters in a
+DNN but exposes limited parallelism.
+Expert-designed parallelization strategies manually
+optimize parallelization for speciﬁc DNNs by using ex-
+perts’ domain knowledge and experience. For example,
+[27] introduces “one weird trick” that uses data paral-
+lelism for convolutional and pooling layers and switches
+to model parallelism for densely-connected layers to ac-
+celerate convolutional neural networks. To parallelize
+recurrent neural networks, [ 42] uses data parallelism
+that replicates the entire DNN on each compute node
+and switches to model parallelism for intra-node paral-
+lelization. Although these expert-designed parallelization
+strategies achieve performance improvement over data
+and model parallelism, they are suboptimal. We use these
+expert-designed strategies as baselines in our experiments
+and show that FlexFlow can further improve training per-
+formance by up to 2.3×.
+Automated frameworks have been proposed for ﬁnd-
+ing efﬁcient parallelization strategies in a limited search
+space. REINFORCE [ 33] uses reinforcement learning
+to ﬁnd efﬁcient device placement for model parallelism.
+OptCNN [25] is designed for parallelizing DNNs with lin-
+ear computation graphs and automatically ﬁnds efﬁcient
+strategies that exploit parallelism within an operation.
+Figure 1 summarizes the parallelism dimensions ex-
+plored by existing approaches. Data parallelism uses
+the sample dimension to parallelize the training process,
+while model parallelism exploits the parameter and op-
+eration dimensions. Expert-designed strategies [27, 42]
+exploit parallelism in the sample or parameter dimension
+to parallelize an operation but do not support hybrid par-
+allelism that uses a combination of the sample, attribute,
+and parameter dimensions to parallelize an operation (see
+Figure 3). Compared to these manually designed strate-
+gies, FlexFlow considers more sophisticated, and often
+more efﬁcient, strategies to parallelize a single opera-
+tion. In addition, compared to existing automated frame-
+works [33, 25], FlexFlow explores a signiﬁcantly broader
+search space and is able to ﬁnd strategies that are up to
+3.8× faster.
+Graph-based cluster schedulers. Previous work [24,
+18] has proposed cluster schedulers that schedule cluster-
+wide tasks by using graph-based algorithms. For example,
+Quincy [24] maps task scheduling to a ﬂow network and
+uses a min-cost max-ﬂow (MCMF) algorithm to ﬁnd efﬁ-
+cient task placement. Firmament [18] generalizes Quincy
+by employing multiple MCMF optimization algorithms
+to reduce task placement latencies. Existing graph-based
+schedulers optimize task placement by assuming a ﬁxed
+task graph. However, FlexFlow solves a different problem
+that requires jointly optimizing how to partition an op-
+eration into tasks by exploiting parallelism in the SOAP
+dimensions and how to assign tasks to devices.
+3 Overview
+In this section, we compare the FlexFlow programming
+interface with other frameworks in Section 3.1, provide a
+general overview of FlexFlow in Section 3.2, and discuss
+the limitations of our approach in Section 3.3.
+3.1 Programming Interface
+Similar to existing deep learning systems [ 7, 6, 2],
+FlexFlow uses an operator graphG to describe all op-
+erations and state in a DNN. Each nodeoi∈G is an oper-
+ation (e.g., matrix multiplication, convolution, etc.), and
+each edge (oi,o j)∈G is a tensor (i.e., an-dimensional
+array) that is an output ofoi and an input ofoj.
+As far as we know, most deep learning systems (e.g.,
+TensorFlow [7], PyTorch [6], and Caffe2 [2]) use data par-
+allelism as the default parallelization strategy and support
+model parallelism as an alternative by allowing users to
+manually specify the device placement for each operation.
+In contrast, FlexFlow takes a device topologyD =
+(DN,DE) describing all available hardware devices and
+their interconnections, as shown in Figure 2. Each node
+di∈D N represents a device (e.g., a CPU or a GPU), and
+each edge (di,d j)∈D E is a hardware connection (e.g.,
+a NVLink, a PCI-e, or a network link) between devicedi
+anddj. The edges are labeled with the bandwidth and
+3
+
+===== PDF PAGE 4 =====
+MCMC	
+Search	Alg.	
+Distributed	Runtime	
+Best Found Strategy 
+Candidate 
+Strategy 
+Simulated 
+Performance 
+Execution Optimizer 
+ 
+Execution	
+Simulator	
+Operator Graph Device Topology 
+GPU	 GPU	
+CPU	
+Network 
+GPU	 GPU	
+CPU	
+Conv	 Conv	
+Concat	
+MatMul	
+Figure 2: FlexFlow overview.
+latency of the connection.
+FlexFlow automatically ﬁnds a parallelization strategy
+for an operator graph and a device topology. Compared
+to existing frameworks, FlexFlow has two advantages:
+Programmability. For DNN applications with com-
+plex operator graphs running on clusters with deep device
+topologies, it is difﬁcult for application developers, even
+domain experts, to manually design efﬁcient operation
+assignments. FlexFlow takes the responsibility for ﬁnd-
+ing efﬁcient parallelization strategies and provides a more
+productive programming interface.
+Portability. A parallelization strategy ﬁne-tuned
+for one cluster may behave poorly on other clusters.
+FlexFlow’s search method automatically selects an ef-
+ﬁcient strategy for each hardware conﬁguration, without
+requiring application changes.
+3.2 FlexFlow Architecture
+The main components of FlexFlow are shown in Figure 2.
+The FlexFlowexecution optimizer takes an operator graph
+and a device topology as inputs and automatically gen-
+erates an efﬁcient parallelization strategy. The optimizer
+uses a MCMC search algorithm to explore the space of
+possible parallelization strategies and iteratively proposes
+candidate strategies that are evaluated by a execution sim-
+ulator. The execution simulator uses a delta simulation
+algorithm that simulates a new strategy using incremental
+updates to previous simulations. The simulated execution
+time guides the search in generating future candidates.
+When the search time budget is exhausted, the execu-
+tion optimizer sends the best discovered strategy to a
+distributed runtime for parallelizing the actual executions.
+3.3 Limitations
+The main limitation of our approach is that the execution
+simulator assumes the execution time of each operation is
+predictable and independent of the contents of input ten-
+Table 1: Parallelizable dimensions for different opera-
+tions. The sample and channel dimension index different
+samples and neurons in a tensor, respectively. For 1D and
+2D images, the length and the combination of height and
+width dimensions specify a position in an image.
+Operation Parallelizable Dimensions
+(S)ample (A)ttribute (P)arameter
+1D pooling sample length, channel
+1D convolution sample length channel
+2D convolution sample height, width channel
+Matrix multiplicationsample channel
+Sample	 Sample	Sample	 Sample	Length	
+Channel	
+Channel	
+Length	
+Channel	
+Length	
+Channel	
+Length	
+Data	Parallelism	
+(S)	
+Model	Parallelism	
+(P)	
+Hybrid	Parallelism	
+(S,	P)	
+Hybrid	Parallelism	
+(S,	A,	P)	
+Figure 3: Example parallelization conﬁgurations for 1D
+convolution. Dashed lines show partitioning the tensor.
+sors, as we discuss in Section 5. Therefore, our approach
+may not be applicable to applications whose execution
+time is data dependent. However, for the DNN applica-
+tions that are the subject of study here, which are based
+on dense matrix operations, execution time is highly pre-
+dictable and independent of the contents of the matrices.
+4 The SOAP Search Space
+This section introduces the SOAP search space of par-
+allelization strategies for DNNs. To parallelize a DNN
+operation across devices, we require each device to com-
+pute a disjoint subset of the operation’s output tensors.
+Therefore, we model the parallelization of an operation
+oi by deﬁning how the output tensor ofoi is partitioned.
+For an operationoi, we deﬁne itsparallelizable dimen-
+sionsPi as the set of all divisible dimensions in its output
+tensor.Pi always includes a sample dimension. For all
+other dimensions inPi, we call it a parameter dimension
+if partitioning over that dimension requires splitting the
+model parameters and call it an attribute dimension other-
+wise. Table 1 shows the parallelizable dimensions of some
+example operations. Finally, we also consider parallelism
+across differ operations in the operation dimension.
+A parallelization conﬁgurationci of an operation oi
+deﬁnes how the operation is parallelized across multiple
+devices. Figure 3 shows some example conﬁgurations for
+parallelizing a 1D convolution operation in a single di-
+mension as well as combinations of multiple dimensions.
+For each parallelizable dimension inPi,ci includes a
+positive integer that is the degree of parallelism in that
+dimension.|ci| is the product of the parallelism degrees
+for all parallelizable dimensions ofci. We use equal size
+4
+
+===== PDF PAGE 5 =====
+Sample (S) 
+t1:1	(GPU1)	
+t1:3	(GPU3)	
+t1:2	(GPU2)	
+t1:4	(GPU4)	
+Config c1: 
+ 
+ deg(Sample) = 2 
+deg(Channelout) = 2 
+t1:1 = GPU1 
+t1:2 = GPU2 
+t1:3 = GPU3 
+t1:4 = GPU4 
+ 
+Sample (S) 
+t1:1		t1:3		
+Channelout (P) 
+Y (output) 
+X (input) W (input) 
+t1:2		t1:4		
+t1:1 
+t1:3  t1:4 
+t1:2 t1:3 t1:4 
+t1:1  t1:2 
+Channelin (P) 
+Channelout (P) 
+Channelin (P) 
+Figure 4: An example parallelization conﬁguration for a
+matrix multiplication operation.
+partitions in each dimension to guarantee well-balanced
+workload distributions. A parallelization conﬁguration
+ci partitions the operationoi into|ci| independent tasks,
+denoted asti:1,...,t i:|ci|, meanwhileci also includes the
+device assignment for each taskti:k (1≤k≤|ci|). Given
+the output tensor of a task and its operation type, we can
+infer the necessary input tensors to execute each task.
+Figure 4 shows an example parallelization conﬁgura-
+tion for a matrix multiplication operation (i.e.,Y =WX ).
+The operation is partitioned into four independent tasks
+assigned to dedicated GPU devices. The input and output
+tensors of the tasks are shown in the ﬁgure.
+A parallelization strategyS describes one possible par-
+allelization of an application.S includes a parallelization
+conﬁgurationci for each operationoi, and eachoi’s con-
+ﬁguration can be chosen independently from among all
+possible conﬁgurations foroi.
+5 Execution Simulator
+In this section, we describe the execution simulator, which
+takes an operator graphG, a device topologyD, and a
+parallelization strategyS as inputs and predicts the ex-
+ecution time to runG onD using strategyS. FlexFlow
+simulates the execution process instead of measuring the
+elapsed time from real executions for two reasons. First,
+processing one iteration of a DNN application can take
+seconds even on modern GPUs [ 19, 7]. The simulator
+runs up to three orders of magnitude faster than real ex-
+ecutions and allows the execution optimizer to explore
+many more candidates in a given time budget. Second, the
+execution simulator requires fewer computation resources.
+A large-scale execution on thousands of devices can be
+simulated on a single node.
+The simulator depends on the following assumptions:
+A1. The execution time of each task is predictable with
+low variance and is independent of the contents of
+input tensors.
+A2. For each connection (di,d j) between devicedi and
+dj with bandwidthb, transferring a tensor of sizes
+fromdi todj takess/b time (i.e., the communication
+bandwidth can be fully-utilized).
+A3. Each device processes the assigned tasks with a
+FIFO (ﬁrst-in-ﬁrst-out) scheduling policy. This is
+the policy used by modern devices such as GPUs.
+A4. The runtime has negligible overhead. A device be-
+gins processing a task as soon as its input tensors are
+available and the device has ﬁnished previous tasks.
+To simulate an execution, the simulator ﬁrst builds a
+task graph, which includes all tasks derived from oper-
+ations and dependencies between tasks, and then runs a
+simulation algorithm to generate an execution timeline.
+Section 5.1 describes task graph construction. Section 5.2
+introduces a full simulation algorithm that builds time-
+lines from scratch. Finally, Section 5.3 introduces an
+alternative delta simulation algorithm that generates a
+new timeline using incremental updates to a previous one.
+5.1 Task Graph
+A task graph models dependencies between individual
+tasks derived from operations and can also represent task
+execution timelines on individual devices. To unify the
+abstraction, we treat each hardware connection between
+devices as a communication device, and each data transfer
+as a communication task. Note that devices and hardware
+connections are modeled as separate devices. This allows
+computation (i.e., normal tasks) and communication (i.e.,
+communication tasks) to be overlapped if possible.
+Given an operator graphG, a device topologyD, and a
+parallelization strategyS, we use the following steps to
+construct a task graphT = (TN,TE), where each node
+t∈T N is a task (i.e., a normal task or a communication
+task) and each edge (ti,t j)∈T E is a dependency that
+tasktj cannot start until taskti is completed. Note that the
+edges in the task graph are simply ordering constraints—
+the edges do not indicate data ﬂow, as all data ﬂow is
+included in the task graph as communication tasks.
+1. For each operationoi∈G with parallelization con-
+ﬁgurationci, we add tasksti:1,...,t i:|ci| intoTN .
+2. For each tensor (oi,o j)∈ G, which is an output
+of operationoi and an input ofoj, we compute the
+output sub-tensors written by tasksti:ki (1≤ki≤
+|ci|) and the input sub-tensors read by tasks tj:kj
+(1≤ kj≤| cj|). For every task pair ti:ki andtj:kj
+with shared tensors, if two tasks are assigned to the
+same device, we add an edge (ti:ki,t j:kj ) intoTE,
+indicating a dependency between the two tasks, and
+no communication task is needed. If ti:ki andtj:kj
+5
+
+===== PDF PAGE 6 =====
+o1 
+o2 
+o3 
+o4 
+o5 
+o6 
+Embedding Layer Recurrent Layer Linear Layer 
+Config c1, c2:  
+# batch = 2 
+# channel = 1 
+ti:k = GPU0 
+ 
+Config c5, c6: 
+# batch = 1 
+# channel = 1 
+ti:k = GPU2 
+Config c3, c4:  
+# batch = 2 
+# channel = 1 
+ti:k = GPU1 
+ 
+(a) An example parallelization strategy.
+t1:1 
+t1:2 
+t2:1 
+t2:2 
+t3:1 t5:1 
+t3:2 
+t4:1 t6:1 
+t4:2 
+tc 
+tc 
+tc 
+tc 
+tc 
+tc 
+tc 
+tc 
+exe: 2 
+GPU0 
+exe: 1 
+GPU1 
+exe: 3 
+GPU2 
+exe: 1 
+Xfer 0→1 
+exe: 1 
+Xfer 1→2 (b) The corresponding task graph.
+r: 0 
+s: 0 
+r: 0 
+s: 2 
+r: 0 
+s: 4 
+r: 0 
+s: 6 
+r: 3 
+s: 3 
+r: 7 
+s: 7 
+r: 5 
+s: 5 
+r: 7 
+s: 7 
+r: 11 
+s: 11 
+r: 9 
+s: 9 
+r: 2 
+s: 2 
+r: 4 
+s: 4 
+r: 6 
+s: 6 
+r: 8 
+s: 8 
+r: 4 
+s: 4 
+r: 6 
+s: 6 
+r: 8 
+s: 8 
+r: 10 
+s: 10 
+exe: 2 
+GPU0 
+exe: 1 
+GPU1 
+exe: 3 
+GPU2 
+exe: 1 
+Xfer 0→1 
+exe: 1 
+Xfer 1→2 (c) The task graph after the
+full simulation algorithm.
+r: 0 
+s: 0 
+r: 0 
+s: 2 
+r: 0 
+s: 4 
+r: 0 
+s: 6 
+r: 5 
+s: 5 
+r: 7 
+s: 7 
+r: 9 
+s: 9 
+r: 9 
+s: 9 
+r: 11 
+s: 12 
+r: 2 
+s: 2 
+r: 4 
+s: 4 
+r: 6 
+s: 6 
+r: 8 
+s: 8 
+r: 7 
+s: 7 
+r: 10 
+s: 10 
+r: 8 
+s: 9 
+exe: 2 
+GPU0 
+exe: 2 
+GPU1 
+exe: 3 
+GPU2 
+exe: 1 
+Xfer 0→1 
+exe: 2 
+Xfer 1→2 
+(d) The task graph after the
+delta simulation algorithm.
+Figure 5: Simulating an example parallelization strategy. The tasks’ exeTime and device are shown on the top
+of each column. In Figure 5c and 5d, the word “r” and “s” indicate the readyTime and startTime of each task,
+respectively, and the dashed edges represents the nextTask.
+Table 2: Properties for each task in the task graph.
+Property Description
+Properties set in graph construction
+exeTime The elapsed time to execute the task.
+device The assigned device of the task.
+I(t) {tin|(tin,t)∈TE}
+O(t) {tout|(t,tout)∈TE}
+Properties set in simulation
+readyTimeThe time when the task is ready to run.
+startTimeThe time when the task starts to run.
+endTime The time when the task is completed.
+preTask The previous task performed ondevice.
+nextTask The next task performed ondevice.
+Internal properties used by the full simulation algorithm
+state Current state of the task, which is one of
+NOTREADY, READY, andCOMPLETE.
+with shared tensors are assigned to different devices,
+we add a communication tasktc toTN and two edges
+(ti:ki,t c) and (tc,t j:kj ) toTE. The new task tc is
+assigned to the communication device between the
+devices that performti:ki andtj:kj .
+Figure 5a shows an example parallelization strategy for
+a standard 3-layer recurrent neural network consisting of
+an embedding layer, a recurrent layer, and a linear layer.
+The parallelization strategy represents commonly used
+model parallelism that assigns operations in each layer to
+a dedicated GPU. Figure 5b shows the corresponding task
+graph. Each square and hexagon indicate a normal task
+and a communication task, respectively, and each directed
+edge represents a dependency between tasks.
+Table 2 lists the properties for each task in the task
+graph. The exeTime property is set during the graph
+construction. For a normal task derived from an operation,
+its exeTime is the time to execute the task on the given
+device and is estimated by running the task multiple times
+on the device and measuring the average execution time
+(assumption A1). A task’s exeTime is cached, and all
+future tasks with the same operation type and output size
+will use the cached value without rerunning the task. For a
+communication task, its exeTime is the time to transfer
+a tensor (of sizes) between devices with bandwidthb and
+Algorithm 1 Full Simulation Algorithm.
+1: Input: An operator graph G, a device topology D, and a paralleliza-
+tion strategy S.
+2: T = BUILD TASK GRAPH (G, D, S)
+3: readyQueue = {} // a priority queue sorted by readyTime
+4: for t ∈ T N do
+5: t.state = NOTREADY
+6: if I(t) = {} then
+7: t.state = READY
+8: readyQueue.enqueue(t)
+9: while readyQueue ̸= {} do
+10: Task t = readyQueue.dequeue()
+11: Device d = t.device
+12: t.state = COMPLETE
+13: t.startTime = max{t.readyTime, d.last.endTime}
+14: t.endTime = t.startTime + t.exeTime
+15: d.last = t
+16: for n ∈ O (t) do
+17: n.readyTime = max{n.readyTime, t.endTime}
+18: if all tasks in I(n) are COMPLETE then
+19: n.state = READY
+20: readyQueue.enqueue(n)
+21: return max{t.endTime | t ∈ T N }
+is estimated ass/b (assumption A2).
+In addition to the exeTime property, FlexFlow also
+sets the device,I(t), andO(t) (deﬁned in Table 2)
+during graph construction. Other properties in Table 2
+remain unset and must be ﬁlled in by the simulation.
+5.2 Full Simulation Algorithm
+We now describes a full simulation algorithm that we will
+use as a baseline for comparisons with our delta simula-
+tion algorithm. Algorithm 1 shows the pseudocode. It
+ﬁrst builds a task graph using the method described in
+Section 5.1 and then sets the properties for each task using
+a variant of Dijkstra’s shortest-path algorithm [14]. Tasks
+are enqueued into a global priority queue when ready (i.e.,
+all predecessor tasks are completed) and are dequeued in
+increasing order by their readyTime. Therefore, when
+a taskt is dequeued, all tasks with an earlierreadyTime
+have been scheduled, and we can set the properties for
+6
+
+===== PDF PAGE 7 =====
+Algorithm 2 Delta Simulation Algorithm.
+1: Input: An operator graph G, a device topology D, an original task
+graph T , and a new conﬁgurationc′
+i for operation oi.
+2: updateQueue = {} // a priority queue sorted by readyTime
+3: /*UPDATE TASK GRAPH returns the updated task graph and a list
+of tasks with new readyTime*/
+4: T , L = UPDATE TASK GRAPH (T , G, D, ci, c′
+i)
+5: updateQueue.enqueue( L)
+6: while updateQueue ̸= {} do
+7: Task t = updateQueue.dequeue()
+8: t.startTime = max{t.readyTime, t.preTask.endTime}
+9: t.endTime = t.startTime + t.exeTime
+10: for n ∈ O (t) do
+11: if UPDATE TASK(n) then
+12: updateQueue.push(n)
+13: if UPDATE TASK(t.nextTask) then
+14: updateQueue.push(t.nextTask)
+15: return max{t.endTime | t ∈ T N }
+16:
+17: function UPDATE TASK(t)
+18: t.readyTime = max{p.endTime | p ∈ I (t)}
+19: /*Swap t with other tasks on the device to maintain FIFO.*/
+20: t.startTime = max{t.readyTime, t.preTask.endTime}
+21: if t’s readyTime or startTime is changed then
+22: return True
+23: else
+24: return False
+taskt while maintaining the FIFO scheduling order (as-
+sumption A3). Figure 5c shows the execution timeline of
+the example parallelization strategy.
+5.3 Delta Simulation Algorithm
+FlexFlow uses a MCMC search algorithm that proposes a
+new parallelization strategy by changing the paralleliza-
+tion conﬁguration of a single operation in the previous
+strategy (see Section 6.2). As a result, in the common case,
+most of the execution timeline does not change from one
+simulated strategy to the next. Based on this observation,
+we introduce a delta simulation algorithm that starts from
+a previous task graph and only re-simulates tasks involved
+in the portion of the execution timeline that changes, an
+optimization that dramatically speeds up the simulator,
+especially for strategies for large distributed machines.
+The full and delta simulation algorithms always produce
+the same timeline for a given task graph.
+Algorithm 2 shows the pseudocode for the delta simu-
+lation algorithm. It ﬁrst updates tasks and dependencies
+in the task graph and enqueues all modiﬁed tasks into a
+global priority queue (line 4-5). Similar to the Bellman-
+Ford shortest-path algorithm [ 14], the delta simulation
+algorithm iteratively dequeues updated tasks and propa-
+gates the updates to subsequent tasks (line 6-14).
+For the example in Figure 5, consider a new paralleliza-
+tion strategy derived from the original strategy (Figure 5a)
+by only reducing the parallelism of operationo3 to 1 (i.e.,
+|c3| = 1). Figure 5d shows the task graph for the new
+parallelization strategy, which can be generated from the
+original task graph (in Figure 5c) by updating the simula-
+tion properties of tasks in the grey area.
+6 Execution Optimizer
+This section describes the execution optimizer that takes
+an operator graph and a device topology as inputs and
+automatically ﬁnds an efﬁcient parallelization strategy.
+Using the simulator as an oracle, FlexFlow transforms the
+parallelization optimization problem into a cost minimiza-
+tion problem, namely minimizing the predicted execution
+time. The primary advantage of this approach is that it
+avoids explicitly encoding the trade-offs between interde-
+pendent optimizations (e.g., reducing data transfers v.s.
+balancing workload distributions) and simply focuses on
+minimizing the application’s overall execution time.
+Finding the optimal parallelization strategy is NP-hard,
+by an easy reduction from minimum makespan [29]. In
+addition, as described in Section 4, the number of possi-
+ble strategies is exponential to the number of operations
+in the operator graph, which makes it intractable to ex-
+haustively enumerate the search space. To ﬁnd a low-cost
+strategy, FlexFlow uses a cost minimization search pro-
+cedure to heuristically explore the space and returns the
+best strategy discovered.
+6.1 MCMC Sampling
+This section brieﬂy introduces the MCMC sampling
+method used by the execution optimizer. MCMC sam-
+pling is a technique for obtaining samples from a proba-
+bility distribution so that higher probability samples are
+visited proportionately more often than low probability
+samples. A common method (described in [17]) to trans-
+form a cost function cost(·) into a probability distribution
+is the following, whereβ is a constant that can be chosen:
+p(S)∝ exp
+(
+−β· cost(S)
+)
+(1)
+MCMC works by starting at any point in the search
+space (a random point, or perhaps a well-known start-
+ing point) and then generating a sequence of points with
+the guarantee that in the limit the set of points visited
+approaches the distribution given byp(·). In our setting,
+we begin with some parallelization strategyS0 and then
+generate a sequence of strategiesS0,S1,... .
+We use the Metropolis-Hastings algorithm [21] for gen-
+erating Markov chains, which maintains a current strategy
+S and proposes a modiﬁed strategyS∗ from a proposal
+distributionq(S|S∗). If the proposal is accepted,S∗ be-
+comes the new current strategy, otherwise another strategy
+based onS is proposed. This process is repeated indef-
+initely (e.g., until a time budget is exhausted). If the
+7
+
+===== PDF PAGE 8 =====
+Table 3: Details of the DNNs and datasets used in evaluation.
+DNN Description Dataset Reported Acc.Our Acc.
+Convolutional Neural Networks (CNNs)
+AlexNet [28] A 12-layer CNN Synthetic data - -
+Inception-v3 [40]A 102-layer CNN with Inception modules [39] ImageNet [36] 78.0%a 78.0%a
+ResNet-101 [22]A 101-layer residual CNN with shortcut connectionsImageNet [36] 76.4%a 76.5%a
+Recurrent Neural Networks (RNNs)
+RNNTC [26] 4 recurrent layers followed by a softmax layer Movie Reviews [1] 79.8% 80.3%
+RNNLM [43] 2 recurrent layers followed by a softmax layer Penn Treebank [31] 78.4b 76.1b
+NMT [42] 4 recurrent layers followed by an attention and a softmax layerWMT English-German [3]19.67c 19.85c
+a top-1 accuracy for single crop on the validation dataset (higher is better).
+b word-level test perplexities on the Peen Treebank dataset (lower is better).
+c BLEU scores [34] on the test dataset (higher is better).
+proposal distribution is symmetric,q(S|S∗) = q(S∗|S),
+the acceptance criteria of a new strategy is the following:
+α(S→S ∗) = min
+(
+1,p (S∗)/p(S)
+)
+= min
+(
+1, exp
+(
+β· (cost(S)− cost(S∗)
+)) (2)
+The acceptance criteria has several important proper-
+ties. If S∗ has a lower cost than S, thenS∗ is always
+accepted. If S∗ has a higher cost than S, thenS∗ may
+still be accepted with a probability that decreases as a
+function of the difference between cost(S) and cost(S∗).
+Intuitively, MCMC tends to behave as a greedy search al-
+gorithm, preferring to move towards lower cost whenever
+that is readily available, but can also escape local minima.
+6.2 Search Algorithm
+Our method for generating proposals is simple: an oper-
+ation in the current parallelization strategy is selected at
+random, and its parallelization conﬁguration is replaced
+by a random conﬁguration. Our deﬁnition of the pro-
+posal distribution q(·) satisﬁes the symmetry property,
+q(S|S∗) = q(S∗|S), since, for any operation, its conﬁgu-
+rations are selected with the same probability.
+We uses existing strategies (e.g., data parallelism,
+expert-designed strategies) as well as randomly generated
+strategies as the initial candidates for the search algorithm.
+For each initial strategy, the search algorithm iteratively
+proposes new candidates until one of the following two
+criteria is satisﬁed: (1) the search time budget for current
+initial strategy is exhausted; or (2) the search procedure
+cannot further improve the best discovered strategy for
+half of the search time.
+7 FlexFlow Runtime
+We found that existing deep learning systems (e.g., Ten-
+sorFlow [7], PyTorch [6], Caffe2 [2], and MXNet [12])
+only support parallelizing an operation in the batch di-
+mension through data parallelism, and it is non-trivial to
+parallelize an operation in other dimensions or combina-
+tions of several dimensions in these systems. In addition,
+we are not aware of any existing system that supports
+parallelization at the granularity of individual operations.
+To support parallelizing DNN models using any strat-
+egy deﬁned in our parallelization space (see Section 4),
+we implemented the FlexFlow distributed runtime in Le-
+gion [10], a high-performance parallel runtime for dis-
+tributed heterogeneous architectures, and use cuDNN [13]
+and cuBLAS [4] as the underlying libraries for processing
+DNN operations. We use the Legion high-dimensional
+partitioning interface [41] to support parallelizing an oper-
+ation in any combination of the parallelizable dimensions
+and use Legion’s ﬁne-grain control mechanism to control
+parallelization at the granularity of each operation.
+The key difference between the FlexFlow runtime and
+existing systems is that FlexFlow supports parallelizing
+an operation in any combination of the parallelizable di-
+mensions and controls parallelization at the granularity of
+individual operations.
+8 Evaluation
+This section evaluates the performance of FlexFlow on
+six real-world DNN benchmarks and two GPU clusters.
+Section 8.1 describes the experimental setup for the eval-
+uation. Section 8.2 compares FlexFlow with state-of-the-
+art parallelization approaches. Section 8.3 evaluates the
+accuracy and efﬁciency of the execution simulator. Sec-
+tions 8.4 and 8.5 evaluate the quality of the best strategies
+discovered by the execution optimizer and discuss two of
+the best discovered strategies.
+8.1 Experimental Setup
+Table 3 summarizes the DNNs used in our experiments.
+AlexNet, Inception-v3, and ResNet-101 are three CNNs
+that achieved the best accuracy in the ILSVRC compe-
+titions [35]. For AlexNet, the per-iteration training time
+is smaller than the time to load training data from disk.
+We follow the suggestions in [5] and use synthetic data
+to benchmark the performance of AlexNet. For all other
+experiments, the training data is loaded from disk in the
+training procedure.
+RNNTC, RNNLM and NMT are sequence-to-sequence
+RNN models for text classiﬁcation, language model-
+ing, and neural machine translation, respectively. RN-
+NTC uses four LSTM layers with a hidden size of 1024.
+8
+
+===== PDF PAGE 9 =====
+P100	
+P100	
+P100	
+P100	
+CPUs	
+Network 
+P100	
+P100	
+P100	
+P100	
+CPUs	
+100 GB/s 
+(a) The P100 Cluster (4 nodes).
+K80	
+K80	
+K80	
+K80	
+CPUs	
+Network 
+K80	
+K80	
+K80	
+K80	
+CPUs	
+56 GB/s (b) The K80 Cluster (16 nodes).
+Figure 6: Architectures of the GPU clusters used in the
+experiments. An arrow line indicates a NVLink connec-
+tion. A solid line is a PCI-e connection. Dashed lines are
+Inﬁniband connections across different nodes.
+RNNLM uses two LSTM layers with a hidden size of
+2048. Both RNN models include a softmax linear after
+the last LSTM layer. NMT includes an encoder and a
+decoder, both of which consist of 2 LSTM layers with
+a hidden size of 1024. To improve model accuracy, we
+also use an attention layer [9] on top of the last decoder
+LSTM layer. Figure 14 illustrates the structure of the
+NMT model. For all three RNN models, we set the num-
+ber of unrolling steps for each recurrent layer to 40.
+We follow prior work [28, 40, 22, 26, 43, 42] to con-
+struct operator graphs and set hyperparameters (e.g., learn-
+ing rates, weight decays). We use synchronous training
+and a batch size of 64 for all DNN benchmarks, except
+for AlexNet, which uses a batch size of 256.
+To evaluate the performance of FlexFlow with different
+device topologies, we performed the experiments on two
+GPU clusters, as shown in Figure 6. The ﬁrst cluster con-
+tains 4 compute nodes, each of which is equipped with
+two Intel 10-core E5-2600 CPUs, 256GB main memory,
+and four NVIDIA Tesla P100 GPUs. GPUs on the same
+node are connected by NVLink, and nodes are connected
+over 100GB/s EDR Inﬁniband. The second cluster con-
+sists of 16 nodes, each of which is equipped with two Intel
+10-core E5-2680 GPUs, 256GB main memory, and four
+NVIDIA Tesla K80 GPUs. Adjacent GPUs are connected
+by a separate PCI-e switch, and all GPUs are connected to
+CPUs through a shared PCI-e switch. Compute nodes in
+the cluster are connected over 56 GB/s EDR Inﬁniband.
+Unless otherwise stated, we set 30 minutes as the time
+budget for the execution optimizer and use data paral-
+lelism and a randomly generated parallelization strategy
+as the initial candidates for the search algorithm. As
+shown in Section 8.3.2, the search procedure terminates
+in a few minutes for most executions.
+8.2 Parallelization Performance
+8.2.1 Per-iteration Performance
+We compare the per-iteration training performance of
+FlexFlow with the following baselines. Data parallelism is
+commonly used in existing deep learning systems [7, 2, 6].
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+500
+1000
+1500
+2000
+2500 AlexNet (batch size = 256)
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+50
+100
+150
+200Inception_v3 (batch size = 64)
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+50
+100
+150
+200ResNet-101 (batch size = 64)
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+100
+200
+300
+400
+500
+600 RNNTC (batch size = 64)
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+50
+100
+150
+200
+250
+300
+350
+400 RNNLM (batch size = 64)
+1(1) 2(1) 4(1) 8(2) 16(4) 32(8)64(16)
+0
+50
+100
+150
+200
+250
+300
+350
+400 NMT (batch size = 64)
+Num. Samples/second/GPU
+Num. Devices
+Data Parallelism (P100)
+Expert-designed Strategy (P100)
+FlexFlow (P100)
+Data Parallelism (K80)
+Expert-designed Strategy (K80)
+FlexFlow (K80)
+Figure 7: Per-iteration training performance on six DNN
+benchmarks. Numbers in parenthesis are the number of
+compute nodes used in the experiments. The dash lines
+show the ideal training throughput.
+To control for implementation differences, we ran data
+parallelism experiments in TensorFlow r1.7, PyTorch
+v0.3, and our implementation and compared the perfor-
+mance numbers. Compared to TensorFlow and PyTorch,
+FlexFlow achieves the same or better performance num-
+bers on all six DNN benchmarks, and therefore we report
+the data parallelism performance achieved by FlexFlow
+in the experiments.
+Expert-designed strategies optimize parallelization
+based on domain experts’ knowledge and experience.
+For CNNs, [ 27] uses data parallelism for parallelizing
+convolutional and pooling layers and switches to model
+parallelism for densely-connected layers. For RNNs, [42]
+uses data parallelism that replicates the entire operator
+graph on each compute node and uses model parallelism
+that assign operations with the same depth to the same
+GPU on each node. These expert-designed strategies
+are used as a baseline in our experiments. Model par-
+allelism only exposes limited parallelism by itself, and
+we compare against model parallelism as a part of these
+expert-designed strategies.
+Figure 7 shows the per-iteration training performance
+on all six DNN benchmarks. For ResNet-101, FlexFlow
+ﬁnds strategies similar to data parallelism (except using
+model parallelism on a single node for the last fully-
+connected layer) and therefore achieves similar paral-
+lelization performance. For other DNN benchmarks,
+9
+
+===== PDF PAGE 10 =====
+Data
+Parallelism
+Expert
+Designed
+FlexFlow
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0Per-iteration Execution Time
+1.9
+2.6
+1.1
+(a) Per-iteration
+execution time.
+Data
+Parallelism
+Expert
+Designed
+FlexFlow
+0
+10
+20
+30
+40
+50
+60
+70Total Data Transfers Per Iteration (GB)
+65.8
+24.2
+12.1
+(b) Overall data trans-
+fers per iteration.
+Data
+Parallelism
+Expert
+Designed
+FlexFlow
+0
+5
+10
+15
+20
+25
+30
+35
+40
+Total Task Computation Time
+Per Iteration (seconds)
+35.7
+28.2 28.7
+(c) Overall task compu-
+tation time per iteration.
+Figure 8: Parallelization performance for the NMT model
+on 64 K80 GPUs (16 nodes). FlexFlow reduces per-
+iteration execution time by 1.7-2.4× and data transfers by
+2-5.5× compared to other approaches. FlexFlow achieves
+similar overall task computation time as expert-designed
+strategy, which is 20% fewer than data parallelism.
+FlexFlow ﬁnds more efﬁcient strategies than the base-
+lines and achieves 1.3-3.3× speedup. Note that FlexFlow
+performs the same operations as data parallelism and
+expert-designed strategies, and the performance improve-
+ment is achieved by using faster parallelization strategies.
+We found that the parallelization strategies discovered by
+FlexFlow have two advantages over data parallelism and
+expert-designed strategies.
+Reducing overall communication costs. Similar to
+existing deep learning systems, the FlexFlow distributed
+runtime supports overlapping data transfers with compu-
+tation to hide communication overheads. However, as
+we scale the number of devices, the communication over-
+heads increase, but the computation time used to hide
+communication remains constant. Therefore, reducing
+overall communication costs is beneﬁcial for large-scale
+distributed training. Figure 8b shows that, to parallelize
+the NMT model on 64 K80 GPUs (16 nodes), FlexFlow
+reduces the per-iteration data transfers by 2-5.5× com-
+pared to other parallelization approaches.
+Reducing overall task computation time. Data par-
+allelism always parallelizes an operation in the batch di-
+mension. However, as reported in [25], parallelizing an
+operation through different dimensions can result in dif-
+ferent task computation time. For the matrix multipli-
+cation operation in the NMT model, parallelizing it in
+the channel dimension reduces the operation’s overall
+computation time by 38% compared to parallelizing the
+operation in the batch dimension. Figure 8c shows that
+FlexFlow reduces the overall task computation time by
+20% compared to data parallelism for the NMT model.
+The expert-designed strategy achieves slightly better total
+task computation time than FlexFlow. However, this is
+achieved by using model parallelism on each node, which
+disables any parallelism within each operation and results
+in imbalanced workloads. As a result, the expert-designed
+strategy achieves even worse execution performance than
+0 5 10 15 20
+Training Time (hours)
+0
+2
+4
+6
+8
+10Average Training Loss
+TensorFlow
+FlexFlow
+Figure 9: Training curves of Inception-v3 in different sys-
+tems. The model is trained on 16 P100 GPUs (4 nodes).
+Inception_v3 NMT
+0
+50
+100
+150
+200
+250
+300
+350
+400Training Throughput (per second)
+REINFORCE
+FlexFlow
+(a) REINFORCE
+Inception_v3 RNNTC RNNLM NMT
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+8000Training Throughput (per second)
+OptCNN
+FlexFlow (b) OptCNN
+Figure 10: Comparison among the parallelization strate-
+gies found by different automated frameworks.
+data parallelism (see Figure 8a). FlexFlow reduces the
+overall task computation time while enabling parallelism
+within an operation and maintaining load balance.
+8.2.2 End-to-end Performance
+FlexFlow performs the same computation as other deep
+learning systems for a DNN model and therefore achieves
+the same model accuracy. Table 3 veriﬁes that FlexFlow
+achieves the state-of-the-art accuracies on the DNN bench-
+marks used in the experiments.
+In this experiment, we compare the end-to-end train-
+ing performance between FlexFlow and TensorFlow on
+Inception-v3. We train Inception-v3 on the ImageNet
+dataset until the model reaches the single-crop top-1 accu-
+racy of 72% on the validation set. The training processes
+in both frameworks use stochastic gradient decent (SGD)
+with a learning rate of 0.045 and a weight decay of 0.0001.
+Figure 9 illustrates the training curves of the two systems
+on Inception-v3 and show that FlexFlow reduces the end-
+to-end training time by 38% compared to TensorFlow.
+8.2.3 Automated Parallelization Optimizer
+We compare against two automated frameworks that ﬁnd
+parallelization strategies in a limited search space.
+REINFORCE [33] uses reinforcement learning to
+learn device placement for model parallelism. We are
+not aware of any publicly available implementation of
+REINFORCE, so we compare against the learned device
+placement for Inception-v3 and NMT, as reported in [33].
+Figure 10a compares the training throughput of the
+strategies found by FlexFlow and REINFORCE for four
+K80 GPUs on a single node. The parallelization strategies
+10
+
+===== PDF PAGE 11 =====
+Table 4: The end-to-end search time with different simulation algorithms (seconds).
+Num. AlexNet ResNet Inception RNNTC RNNLM NMTGPUsFull Delta SpeedupFull Delta SpeedupFull Delta SpeedupFull Delta SpeedupFull Delta SpeedupFull Delta Speedup
+4 0.11 0.04 2.9× 1.4 0.4 3.2× 14 4.1 3.4× 16 7.5 2.2× 21 9.2 2.3× 40 16 2.5×8 0.40 0.13 3.0× 4.5 1.4 3.2× 66 17 3.9× 91 39 2.3× 76 31 2.5× 178 65 2.7×16 1.4 0.48 2.9× 22 7.3 3.1× 388 77 5.0× 404 170 2.4× 327 121 2.7× 998 328 3.0×32 5.3 1.8 3.0× 107 33 3.2× 1746 298 5.9× 1358 516 2.6× 1102 342 3.2× 2698 701 3.8×64 18 5.9 3.0× 515 158 3.3× 8817 1278 6.9× 4404 1489 3.0× 3406 969 3.6× 8982 2190 4.1×
+0.4 1 2 4 8
+Simulated Execution Time (seconds)
+0.4
+1
+2
+4
+8
+Real Execution Time (seconds)
+4 x P100 (1 node)
+16 x P100 (4 nodes)
+4 x K80 (1 node)
+16 x K80 (4 nodes)
+(a) Inception-v3
+0.1 0.2 0.5 1 2 4
+Simulated Execution Time (seconds)
+0.1
+0.2
+0.5
+1
+2
+4
+Real Execution Time (seconds)
+4 x P100 (1 node)
+16 x P100 (4 nodes)
+4 x K80 (1 node)
+16 x K80 (4 nodes) (b) NMT
+Figure 11: Comparison between the simulated and actual
+execution time for different DNNs and device topologies.
+found by FlexFlow achieve 3.4 - 3.8× speedup compared
+to REINFORCE. We attribute the performance improve-
+ment to the larger search space explored by FlexFlow.
+Besides improving training performance, FlexFlow has
+two additional advantages over REINFORCE. First, RE-
+INFORCE requires executing each strategy in the hard-
+ware environment to get reward signals and takes 12-27
+hours to ﬁnd the best placement [33], while the FlexFlow
+execution optimizer ﬁnds efﬁcient parallelization strate-
+gies for these executions in 14-40 seconds. Second, REIN-
+FORCE uses up to 160 compute nodes (with 4 GPUs on
+each node) to ﬁnd the placement in time, while FlexFlow
+uses a single compute node to run the execution optimizer.
+OptCNN [25] optimizes parallelization for DNNs with
+linear operator graphs. OptCNN assumes that different
+operations in an operator graph cannot be performed in
+parallel and estimates a DNN’s execution time as the sum
+of the operations’ computation time and synchronization
+time and the tensors’ data transfer time. This assumption
+allows OptCNN to use a dynamic programming algorithm
+to ﬁnd an efﬁcient parallelization strategy.
+We compare the strategies found by FlexFlow and
+OptCNN for different DNNs on 16 P100 GPUs. The
+frameworks found the same parallelization strategies for
+AlexNet and ResNet with linear operator graphs and
+found different strategies for the other DNNs as shown
+in Figure 10b. For these DNNs with non-linear operator
+graphs, FlexFlow achieves 1.2-1.6× speedup compared
+to OptCNN by using parallelization strategies that exploit
+parallelism across different operations. We show two
+examples in Section 8.5.
+8.3 Execution Simulator
+We evaluate the performance of the simulator using two
+metrics: simulator accuracy and simulator execution time.
+0 5 10 15
+Elapsed Time (minutes)
+100
+150
+200
+250
+300
+Expected Runtime of Best Found 
+Parallelization Strategy (milliseconds)
+Full Simulation
+Delta Simulation
+Figure 12: Search performance with the full and delta
+simulation algorithms for the NMT model on 16 P100
+GPUs (4 nodes).
+8.3.1 Simulator Accuracy
+In this experiment, we compare the estimated execution
+time predicted by the execution simulator with the real
+execution time measured by actual executions. Figure 11
+shows the results for different DNNs and different avail-
+able devices. The dashed lines indicate a relative differ-
+ence of 0% and 30%, respectively, which encompasses
+the variance between actual and predicted execution time.
+In addition, for different parallelization strategies with
+the same operator graph and device topology (i.e., points
+of the same shape in the ﬁgure), their simulated execu-
+tion time preserves actual execution time ordering, which
+shows that simulated execution time is an appropriate
+metric to evaluate the performance of different strategies.
+8.3.2 Simulator Execution Time
+Figure 12 shows the search performance with different
+simulation algorithms for ﬁnding a strategy for the NMT
+model on 16 P100 GPUs on 4 nodes. The full and delta
+simulation algorithms terminate in 16 and 6 minutes,
+respectively. If the allowed time budget is less than 8
+minutes, the full simulation algorithm will ﬁnd a worse
+strategy than the delta simulation algorithm.
+We compare the end-to-end search time of the execu-
+tion optimizer with different simulation algorithms. For a
+given DNN model and device topology, we measure the
+average execution time of the optimizer using 10 random
+initial strategies. The results are shown in Table 4. The
+delta simulation algorithm is 2.2-6.9× faster than the full
+simulation algorithm. Moreover, the speedup over the full
+simulation algorithm increases as we scale the number of
+devices.
+11
+
+===== PDF PAGE 12 =====
+Figure 13: The best strategy for parallelizing the Inception-v3 model on 4 P100 GPUs. For each operation, the vertical
+and horizontal dimensions indicate parallelism in the batch and channel dimension, respectively. Each GPU is denoted
+by a color. This strategy reduces the per-iteration execution time by 12% compared to data parallelism.
+. . .  
+. . .  
+. . .  
+. . .  
+. . .  
+. . .  
+. . .  
+. . .  
+Softmax 
+Attention 
+Decoder 
+LSTM2 
+Decoder 
+LSTM1 
+Decoder 
+Embed 
+Encoder  
+LSTM2 
+Encoder 
+LSTM1 
+Encoder 
+Embed 
+Figure 14: The best strategy for parallelizing the NMT
+model on 4 P100 GPUs. For each operation, the verti-
+cal and horizontal dimensions indicate parallelism in the
+batch and channel dimension, respectively. Each grey box
+denotes a layer, whose operations share the same network
+parameters. Each GPU is denoted by a color.
+8.4 Search Algorithm
+This section evaluates the quality of the best paralleliza-
+tion strategies discovered by the search algorithm.
+First, we compare the best discovered strategies with
+the global optimal strategies for small executions. To
+obtain a search space of reasonable size, we limit the
+number of devices to 4 and consider the following two
+DNNs. LeNet [ 30] is a 6-layer CNN for image classiﬁ-
+cation. The second DNN is a variant of RNNLM where
+the number of unrolling steps for each recurrent layer is
+restricted to 2. The search space for both DNNs contains
+approximately 1011 strategies. We use depth-ﬁrst search
+to explore the search space and use A∗ [14] to prune the
+search space. Finding the optimal strategies for LeNet
+and RNNLM took 0.8 and 18 hours, respectively. For
+both DNNs, FlexFlow ﬁnds the global optimal strategy.
+Second, we test if the search algorithm returns at least a
+locally optimal strategy in larger search spaces by compar-
+ing the best discovered strategy with all of its neighbors.
+For this experiment, we consider all six DNNs on 2, 4,
+and 8 devices, where the number of neighbors remains
+small enough to exhaustively enumerate them all. All the
+strategies returned by FlexFlow were locally optimal.
+8.5 Case Studies
+We discuss the best strategies discovered by FlexFlow and
+how they improve parallelization performance.
+Inception-v3. Figure 13 shows the best discovered
+strategy for parallelizing Inception-v3 on four P100 GPUs
+on a single node, which exploits intra-operation paral-
+lelism for operations on the critical path and uses a combi-
+nation of intra- and inter-operation parallelism for opera-
+tions on different branches. This results in a well-balanced
+workload and reduces data transfers for parameter syn-
+chronization. Compared to data parallelism, this strategy
+reduces the parameter synchronization costs by 75% and
+the per-iteration execution time by 12%.
+For parallelizing the same Inception-v3 model on four
+K80 GPUs with asymmetric connections between GPUs
+(see Figure 6b), we observe that the best discovered strat-
+egy tends to parallelize operations on adjacent GPUs with
+a direct connection to reduce the communication costs.
+NMT. Figure 14 shows the best discovered strategy for
+parallelizing NMT on four P100 GPUs, which uses vari-
+ous strategies for parallelizing different layers. We brieﬂy
+discuss the insights from this strategy. First, for a layer
+with a large number of network parameters and little com-
+putation (e.g., the embed layer), it is beneﬁcial to perform
+the computation on a small number of GPU devices to re-
+duce parameter synchronization costs. Second, for a layer
+with a large number of network parameters and a heavy
+computation workload (e.g., the softmax layer), FlexFlow
+uses parallelism in the channel dimension and assigns the
+computation for a subset of channels to each task. This
+allows each device to use a subset of the network parame-
+ters, which reduces parameter synchronization costs while
+maintaining load balance. Third, for multiple recurrent
+layers (e.g., the LSTM and attention layers), FlexFlow
+uses concurrency among different layers as well as par-
+allelism within each operation to cooperatively reduce
+parameter synchronization costs while balancing load.
+9 Conclusion
+This paper presents FlexFlow, a deep learning system
+that automatically ﬁnds efﬁcient parallelization strategies
+for DNN applications. FlexFlow uses a guided random-
+ized search procedure to explore the space of possible
+strategies and includes an execution simulator that is an
+efﬁcient and accurate predictor of DNN performance. We
+evaluate FlexFlow with six real-world DNN benchmarks
+on two GPU clusters and show FlexFlow signiﬁcantly
+outperforms state-of-the-art parallelization approaches.
+12
+
+===== PDF PAGE 13 =====
+References
+[1] Movie review data. https://www.
+cs.cornell.edu/people/pabo/
+movie-review-data/, 2005.
+[2] A New Lightweight, Modular, and Scalable Deep
+Learning Framework. https://caffe2.ai,
+2016.
+[3] Conference on machine translation. http://www.
+statmt.org/wmt16, 2016.
+[4] Dense Linear Algebra on GPUs. https://
+developer.nvidia.com/cublas, 2016.
+[5] TensorFlow Benchmarks. https:
+//www.tensorflow.org/performance/
+benchmarks, 2017.
+[6] Tensors and Dynamic neural networks in Python
+with strong GPU acceleration. https://
+pytorch.org, 2017.
+[7] M. Abadi, P. Barham, J. Chen, Z. Chen, A. Davis,
+J. Dean, M. Devin, S. Ghemawat, G. Irving, M. Is-
+ard, M. Kudlur, J. Levenberg, R. Monga, S. Moore,
+D. G. Murray, B. Steiner, P. Tucker, V . Vasudevan,
+P. Warden, M. Wicke, Y . Yu, and X. Zheng. Tensor-
+ﬂow: A system for large-scale machine learning. In
+Proceedings of the 12th USENIX Conference on Op-
+erating Systems Design and Implementation, OSDI,
+2016.
+[8] D. Amodei, S. Ananthanarayanan, R. Anubhai,
+J. Bai, E. Battenberg, C. Case, J. Casper, B. Catan-
+zaro, Q. Cheng, G. Chen, J. Chen, J. Chen, Z. Chen,
+M. Chrzanowski, A. Coates, G. Diamos, K. Ding,
+N. Du, E. Elsen, J. Engel, W. Fang, L. Fan,
+C. Fougner, L. Gao, C. Gong, A. Hannun, T. Han,
+L. V . Johannes, B. Jiang, C. Ju, B. Jun, P. LeGres-
+ley, L. Lin, J. Liu, Y . Liu, W. Li, X. Li, D. Ma,
+S. Narang, A. Ng, S. Ozair, Y . Peng, R. Prenger,
+S. Qian, Z. Quan, J. Raiman, V . Rao, S. Satheesh,
+D. Seetapun, S. Sengupta, K. Srinet, A. Sriram,
+H. Tang, L. Tang, C. Wang, J. Wang, K. Wang,
+Y . Wang, Z. Wang, Z. Wang, S. Wu, L. Wei, B. Xiao,
+W. Xie, Y . Xie, D. Yogatama, B. Yuan, J. Zhan, and
+Z. Zhu. Deep speech 2: End-to-end speech recog-
+nition in english and mandarin. In Proceedings of
+the 33rd International Conference on International
+Conference on Machine Learning, ICML’16.
+[9] D. Bahdanau, K. Cho, and Y . Bengio. Neural ma-
+chine translation by jointly learning to align and
+translate. CoRR, abs/1409.0473, 2014.
+[10] M. Bauer, S. Treichler, E. Slaughter, and A. Aiken.
+Legion: Expressing locality and independence with
+logical regions. In Proceedings of the International
+Conference on High Performance Computing, Net-
+working, Storage and Analysis, 2012.
+[11] C. Chelba, T. Mikolov, M. Schuster, Q. Ge,
+T. Brants, and P. Koehn. One billion word bench-
+mark for measuring progress in statistical language
+modeling. CoRR, abs/1312.3005, 2013.
+[12] T. Chen, M. Li, Y . Li, M. Lin, N. Wang, M. Wang,
+T. Xiao, B. Xu, C. Zhang, and Z. Zhang. MXNet:
+A ﬂexible and efﬁcient machine learning library
+for heterogeneous distributed systems. CoRR,
+abs/1512.01274, 2015.
+[13] S. Chetlur, C. Woolley, P. Vandermersch, J. Co-
+hen, J. Tran, B. Catanzaro, and E. Shelhamer.
+cudnn: Efﬁcient primitives for deep learning.CoRR,
+abs/1410.0759, 2014.
+[14] T. H. Cormen, C. E. Leiserson, R. L. Rivest, and
+C. Stein. Introduction to Algorithms, Third Edition.
+The MIT Press, 3rd edition, 2009.
+[15] J. Dean, G. S. Corrado, R. Monga, K. Chen,
+M. Devin, Q. V . Le, M. Z. Mao, M. Ranzato, A. Se-
+nior, P. Tucker, K. Yang, and A. Y . Ng. Large scale
+distributed deep networks. In NIPS, 2012.
+[16] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and
+L. Fei-Fei. ImageNet: A large-scale hierarchical
+image database. In Proceedings of the IEEE Confer-
+ence on Computer Vision and Pattern Recognition,
+CVPR, 2009.
+[17] W. R. Gilks, S. Richardson, and D. Spiegelhalter.
+Markov chain Monte Carlo in practice. CRC press,
+1995.
+[18] I. Gog, M. Schwarzkopf, A. Gleave, R. N. M. Wat-
+son, and S. Hand. Firmament: Fast, centralized
+cluster scheduling at scale. In 12th USENIX Sympo-
+sium on Operating Systems Design and Implementa-
+tion (OSDI 16), pages 99–115, Savannah, GA, 2016.
+USENIX Association.
+[19] P. Goyal, P. Doll´ar, R. B. Girshick, P. Noordhuis,
+L. Wesolowski, A. Kyrola, A. Tulloch, Y . Jia, and
+K. He. Accurate, large minibatch SGD: training
+imagenet in 1 hour. CoRR, abs/1706.02677, 2017.
+[20] A. Graves and N. Jaitly. Towards end-to-end speech
+recognition with recurrent neural networks. In
+13
+
+===== PDF PAGE 14 =====
+Proceedings of the 31st International Conference
+on International Conference on Machine Learning,
+ICML’14, 2014.
+[21] W. K. Hastings. Monte carlo sampling meth-
+ods using markov chains and their applications.
+Biometrika, 57(1):97–109, 1970.
+[22] K. He, X. Zhang, S. Ren, and J. Sun. Deep resid-
+ual learning for image recognition. In Proceedings
+of the IEEE Conference on Computer Vision and
+Pattern Recognition, CVPR, 2016.
+[23] G. Huang, Z. Liu, and K. Q. Weinberger.
+Densely connected convolutional networks. CoRR,
+abs/1608.06993, 2016.
+[24] M. Isard, V . Prabhakaran, J. Currey, U. Wieder,
+K. Talwar, and A. Goldberg. Quincy: Fair schedul-
+ing for distributed computing clusters. In Proceed-
+ings of the ACM SIGOPS 22nd Symposium on Oper-
+ating Systems Principles, SOSP ’09, pages 261–276.
+ACM, 2009.
+[25] Z. Jia, S. Lin, C. R. Qi, and A. Aiken. Exploring
+hidden dimensions in parallelizing convolutional
+neural networks. CoRR, abs/1802.04924, 2018.
+[26] Y . Kim. Convolutional neural networks for sentence
+classiﬁcation. CoRR, abs/1408.5882, 2014.
+[27] A. Krizhevsky. One weird trick for parallelizing con-
+volutional neural networks. CoRR, abs/1404.5997,
+2014.
+[28] A. Krizhevsky, I. Sutskever, and G. E. Hinton. Ima-
+geNet classiﬁcation with deep convolutional neural
+networks. In Proceedings of the 25th International
+Conference on Neural Information Processing Sys-
+tems, NIPS, 2012.
+[29] S. Lam and R. Sethi. Worst case analysis of two
+scheduling algorithms. SIAM Journal on Computing,
+6, 1977.
+[30] Y . LeCun. LeNet-5, convolutional neural networks.
+URL: http://yann. lecun. com/exdb/lenet, 2015.
+[31] M. P. Marcus, M. A. Marcinkiewicz, and B. San-
+torini. Building a large annotated corpus of english:
+The penn treebank. Comput. Linguist., 19.
+[32] A. Mirhoseini, A. Goldie, H. Pham, B. Steiner, Q. V .
+Le, and J. Dean. A hierarchical model for device
+placement. In International Conference on Learning
+Representations, 2018.
+[33] A. Mirhoseini, H. Pham, Q. V . Le, B. Steiner,
+R. Larsen, Y . Zhou, N. Kumar, M. Norouzi, S. Ben-
+gio, and J. Dean. Device placement optimization
+with reinforcement learning. 2017.
+[34] K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu.
+Bleu: A method for automatic evaluation of ma-
+chine translation. In Proceedings of the 40th Annual
+Meeting on Association for Computational Linguis-
+tics, ACL ’02, 2002.
+[35] O. Russakovsky, J. Deng, H. Su, J. Krause,
+S. Satheesh, S. Ma, Z. Huang, A. Karpathy,
+A. Khosla, M. Bernstein, A. C. Berg, and L. Fei-
+Fei. ImageNet Large Scale Visual Recognition Chal-
+lenge. International Journal of Computer Vision
+(IJCV), 115(3):211–252, 2015.
+[36] O. Russakovsky, J. Deng, H. Su, J. Krause,
+S. Satheesh, S. Ma, Z. Huang, A. Karpathy,
+A. Khosla, M. Bernstein, et al. Imagenet large scale
+visual recognition challenge. International Journal
+of Computer Vision, 2015.
+[37] D. Silver, A. Huang, C. J. Maddison, A. Guez,
+L. Sifre, G. Van Den Driessche, J. Schrittwieser,
+I. Antonoglou, V . Panneershelvam, M. Lanctot, et al.
+Mastering the game of go with deep neural networks
+and tree search. Nature, 529:484–489, 2016.
+[38] K. Simonyan and A. Zisserman. Very deep convo-
+lutional networks for large-scale image recognition.
+CoRR, abs/1409.1556, 2014.
+[39] C. Szegedy, W. Liu, Y . Jia, P. Sermanet, S. E. Reed,
+D. Anguelov, D. Erhan, V . Vanhoucke, and A. Ra-
+binovich. Going deeper with convolutions. CoRR,
+abs/1409.4842, 2014.
+[40] C. Szegedy, V . Vanhoucke, S. Ioffe, J. Shlens, and
+Z. Wojna. Rethinking the inception architecture for
+computer vision. In Proceedings of the IEEE Confer-
+ence on Computer Vision and Pattern Recognition,
+2016.
+[41] S. Treichler, M. Bauer, R. Sharma, E. Slaughter,
+and A. Aiken. Dependent partitioning. In Proceed-
+ings of the 2016 ACM SIGPLAN International Con-
+ference on Object-Oriented Programming, Systems,
+Languages, and Applications, OOPSLA’ 16. ACM,
+2016.
+[42] Y . Wu, M. Schuster, Z. Chen, Q. V . Le, M. Norouzi,
+W. Macherey, M. Krikun, Y . Cao, Q. Gao,
+K. Macherey, J. Klingner, A. Shah, M. Johnson,
+14
+
+===== PDF PAGE 15 =====
+X. Liu, L. Kaiser, S. Gouws, Y . Kato, T. Kudo,
+H. Kazawa, K. Stevens, G. Kurian, N. Patil,
+W. Wang, C. Young, J. Smith, J. Riesa, A. Rudnick,
+O. Vinyals, G. Corrado, M. Hughes, and J. Dean.
+Google’s neural machine translation system: Bridg-
+ing the gap between human and machine translation.
+CoRR, abs/1609.08144, 2016.
+[43] W. Zaremba, I. Sutskever, and O. Vinyals. Re-
+current neural network regularization. CoRR,
+abs/1409.2329, 2014.
+15
