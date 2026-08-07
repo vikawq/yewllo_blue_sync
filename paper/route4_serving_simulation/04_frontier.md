@@ -1,5 +1,8 @@
 # Frontier：面向全面、准确 LLM 推理仿真的高保真离散事件仿真器
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 > 论文正式标题：*Frontier: Towards Comprehensive and Accurate LLM Inference Simulation*，arXiv:2605.21312v2，2026-06-13。本文页码均为 PDF 物理页码；当前日期为 2026-08-06，论文与公开仓库均较新。
 >
 > 标题核验：arXiv v1（2026-05-20）与本地 v2 PDF 首页/元数据均使用上述正式标题；调研初稿中的 *A High-Fidelity Simulator for Modern LLM Serving* 是描述性简称，并非 2605.21312 的正式 v1/v2 标题。另外，arXiv:2508.03148 *Frontier: Simulating the Next Generation of LLM Inference Systems* 是同团队更早的另一条 arXiv 记录，不能当作 2605.21312 的 v1。
@@ -8,9 +11,9 @@
 
 ## 1. 为什么需要 Frontier
 
-**[论文事实]** Frontier 认为旧仿真器的主要误差不再只来自算子时延，而来自现代 runtime 状态：co-location、prefill/decode disaggregation（PDD）、attention/FFN disaggregation（AFD）、CUDA Graph、speculative/MTP decoding、prefix cache、chunked prefill、MoE/EP、分层 KV cache，以及 reasoning/agent/RL 的多轮状态（PDF 第 1–2 页，Abstract、§1，Table 1）。
+**[论文事实]** Frontier 认为旧仿真器的主要误差不再只来自算子时延，而来自现代 runtime 状态：co-location、prefill/decode disaggregation（PDD）、attention/FFN disaggregation（AFD）、CUDA Graph、speculative/MTP decoding、prefix cache、chunked prefill、MoE/EP、分层 KV cache，以及 reasoning/agent/RL 的多轮状态（PDF 第 1–2 页，Abstract、§1，Table 1）。 〔[原文截图 E001](#evidence-e001)〕
 
-论文给出的直接例子包括（PDF 第 3–4 页，§2，Figure 1–5、Table 2）：
+论文给出的直接例子包括（PDF 第 3–4 页，§2，Figure 1–5、Table 2）： 〔[原文截图 E002](#evidence-e002)〕
 
 - CUDA Graph capture bucket 常为 {1,2,4,8,16,32,64}，batch=33 会 pad 到 64；
 - 不建模 padding 会造成 co-located 22.6–45.8%、PDD 40–57.2% 的相关偏差；
@@ -22,14 +25,14 @@
 
 ## 2. 总体架构与事件模型
 
-**[论文事实]** Frontier 包含四层（PDF 第 4–5 页，§3.1，Figure 6）：
+**[论文事实]** Frontier 包含四层（PDF 第 4–5 页，§3.1，Figure 6）： 〔[原文截图 E003](#evidence-e003)〕
 
 1. Workload & Configuration：模型、硬件、请求、架构与 runtime 特性；
 2. Fidelity Plane：compute operator library、memory capacity model、communication backend；
 3. Control Plane：scheduler、admission、batching、routing、Serving State；
 4. Execution Plane：DES 事件循环、跨 cluster 因果关系与指标。
 
-每个 cluster 有独立 event queue 和一个执行线程；跨 cluster 通过队列传递事件。运行时跟踪 per-request history、batch trace、TTFT/TPOT、吞吐、E2E 与内存（PDF 第 5 页，§3.1 “Discrete-event execution” 段）。
+每个 cluster 有独立 event queue 和一个执行线程；跨 cluster 通过队列传递事件。运行时跟踪 per-request history、batch trace、TTFT/TPOT、吞吐、E2E 与内存（PDF 第 5 页，§3.1 “Discrete-event execution” 段）。 〔[原文截图 E004](#evidence-e004)〕
 
 ### 2.1 显式依赖
 
@@ -40,7 +43,7 @@
 - AFD 在 attention 与 FFN clusters 间进行 activation ping-pong；
 - MoE EP 要等待所有 rank ready，最慢 rank 到达后才触发 combine collective。
 
-见 PDF 第 5–6 页，§3.2 “Parallelism and dependencies” 延续段；更完整伪代码见 PDF 第 17 页，Appendix A.2，Algorithm 1。
+见 PDF 第 5–6 页，§3.2 “Parallelism and dependencies” 延续段；更完整伪代码见 PDF 第 17 页，Appendix A.2，Algorithm 1。 〔[原文截图 E005](#evidence-e005)〕
 
 **[综合判断]** 这是五篇中最接近“全局因果图 + 离散事件回放”的设计。尤其最慢 MoE rank 决定 combine ready，能自然产生一部分等待；但它仍使用预测代价，并不是从原始 profiler trace 恢复每个 rank 的真实到达。
 
@@ -48,17 +51,17 @@
 
 ### 3.1 请求、路由与多轮状态
 
-**[论文事实]** 常规请求携带 arrival、prompt/decode 计划；解耦架构会在角色 worker 间传递 KV 或 activation。对 reasoning/agent workload，论文增加 stateful request abstraction：每个请求包含 round 数、每轮 prefill/decode token 计划、工具执行延迟；每轮完成后发 ThinkingRequeueEvent，并通过 session affinity 回到同一 replica 以复用 KV/prefix（PDF 第 6 页，§3.2 “Agentic Reasoning”）。
+**[论文事实]** 常规请求携带 arrival、prompt/decode 计划；解耦架构会在角色 worker 间传递 KV 或 activation。对 reasoning/agent workload，论文增加 stateful request abstraction：每个请求包含 round 数、每轮 prefill/decode token 计划、工具执行延迟；每轮完成后发 ThinkingRequeueEvent，并通过 session affinity 回到同一 replica 以复用 KV/prefix（PDF 第 6 页，§3.2 “Agentic Reasoning”）。 〔[原文截图 E006](#evidence-e006)〕
 
 这比只给 input/output length 的 trace 更接近真实 workload recipe，但仍是“计划 token 数与延迟”，不保存 token 内容、工具返回值或模型分支。
 
 ### 3.2 Runtime invariants
 
-**[论文事实]** 在 batch 形成前，Control Plane 固定 capacity envelope 与运行时契约：Graph capture sizes、prefix eligibility、speculative decoding token allowances、watermark 与 preemption。KV manager 以 block 数检查容量，超 watermark 触发 preemption（PDF 第 6 页，§3.2 “Runtime invariants”）。
+**[论文事实]** 在 batch 形成前，Control Plane 固定 capacity envelope 与运行时契约：Graph capture sizes、prefix eligibility、speculative decoding token allowances、watermark 与 preemption。KV manager 以 block 数检查容量，超 watermark 触发 preemption（PDF 第 6 页，§3.2 “Runtime invariants”）。 〔[原文截图 E007](#evidence-e007)〕
 
 ### 3.3 Runtime Adapters
 
-**[论文事实]** Frontier 把现代优化写成适配 scheduler-batch-engine loop 的 Runtime Adapters（PDF 第 6 页，§3.3）：
+**[论文事实]** Frontier 把现代优化写成适配 scheduler-batch-engine loop 的 Runtime Adapters（PDF 第 6 页，§3.3）： 〔[原文截图 E008](#evidence-e008)〕
 
 - CUDA Graph：pad 到最近 capture size；Graph 路径查询 kernel-only cost，非 Graph 路径查询 launch-inclusive cost；
 - MTP/speculative decoding：每请求维护 planned、verified、accepted、committed token 状态；verify 是 prefill-like workload，并允许不同请求接受率不同；
@@ -72,7 +75,7 @@
 
 ### 4.1 Compute Operator Library
 
-**[论文事实]**（PDF 第 6–7 页，§3.4）：
+**[论文事实]**（PDF 第 6–7 页，§3.4）： 〔[原文截图 E009](#evidence-e009)〕
 
 - token operators：按 token 数与 shard 配 RF/linear model；
 - attention：RF 特征包含 batch size、prefill/decode 长度的 total/min/max/percentiles；
@@ -84,11 +87,11 @@
 
 ### 4.2 Memory Capacity Model
 
-**[论文事实]** Frontier 复用 vLLM dummy profile：加载权重、记录 torch peak 和 non-torch residency，再计算可用 KV blocks；运行中由 scheduler 依据 block watermark 做 admission/preemption（PDF 第 6–7 页，§3.4 “Memory-Capacity Model”）。
+**[论文事实]** Frontier 复用 vLLM dummy profile：加载权重、记录 torch peak 和 non-torch residency，再计算可用 KV blocks；运行中由 scheduler 依据 block watermark 做 admission/preemption（PDF 第 6–7 页，§3.4 “Memory-Capacity Model”）。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 4.3 Communication Backend
 
-**[论文事实]** 根据 domain 与规模选择 ASTRA-sim 或 HTSim，支持 collective 与 point-to-point；PDD/AFD 的 transfer 通过显式事件连接不同 cluster（PDF 第 7 页，§3.4 “Communication Backend”）。
+**[论文事实]** 根据 domain 与规模选择 ASTRA-sim 或 HTSim，支持 collective 与 point-to-point；PDD/AFD 的 transfer 通过显式事件连接不同 cluster（PDF 第 7 页，§3.4 “Communication Backend”）。 〔[原文截图 E011](#evidence-e011)〕
 
 **[综合判断]** 这比单纯查表更能表达依赖和拓扑，但论文没有把 profiler 的 message/wait/transit 分量与真实 peer arrival 全量对齐。Observation Ledger 的重点是校准预测器，而不是保存原始实机执行证据。
 
@@ -96,17 +99,17 @@
 
 ### 5.1 平台和 workload
 
-**[论文事实]** 实机为 2 台服务器、每台 8×H800 SXM，机内 NVLink 400GB/s，机间 400Gb NDR IB/GPU；vLLM 0.10.2 V1。模型包括 Qwen3-30B MoE、Step3-316B、Llama3.1-8B；workload 包括 prefill-heavy 2048/256、decode-heavy 256/2048、balanced 1024/1024 与 ShareGPT（PDF 第 7–8 页，§5.1，Table 3）。AFD ground truth 来自作者 in-house、未公开实现（PDF 第 8 页脚注）。
+**[论文事实]** 实机为 2 台服务器、每台 8×H800 SXM，机内 NVLink 400GB/s，机间 400Gb NDR IB/GPU；vLLM 0.10.2 V1。模型包括 Qwen3-30B MoE、Step3-316B、Llama3.1-8B；workload 包括 prefill-heavy 2048/256、decode-heavy 256/2048、balanced 1024/1024 与 ShareGPT（PDF 第 7–8 页，§5.1，Table 3）。AFD ground truth 来自作者 in-house、未公开实现（PDF 第 8 页脚注）。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 5.2 微观模型
 
-**[论文事实]** H800 BF16 的 p50/p95 相对误差：attention 3.5%/14.2%，linear 3.3%/6.4%，GMM 1.4%/5.3%；对比 Vidur 特征，attention 达 55.4%/376.1%。FP8 attention p95 为 8.8%（PDF 第 8 页，§5.2，Figure 7）。
+**[论文事实]** H800 BF16 的 p50/p95 相对误差：attention 3.5%/14.2%，linear 3.3%/6.4%，GMM 1.4%/5.3%；对比 Vidur 特征，attention 达 55.4%/376.1%。FP8 attention p95 为 8.8%（PDF 第 8 页，§5.2，Figure 7）。 〔[原文截图 E013](#evidence-e013)〕
 
-KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT 运行中最大差 294 blocks，即 115.6MB；makespan 在 7.6% 内（PDF 第 8 页，§5.3，Figure 8、Table 4）。
+KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT 运行中最大差 294 blocks，即 115.6MB；makespan 在 7.6% 内（PDF 第 8 页，§5.3，Figure 8、Table 4）。 〔[原文截图 E014](#evidence-e014)〕
 
 ### 5.3 Runtime feature 与端到端
 
-**[论文事实]**（PDF 第 9–10 页，§5.4–§5.5）：
+**[论文事实]**（PDF 第 9–10 页，§5.4–§5.5）： 〔[原文截图 E015](#evidence-e015)〕
 
 - CUDA Graph speedup 误差：co-located 1.7% 内、PDD 6.1% 内；
 - prefix cache 最终 hit rate：模拟 36.98%，实机 37.11%；
@@ -120,17 +123,17 @@ KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT
 
 **[论文事实]**
 
-- 256×H800 搜索 483,536 个候选，65,190 个 OOM，496 个满足 SLA；输出 Pareto frontier（PDF 第 10–11 页，§6.1，Figure 12）；
-- 宽松 TTFT 下 PDD 可达 137.4K，AFD 116.2K、co-located 27.7K；TTFT 收紧到 500ms 后 AFD 116.2K，PDD 100.7K（PDF 第 10–11 页，§6.1）；
-- 1,024 个异构 H800/H20 可搜索角色分配与成本效率（PDF 第 11–12 页，§6.2）；
-- reasoning 场景的 phase-aware scheduler 把 answer-visible TTFT p95 降低 30.4%，planning throughput 提升 23.2%；trace 为 4K–32K prompt、每轮约 0.2K decode（PDF 第 12 页，§6.3，Figure 14）；
-- RL 训练/rollout 根据 active requests 从 DP32/PP16/TP2 切到 DP8/PP16/TP8，重配置 4.52s，makespan 从 528.8s 降到 259.1s，约 2.04×（PDF 第 12–13 页，§6.4，Figure 15）。
+- 256×H800 搜索 483,536 个候选，65,190 个 OOM，496 个满足 SLA；输出 Pareto frontier（PDF 第 10–11 页，§6.1，Figure 12）； 〔[原文截图 E016](#evidence-e016)〕
+- 宽松 TTFT 下 PDD 可达 137.4K，AFD 116.2K、co-located 27.7K；TTFT 收紧到 500ms 后 AFD 116.2K，PDD 100.7K（PDF 第 10–11 页，§6.1）； 〔[原文截图 E017](#evidence-e017)〕
+- 1,024 个异构 H800/H20 可搜索角色分配与成本效率（PDF 第 11–12 页，§6.2）； 〔[原文截图 E018](#evidence-e018)〕
+- reasoning 场景的 phase-aware scheduler 把 answer-visible TTFT p95 降低 30.4%，planning throughput 提升 23.2%；trace 为 4K–32K prompt、每轮约 0.2K decode（PDF 第 12 页，§6.3，Figure 14）； 〔[原文截图 E019](#evidence-e019)〕
+- RL 训练/rollout 根据 active requests 从 DP32/PP16/TP2 切到 DP8/PP16/TP8，重配置 4.52s，makespan 从 528.8s 降到 259.1s，约 2.04×（PDF 第 12–13 页，§6.4，Figure 15）。 〔[原文截图 E020](#evidence-e020)〕
 
 这些比例都是特定配置下的 what-if，不应脱离硬件、SLO 和 workload 引用。
 
 ## 7. 落地、开源与成熟度
 
-**[论文事实]** 论文称实现约 70K Python LoC，并基于/重构 Vidur；支持 HuggingFace config、PyTorch/vLLM/FlashInfer operator library（PDF 第 7 页，§4）。官方仓库为 https://github.com/NetX-lab/Frontier ，MIT 许可。
+**[论文事实]** 论文称实现约 70K Python LoC，并基于/重构 Vidur；支持 HuggingFace config、PyTorch/vLLM/FlashInfer operator library（PDF 第 7 页，§4）。官方仓库为 https://github.com/NetX-lab/Frontier ，MIT 许可。 〔[原文截图 E021](#evidence-e021)〕
 
 **[公开实现现状]** 截至 2026-08-06，README 显示：PDD 与 sequential PD-AF 已开放，但公开 PDD/PD-AF 要求 no-enable_parallel_clusters；并行 disaggregated execution 仍有保护限制；smoke run 默认可能使用 formula analytical backend；只有 h800 与 rtx_pro_6000 提供 full-feature profiles，并建议在目标机重新 profile；scheduler 目前主要对齐 vLLM，其他 engine 仍在计划中。
 
@@ -151,8 +154,8 @@ KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT
 
 - 仍是预测仿真，不是原始 kernel trace 或数值回放；
 - prefix/KV 采用块计数/哈希抽象，非逐 token/slot 内容状态；
-- 主要校准 vLLM，SGLang/TensorRT-LLM 尚未同等验证（PDF 第 13 页，§7）；
-- CPU overhead 模型可能不稳，论文假设大规模场景约 90% 时间在 GPU，并把 CUDA API interception 列为未来工作（PDF 第 13 页，§7）；
+- 主要校准 vLLM，SGLang/TensorRT-LLM 尚未同等验证（PDF 第 13 页，§7）； 〔[原文截图 E022](#evidence-e022)〕
+- CPU overhead 模型可能不稳，论文假设大规模场景约 90% 时间在 GPU，并把 CUDA API interception 列为未来工作（PDF 第 13 页，§7）； 〔[原文截图 E023](#evidence-e023)〕
 - 公共 disaggregation 并行模式和 profile 覆盖仍有限；
 - AFD 生产 ground truth 不公开。
 
@@ -184,3 +187,290 @@ KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT
 ## 11. 一句话评价
 
 Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 DES，是本组最值得借鉴的 Event Runtime/Serving State 蓝本；它距离可审计、跨平台的录制回放，还差低层绑定、原始观测账本与功能状态。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 14 行 - PDF p.1, 2</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** Frontier 认为旧仿真器的主要误差不再只来自算子时延，而来自现代 runtime 状态：co-location、prefill/decode disaggregation（PDD）、attention/FFN disaggregation（AFD）、CUDA Graph、speculative/MTP decoding、prefix cache、chunked prefill、MoE/EP、分层 KV cache，以及 reasoning/agent/RL 的多轮状态（PDF 第 1–2 页，Abstract、§1，Table 1）。</code></p>
+
+![E001 - PDF p.1, 2](../evidence_pages/frontier/p001.png)
+
+![E001 - PDF p.1, 2](../evidence_pages/frontier/p002.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 16 行 - PDF p.3, 4</summary>
+
+<p><strong>原定位：</strong> <code>论文给出的直接例子包括（PDF 第 3–4 页，§2，Figure 1–5、Table 2）：</code></p>
+
+![E002 - PDF p.3, 4](../evidence_pages/frontier/p003.png)
+
+![E002 - PDF p.3, 4](../evidence_pages/frontier/p004.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 28 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** Frontier 包含四层（PDF 第 4–5 页，§3.1，Figure 6）：</code></p>
+
+![E003 - PDF p.4, 5](../evidence_pages/frontier/p004.png)
+
+![E003 - PDF p.4, 5](../evidence_pages/frontier/p005.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 35 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>每个 cluster 有独立 event queue 和一个执行线程；跨 cluster 通过队列传递事件。运行时跟踪 per-request history、batch trace、TTFT/TPOT、吞吐、E2E 与内存（PDF 第 5 页，§3.1 “Discrete-event execution” 段）。</code></p>
+
+![E004 - PDF p.5](../evidence_pages/frontier/p005.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 46 行 - PDF p.5, 6, 17</summary>
+
+<p><strong>原定位：</strong> <code>见 PDF 第 5–6 页，§3.2 “Parallelism and dependencies” 延续段；更完整伪代码见 PDF 第 17 页，Appendix A.2，Algorithm 1。</code></p>
+
+![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p005.png)
+
+![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p006.png)
+
+![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p017.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 54 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** 常规请求携带 arrival、prompt/decode 计划；解耦架构会在角色 worker 间传递 KV 或 activation。对 reasoning/agent workload，论文增加 stateful request abstraction：每个请求包含 round 数、每轮 prefill/decode token 计划、工具执行延迟；每轮完成后发 ThinkingRequeueEvent，并通过 session affinity 回到同一 replica 以复用 KV/prefix（PDF 第 6 页，§3.2 “Agentic Reasoning”）。</code></p>
+
+![E006 - PDF p.6](../evidence_pages/frontier/p006.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 60 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** 在 batch 形成前，Control Plane 固定 capacity envelope 与运行时契约：Graph capture sizes、prefix eligibility、speculative decoding token allowances、watermark 与 preemption。KV manager 以 block 数检查容量，超 watermark 触发 preemption（PDF 第 6 页，§3.2 “Runtime invariants”）。</code></p>
+
+![E007 - PDF p.6](../evidence_pages/frontier/p006.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 64 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** Frontier 把现代优化写成适配 scheduler-batch-engine loop 的 Runtime Adapters（PDF 第 6 页，§3.3）：</code></p>
+
+![E008 - PDF p.6](../evidence_pages/frontier/p006.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 78 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]**（PDF 第 6–7 页，§3.4）：</code></p>
+
+![E009 - PDF p.6, 7](../evidence_pages/frontier/p006.png)
+
+![E009 - PDF p.6, 7](../evidence_pages/frontier/p007.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 90 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** Frontier 复用 vLLM dummy profile：加载权重、记录 torch peak 和 non-torch residency，再计算可用 KV blocks；运行中由 scheduler 依据 block watermark 做 admission/preemption（PDF 第 6–7 页，§3.4 “Memory-Capacity Model”）。</code></p>
+
+![E010 - PDF p.6, 7](../evidence_pages/frontier/p006.png)
+
+![E010 - PDF p.6, 7](../evidence_pages/frontier/p007.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 94 行 - PDF p.7</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** 根据 domain 与规模选择 ASTRA-sim 或 HTSim，支持 collective 与 point-to-point；PDD/AFD 的 transfer 通过显式事件连接不同 cluster（PDF 第 7 页，§3.4 “Communication Backend”）。</code></p>
+
+![E011 - PDF p.7](../evidence_pages/frontier/p007.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 102 行 - PDF p.7, 8</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** 实机为 2 台服务器、每台 8×H800 SXM，机内 NVLink 400GB/s，机间 400Gb NDR IB/GPU；vLLM 0.10.2 V1。模型包括 Qwen3-30B MoE、Step3-316B、Llama3.1-8B；workload 包括 prefill-heavy 2048/256、decode-heavy 256/2048、balanced 1024/1024 与 ShareGPT（PDF 第 7–8 页，§5.1，Table 3）。AFD ground truth 来自作者 in-house、未公开实现（PDF 第 8 页脚注）。</code></p>
+
+![E012 - PDF p.7, 8](../evidence_pages/frontier/p007.png)
+
+![E012 - PDF p.7, 8](../evidence_pages/frontier/p008.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 106 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** H800 BF16 的 p50/p95 相对误差：attention 3.5%/14.2%，linear 3.3%/6.4%，GMM 1.4%/5.3%；对比 Vidur 特征，attention 达 55.4%/376.1%。FP8 attention p95 为 8.8%（PDF 第 8 页，§5.2，Figure 7）。</code></p>
+
+![E013 - PDF p.8](../evidence_pages/frontier/p008.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 108 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT 运行中最大差 294 blocks，即 115.6MB；makespan 在 7.6% 内（PDF 第 8 页，§5.3，Figure 8、Table 4）。</code></p>
+
+![E014 - PDF p.8](../evidence_pages/frontier/p008.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 112 行 - PDF p.9, 10</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]**（PDF 第 9–10 页，§5.4–§5.5）：</code></p>
+
+![E015 - PDF p.9, 10](../evidence_pages/frontier/p009.png)
+
+![E015 - PDF p.9, 10](../evidence_pages/frontier/p010.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 126 行 - PDF p.10, 11</summary>
+
+<p><strong>原定位：</strong> <code>- 256×H800 搜索 483,536 个候选，65,190 个 OOM，496 个满足 SLA；输出 Pareto frontier（PDF 第 10–11 页，§6.1，Figure 12）；</code></p>
+
+![E016 - PDF p.10, 11](../evidence_pages/frontier/p010.png)
+
+![E016 - PDF p.10, 11](../evidence_pages/frontier/p011.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 127 行 - PDF p.10, 11</summary>
+
+<p><strong>原定位：</strong> <code>- 宽松 TTFT 下 PDD 可达 137.4K，AFD 116.2K、co-located 27.7K；TTFT 收紧到 500ms 后 AFD 116.2K，PDD 100.7K（PDF 第 10–11 页，§6.1）；</code></p>
+
+![E017 - PDF p.10, 11](../evidence_pages/frontier/p010.png)
+
+![E017 - PDF p.10, 11](../evidence_pages/frontier/p011.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 128 行 - PDF p.11, 12</summary>
+
+<p><strong>原定位：</strong> <code>- 1,024 个异构 H800/H20 可搜索角色分配与成本效率（PDF 第 11–12 页，§6.2）；</code></p>
+
+![E018 - PDF p.11, 12](../evidence_pages/frontier/p011.png)
+
+![E018 - PDF p.11, 12](../evidence_pages/frontier/p012.png)
+
+</details>
+
+<a id="evidence-e019"></a>
+
+<details>
+<summary><strong>E019</strong> - 原笔记第 129 行 - PDF p.12</summary>
+
+<p><strong>原定位：</strong> <code>- reasoning 场景的 phase-aware scheduler 把 answer-visible TTFT p95 降低 30.4%，planning throughput 提升 23.2%；trace 为 4K–32K prompt、每轮约 0.2K decode（PDF 第 12 页，§6.3，Figure 14）；</code></p>
+
+![E019 - PDF p.12](../evidence_pages/frontier/p012.png)
+
+</details>
+
+<a id="evidence-e020"></a>
+
+<details>
+<summary><strong>E020</strong> - 原笔记第 130 行 - PDF p.12, 13</summary>
+
+<p><strong>原定位：</strong> <code>- RL 训练/rollout 根据 active requests 从 DP32/PP16/TP2 切到 DP8/PP16/TP8，重配置 4.52s，makespan 从 528.8s 降到 259.1s，约 2.04×（PDF 第 12–13 页，§6.4，Figure 15）。</code></p>
+
+![E020 - PDF p.12, 13](../evidence_pages/frontier/p012.png)
+
+![E020 - PDF p.12, 13](../evidence_pages/frontier/p013.png)
+
+</details>
+
+<a id="evidence-e021"></a>
+
+<details>
+<summary><strong>E021</strong> - 原笔记第 136 行 - PDF p.7</summary>
+
+<p><strong>原定位：</strong> <code>**[论文事实]** 论文称实现约 70K Python LoC，并基于/重构 Vidur；支持 HuggingFace config、PyTorch/vLLM/FlashInfer operator library（PDF 第 7 页，§4）。官方仓库为 https://github.com/NetX-lab/Frontier ，MIT 许可。</code></p>
+
+![E021 - PDF p.7](../evidence_pages/frontier/p007.png)
+
+</details>
+
+<a id="evidence-e022"></a>
+
+<details>
+<summary><strong>E022</strong> - 原笔记第 157 行 - PDF p.13</summary>
+
+<p><strong>原定位：</strong> <code>- 主要校准 vLLM，SGLang/TensorRT-LLM 尚未同等验证（PDF 第 13 页，§7）；</code></p>
+
+![E022 - PDF p.13](../evidence_pages/frontier/p013.png)
+
+</details>
+
+<a id="evidence-e023"></a>
+
+<details>
+<summary><strong>E023</strong> - 原笔记第 158 行 - PDF p.13</summary>
+
+<p><strong>原定位：</strong> <code>- CPU overhead 模型可能不稳，论文假设大规模场景约 90% 时间在 GPU，并把 CUDA API interception 列为未来工作（PDF 第 13 页，§7）；</code></p>
+
+![E023 - PDF p.13](../evidence_pages/frontier/p013.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

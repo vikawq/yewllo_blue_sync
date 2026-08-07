@@ -1,5 +1,8 @@
 # Habitat：基于源 GPU 运行时信息的跨 GPU 训练性能预测
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 > 论文：Geoffrey X. Yu, Yubo Gao, Pavel Golikov, Gennady Pekhimenko, **Habitat: A Runtime-Based Computational Performance Predictor for Deep Neural Network Training**, USENIX ATC 2021, pp. 503–521。  
 > 原文：[USENIX 论文 PDF](https://www.usenix.org/system/files/atc21-yu.pdf)；[会议页面](https://www.usenix.org/conference/atc21/presentation/yu)；[开源仓库](https://github.com/geoffxy/habitat)。  
 > 版本核对：这是正式会议论文，不是“边缘推理延迟预测”论文；目标是**单 GPU DNN 训练迭代**的跨 GPU 预测。  
@@ -16,7 +19,7 @@ Habitat 先在用户已有的“源 GPU”上录制一轮训练迭代，把迭�
 - **归纳：** 它是“源运行 trace + 解析跨 GPU 缩放 + 少数算子 MLP”的混合 predictor，比纯 lookup table 更靠近本项目的 Observation→CostModel 层。
 - **边界：** 论文主体不模拟分布式通信、计算通信重叠、排队、动态 scheduler、KV 状态或推理请求到达；这些在论文中被明确留给未来工作。
 
-定位：PDF 2–3/印刷 503–504，Abstract、§1 第 7–10 段及贡献列表；PDF 5/印刷 506，§3.2 第 1–3 段。
+定位：PDF 2–3/印刷 503–504，Abstract、§1 第 7–10 段及贡献列表；PDF 5/印刷 506，§3.2 第 1–3 段。 〔[原文截图 E001](#evidence-e001)〕
 
 ## 2. 问题定义
 
@@ -24,7 +27,7 @@ Habitat 先在用户已有的“源 GPU”上录制一轮训练迭代，把迭�
 
 用户通常无法为了选卡而先购买或租用所有候选 GPU；公共 benchmark 又只覆盖少数模型/GPU。Habitat 要回答：给定一个 PyTorch DNN、一个固定 batch size、一个用户已有的源 GPU和一个目标 GPU，目标 GPU 上**一轮训练迭代的执行时间**是多少，并由此计算训练吞吐和租用成本归一化吞吐。
 
-定位：PDF 2–3/印刷 503–504，§1 第 1–10 段；PDF 4/印刷 505，§2.2–§2.5；PDF 5/印刷 506，§3.2 第 1 段。
+定位：PDF 2–3/印刷 503–504，§1 第 1–10 段；PDF 4/印刷 505，§2.2–§2.5；PDF 5/印刷 506，§3.2 第 1 段。 〔[原文截图 E002](#evidence-e002)〕
 
 ### 2.2 为什么训练迭代可预测
 
@@ -34,7 +37,7 @@ Habitat 先在用户已有的“源 GPU”上录制一轮训练迭代，把迭�
 2. DNN 虽有很多调用，但 unique operation 种类较少；
 3. 用户通常已有一张开发 GPU，可提供目标模型真实的 runtime/kernel 元数据。
 
-定位：PDF 5/印刷 506，§3.1 的 Observation 1–3 三段。
+定位：PDF 5/印刷 506，§3.1 的 Observation 1–3 三段。 〔[原文截图 E003](#evidence-e003)〕
 
 ### 2.3 输入与输出
 
@@ -46,7 +49,7 @@ Habitat 先在用户已有的“源 GPU”上录制一轮训练迭代，把迭�
 | MLP | operation shape/参数 + 目标 GPU 的容量、带宽、SM 数、峰值 FLOPS | 该 operation 前向+反向时间 |
 | 汇总 | 全部 operation 的目标预测时间 | 迭代时间、吞吐、cost-normalized throughput |
 
-定位：PDF 3/印刷 504，Listing 1 与其后第 1–4 段；PDF 5/印刷 506，§3.2；PDF 6/印刷 507，§4.1。
+定位：PDF 3/印刷 504，Listing 1 与其后第 1–4 段；PDF 5/印刷 506，§3.2；PDF 6/印刷 507，§4.1。 〔[原文截图 E004](#evidence-e004)〕
 
 ## 3. 采集流程与可视为“表”的 schema
 
@@ -54,7 +57,7 @@ Habitat 先在用户已有的“源 GPU”上录制一轮训练迭代，把迭�
 
 Habitat monkey-patch PyTorch operation，用 wrapper 截获用户在 `track()` 区间内执行的每个 operation。为避免极短调用计时不准，它用原先截获的相同输入把 operation 独立重跑多次，用 CUDA event 测 operation 的前向和（若有）反向时间；同时通过 CUPTI 采集组成该 operation 的 kernel 时间与性能指标。
 
-定位：PDF 6/印刷 507，§4.1 第 1–3 段（定位词 `monkey patching`、`re-runs each operation independently`、`Kernel metadata and metrics`）。
+定位：PDF 6/印刷 507，§4.1 第 1–3 段（定位词 `monkey patching`、`re-runs each operation independently`、`Kernel metadata and metrics`）。 〔[原文截图 E005](#evidence-e005)〕
 
 可映射为如下记录：
 
@@ -82,7 +85,7 @@ OperationObservation:
 
 性能计数器采集很慢，Habitat 用 `(kernel name, launch configuration)` 缓存指标，launch configuration 包括 thread block 数与 block size；只为迭代时间贡献位于约 99.5 百分位以上的 operation 采性能指标，缺指标时将 `γ=1`，即近似为内存带宽受限。
 
-定位：PDF 7/印刷 508，§4.2 最后一段（定位词 `cache measured metrics`、`99.5th percentile`）。
+定位：PDF 7/印刷 508，§4.2 最后一段（定位词 `cache measured metrics`、`99.5th percentile`）。 〔[原文截图 E006](#evidence-e006)〕
 
 ### 3.3 MLP 离线数据表
 
@@ -97,7 +100,7 @@ OperationObservation:
 
 operation 维度范围：卷积采 batch 1–64、输入通道 3–2048、输出通道 16–2048、kernel 1–11、padding 0–3、stride 1–4、image 1–256 及 bias；LSTM 采 batch 1–128、输入/hidden 1–1280、sequence 1–64、layer 1–6、双向/bias；BMM 的 batch 1–128、三个矩阵维 1–1024；Linear 的 batch 1–3500、输入/输出 feature 1–32768、bias。
 
-定位：PDF 7–8/印刷 508–509，§4.3.1、表 1，第 1–6 段。
+定位：PDF 7–8/印刷 508–509，§4.3.1、表 1，第 1–6 段。 〔[原文截图 E007](#evidence-e007)〕
 
 ## 4. 预测方法
 
@@ -106,7 +109,7 @@ operation 维度范围：卷积采 batch 1–64、输入通道 3–2048、输出
 - kernel-alike：不同 GPU 上仍由相同/相似 kernel 实现；使用 wave scaling。论文评估中约占 unique operation 的 95%，但只占迭代时间约 46%。
 - kernel-varying：cuDNN/cuBLAS 等会按 GPU 架构选择不同 kernel；对 Conv2D、LSTM、BMM、Linear 使用 operation-specific MLP。评估中约占 unique operation 的 5%，却占时间约 54%。
 
-定位：PDF 5/印刷 506，§3.2 第 3 段；PDF 10/印刷 511，§5.2.3 第 1–3 段。
+定位：PDF 5/印刷 506，§3.2 第 3 段；PDF 10/印刷 511，§5.2.3 第 1–3 段。 〔[原文截图 E008](#evidence-e008)〕
 
 论文没有给出一个自动、普适的 kernel-varying 判定算法。哪些 operation 进入 MLP 是实现支持集与工程判断的一部分，这是迁移时必须重新验证的隐藏 schema。
 
@@ -116,7 +119,7 @@ operation 维度范围：卷积采 batch 1–64、输入通道 3–2048、输出
 
 `γ` 由 roofline 算术强度 `x` 与目标 GPU ridge point `R=P/D` 的位置确定：`x<R` 时从 1 线性降到 0.5，超过 `R` 后随 `R/x` 逼近 0。算术强度从 CUPTI 的 FLOP efficiency 和 DRAM 读写字节经验计算。
 
-定位：PDF 6/印刷 507，§3.3、Eq. (1)–(2)；PDF 7/印刷 508，§4.2、图 2、Eq. (3)。
+定位：PDF 6/印刷 507，§3.3、Eq. (1)–(2)；PDF 7/印刷 508，§4.2、图 2、Eq. (3)。 〔[原文截图 E009](#evidence-e009)〕
 
 优点是样本少、解释性强；缺点是显式假设 kernel code/launch 行为可跨 GPU 对齐，而且论文脚注承认没有建模 ISA 等更复杂时钟效应。
 
@@ -124,7 +127,7 @@ operation 维度范围：卷积采 batch 1–64、输入通道 3–2048、输出
 
 每个 operation 一张 MLP：输入为 operation/layer 维度，加目标 GPU 的内存容量、内存带宽、SM 数、峰值 FLOPS；8 个 hidden layer、每层 1024 ReLU，输出一个前向+反向总时间。训练 80 epoch，Adam，初始 LR `5e-4`、40 epoch 后 `1e-4`，weight decay `1e-4`，batch 512；80/20 train/test，输入标准化，loss 为 MAPE；正式模型评估用到的配置不进入 MLP 训练集。
 
-定位：PDF 6/印刷 507，§3.4 第 2–3 段；PDF 8/印刷 509，§4.3.2–§4.3.3、表 1。
+定位：PDF 6/印刷 507，§3.4 第 2–3 段；PDF 8/印刷 509，§4.3.2–§4.3.3、表 1。 〔[原文截图 E010](#evidence-e010)〕
 
 这是对未覆盖 shape 的 learned interpolation/extrapolation，但没有物理约束输出，也没有不确定度/OOD 拒绝策略；论文 2025 年的 NeuSight 实验后来显示，直接 latency MLP 对新 GPU/新 shape 可能灾难性外推，这也是 Habitat 的重要边界，详见本目录 `03_neusight_gpu_forecasting.md`。
 
@@ -132,7 +135,7 @@ operation 维度范围：卷积采 batch 1–64、输入通道 3–2048、输出
 
 Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到 iteration time。论文评估指标是 wall-clock iteration execution time，吞吐为 `batch_size / iteration_time`，成本归一化吞吐再除以 GPU 每小时租金。
 
-定位：PDF 5/印刷 506，§3.2 第 2 段；PDF 9/印刷 510，§5.1 `Metrics` 段。
+定位：PDF 5/印刷 506，§3.2 第 2 段；PDF 9/印刷 510，§5.1 `Metrics` 段。 〔[原文截图 E011](#evidence-e011)〕
 
 这里没有 DAG 调度、并发 stream、通信重叠或 queue 模型。对当前录制回放项目而言，Habitat cost model 只能给 Operator/Kernel node 的服务时间，不能独立生成 Distributed Execution Graph 的端到端时间线。
 
@@ -145,19 +148,19 @@ Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到
 - 四类 MLP 由论文作者离线在六张 GPU、约 50 万级 unique operation 配置上采样，并发布预训练模型；用户不需要每个模型重训 MLP。
 - 性能计数器采集需要特殊权限，且 metric replay 慢，论文用缓存和只测重要 operation 降本。
 
-定位：PDF 3/印刷 504，Listing 1；PDF 6–8/印刷 507–509，§4.1–§4.3；开源仓库 README 的 Running From Source。
+定位：PDF 3/印刷 504，Listing 1；PDF 6–8/印刷 507–509，§4.1–§4.3；开源仓库 README 的 Running From Source。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 5.2 跨 GPU
 
 正式评估覆盖 P4000、P100、V100、RTX 2070、RTX 2080Ti、T4，跨 Pascal/Volta/Turing、桌面/工作站/服务器等级。所有 6×5=30 个源→目标有向 GPU 对都评估。
 
-定位：PDF 8–9/印刷 509–510，表 2、§5.2 第 1 段。
+定位：PDF 8–9/印刷 509–510，表 2、§5.2 第 1 段。 〔[原文截图 E013](#evidence-e013)〕
 
 ### 5.3 跨模型
 
 支持 ResNet-50、Inception v3、Transformer、GNMT、DCGAN。泛化来自“operation building blocks 可复用”，不是学习完整模型 embedding。测试模型实际 operation 配置不在 MLP 训练集中，但它们仍在论文采样范围附近；没有真正的现代 LLM、MoE、FlashAttention 或动态图验证。
 
-定位：PDF 8–10/印刷 509–511，表 4、§5.2.1–§5.2.4。
+定位：PDF 8–10/印刷 509–511，表 4、§5.2.1–§5.2.4。 〔[原文截图 E014](#evidence-e014)〕
 
 ## 6. 计算、通信、重叠、排队与状态
 
@@ -171,7 +174,7 @@ Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到
 | mixed precision | 主体未实现 | §6.1.2 建议串联 Daydream；示例平均误差 16.1% |
 | 数值/状态 | 不建模 | 论文验证 synthetic data 值不影响其训练计算时间，但这不能外推到 MoE/index/KV 动态路径 |
 
-定位：PDF 12–13/印刷 513–514，§6.1.1–§6.1.3。
+定位：PDF 12–13/印刷 513–514，§6.1.1–§6.1.3。 〔[原文截图 E015](#evidence-e015)〕
 
 ## 7. 误差定义与关键实验结果
 
@@ -179,7 +182,7 @@ Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到
 
 论文把预测误差按相对百分比报告；MLP 的训练 loss 明确为 MAPE。ground truth 用 CUDA event；先 3 次 warmup 丢弃，再取 3 次测量平均；kernel 用 CUPTI。正文没有报告置信区间、跨运行方差或 tail error。
 
-定位：PDF 8–9/印刷 509–510，§4.3.3 的公式与 §5.1 `Measurements` 段。
+定位：PDF 8–9/印刷 509–510，§4.3.3 的公式与 §5.1 `Measurements` 段。 〔[原文截图 E016](#evidence-e016)〕
 
 ### 7.2 主要结果
 
@@ -189,7 +192,7 @@ Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到
 - GNMT 选云卡案例平均误差 10.7%，仍正确排序性能和成本；DCGAN 案例平均误差 7.7%，正确判断 V100 相对 2080Ti 仅约 1.1×。
 - Habitat+Daydream 做混合精度跨 GPU 预测平均误差 16.1%；只用 Daydream 转换实测 FP32 的误差 10.7%。
 
-定位：PDF 4/印刷 505，图 1；PDF 9–10/印刷 510–511，图 3–5、§5.2；PDF 11–12/印刷 512–513，图 6–7、§5.3；PDF 13/印刷 514，§6.1.2。
+定位：PDF 4/印刷 505，图 1；PDF 9–10/印刷 510–511，图 3–5、§5.2；PDF 11–12/印刷 512–513，图 6–7、§5.3；PDF 13/印刷 514，§6.1.2。 〔[原文截图 E017](#evidence-e017)〕
 
 ## 8. 实现、开源与落地成熟度
 
@@ -199,7 +202,7 @@ Habitat 对一轮 trace 中每个 operation 单独预测，再直接求和得到
 
 **成熟度判断：研究原型（中）。** 方法、代码和预训练模型都存在，API 清楚；但软件栈是 PyTorch 1.4/CUDA 10.1/cuDNN 7 的时代，目标是单卡静态训练迭代，不能直接承担现代 LLM serving 或昇腾分布式回放。
 
-定位：PDF 3/印刷 504，Listing 1 与开源声明；PDF 6/印刷 507，§4；PDF 8/印刷 509，§5.1；仓库 README。
+定位：PDF 3/印刷 504，Listing 1 与开源声明；PDF 6/印刷 507，§4；PDF 8/印刷 509，§5.1；仓库 README。 〔[原文截图 E018](#evidence-e018)〕
 
 ## 9. 优点、缺点与适用边界
 
@@ -274,3 +277,263 @@ Habitat 只覆盖其中 operation shape、kernel、launch 和 GPU 特征；本�
 ## 11. 最终评价
 
 Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源运行揭示了目标模型实际使用的 operation/kernel，解析模型与 ML 应按 kernel 稳定性分工。对昇腾录制回放，它适合作为第一代 operator cost calibration 的参考；但必须由 V0.8 的 Recipe/Binding/Observation 分离、状态/决策记录和跨-rank DAG 来补齐，不能被误称为完整回放系统。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 22 行 - PDF p.2, 3, 5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2–3/印刷 503–504，Abstract、§1 第 7–10 段及贡献列表；PDF 5/印刷 506，§3.2 第 1–3 段。</code></p>
+
+![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p002.png)
+
+![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p003.png)
+
+![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p005.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 30 行 - PDF p.2, 3, 4, 5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2–3/印刷 503–504，§1 第 1–10 段；PDF 4/印刷 505，§2.2–§2.5；PDF 5/印刷 506，§3.2 第 1 段。</code></p>
+
+![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p002.png)
+
+![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p003.png)
+
+![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p004.png)
+
+![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p005.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 40 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.1 的 Observation 1–3 三段。</code></p>
+
+![E003 - PDF p.5](../evidence_pages/habitat/p005.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 52 行 - PDF p.3, 5, 6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1 与其后第 1–4 段；PDF 5/印刷 506，§3.2；PDF 6/印刷 507，§4.1。</code></p>
+
+![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p003.png)
+
+![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p005.png)
+
+![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p006.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 60 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§4.1 第 1–3 段（定位词 `monkey patching`、`re-runs each operation independently`、`Kernel metadata and metrics`）。</code></p>
+
+![E005 - PDF p.6](../evidence_pages/habitat/p006.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 88 行 - PDF p.7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 7/印刷 508，§4.2 最后一段（定位词 `cache measured metrics`、`99.5th percentile`）。</code></p>
+
+![E006 - PDF p.7](../evidence_pages/habitat/p007.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 103 行 - PDF p.7, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 7–8/印刷 508–509，§4.3.1、表 1，第 1–6 段。</code></p>
+
+![E007 - PDF p.7, 8](../evidence_pages/habitat/p007.png)
+
+![E007 - PDF p.7, 8](../evidence_pages/habitat/p008.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 112 行 - PDF p.5, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.2 第 3 段；PDF 10/印刷 511，§5.2.3 第 1–3 段。</code></p>
+
+![E008 - PDF p.5, 10](../evidence_pages/habitat/p005.png)
+
+![E008 - PDF p.5, 10](../evidence_pages/habitat/p010.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 122 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§3.3、Eq. (1)–(2)；PDF 7/印刷 508，§4.2、图 2、Eq. (3)。</code></p>
+
+![E009 - PDF p.6, 7](../evidence_pages/habitat/p006.png)
+
+![E009 - PDF p.6, 7](../evidence_pages/habitat/p007.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 130 行 - PDF p.6, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§3.4 第 2–3 段；PDF 8/印刷 509，§4.3.2–§4.3.3、表 1。</code></p>
+
+![E010 - PDF p.6, 8](../evidence_pages/habitat/p006.png)
+
+![E010 - PDF p.6, 8](../evidence_pages/habitat/p008.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 138 行 - PDF p.5, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.2 第 2 段；PDF 9/印刷 510，§5.1 `Metrics` 段。</code></p>
+
+![E011 - PDF p.5, 9](../evidence_pages/habitat/p005.png)
+
+![E011 - PDF p.5, 9](../evidence_pages/habitat/p009.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 151 行 - PDF p.3, 6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1；PDF 6–8/印刷 507–509，§4.1–§4.3；开源仓库 README 的 Running From Source。</code></p>
+
+![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p003.png)
+
+![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p006.png)
+
+![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p007.png)
+
+![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p008.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 157 行 - PDF p.8, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8–9/印刷 509–510，表 2、§5.2 第 1 段。</code></p>
+
+![E013 - PDF p.8, 9](../evidence_pages/habitat/p008.png)
+
+![E013 - PDF p.8, 9](../evidence_pages/habitat/p009.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 163 行 - PDF p.8, 9, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8–10/印刷 509–511，表 4、§5.2.1–§5.2.4。</code></p>
+
+![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p008.png)
+
+![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p009.png)
+
+![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p010.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 177 行 - PDF p.12, 13</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 12–13/印刷 513–514，§6.1.1–§6.1.3。</code></p>
+
+![E015 - PDF p.12, 13](../evidence_pages/habitat/p012.png)
+
+![E015 - PDF p.12, 13](../evidence_pages/habitat/p013.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 185 行 - PDF p.8, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8–9/印刷 509–510，§4.3.3 的公式与 §5.1 `Measurements` 段。</code></p>
+
+![E016 - PDF p.8, 9](../evidence_pages/habitat/p008.png)
+
+![E016 - PDF p.8, 9](../evidence_pages/habitat/p009.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 195 行 - PDF p.4, 9, 10, 11, 12, 13</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 4/印刷 505，图 1；PDF 9–10/印刷 510–511，图 3–5、§5.2；PDF 11–12/印刷 512–513，图 6–7、§5.3；PDF 13/印刷 514，§6.1.2。</code></p>
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p004.png)
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p009.png)
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p010.png)
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p011.png)
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p012.png)
+
+![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p013.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 205 行 - PDF p.3, 6, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1 与开源声明；PDF 6/印刷 507，§4；PDF 8/印刷 509，§5.1；仓库 README。</code></p>
+
+![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p003.png)
+
+![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p006.png)
+
+![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p008.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

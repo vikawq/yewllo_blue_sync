@@ -1,5 +1,8 @@
 # ParallelSim：仅基于官方摘要的受限证据笔记
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。该论文全文受订阅限制；卡片只使用 Springer 官方摘要页快照，不能替代正文 PDF 证据。
+
+
 ## 1. 论文身份与证据等级
 
 - 正式题名：*Parallelsim: an accurate, generic, and efficient simulator for distributed deep learning*。
@@ -10,13 +13,13 @@
 
 ## 2. 摘要可确认的贡献
 
-**原文事实（官方摘要，未分页）**：ParallelSim 把 Python/PyTorch 程序转换为 intermediate representation（IR）subgraphs，目标是兼顾通用性。
+**原文事实（官方摘要，未分页）**：ParallelSim 把 Python/PyTorch 程序转换为 intermediate representation（IR）subgraphs，目标是兼顾通用性。 〔[原文截图 E001](#evidence-e001)〕
 
-**原文事实（官方摘要，未分页）**：作者从 GPU hardware design 与 profiling logic 分析 profiling errors 和 computation-communication overlap，并据此做适配。
+**原文事实（官方摘要，未分页）**：作者从 GPU hardware design 与 profiling logic 分析 profiling errors 和 computation-communication overlap，并据此做适配。 〔[原文截图 E002](#evidence-e002)〕
 
-**原文事实（官方摘要，未分页）**：系统采用 hierarchical simulation engine，将 inter-stage 与 intra-stage simulation 解耦。
+**原文事实（官方摘要，未分页）**：系统采用 hierarchical simulation engine，将 inter-stage 与 intra-stage simulation 解耦。 〔[原文截图 E003](#evidence-e003)〕
 
-**原文事实（官方摘要，未分页）**：在 16 个 DGX A100 节点上评估，报告平均模拟误差 1.83%，并称可用于选择最优并行策略。
+**原文事实（官方摘要，未分页）**：在 16 个 DGX A100 节点上评估，报告平均模拟误差 1.83%，并称可用于选择最优并行策略。 〔[原文截图 E004](#evidence-e004)〕
 
 ## 3. 目前不能从摘要确认的内容
 
@@ -67,3 +70,65 @@
 - 核验 1.83% 指标的分母、平均方式、训练配置与误差尾部。
 - 检索并验证官方代码，而非根据同名仓库猜测。
 - 与 SimAI/Proteus 在同一“固定 Recipe / 系统 capacity”口径下重新比较。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+> **来源限制：** ParallelSim 合法全文受订阅限制。以下只展示 Springer 官方摘要页网页快照；正文方法、图表与算法仍不可核验。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 16 行 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）</summary>
+
+<p><strong>原定位：</strong> <code>**原文事实（官方摘要，未分页）**：ParallelSim 把 Python/PyTorch 程序转换为 intermediate representation（IR）subgraphs，目标是兼顾通用性。</code></p>
+
+![E001 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p001.png)
+
+![E001 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p002.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 18 行 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）</summary>
+
+<p><strong>原定位：</strong> <code>**原文事实（官方摘要，未分页）**：作者从 GPU hardware design 与 profiling logic 分析 profiling errors 和 computation-communication overlap，并据此做适配。</code></p>
+
+![E002 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p001.png)
+
+![E002 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p002.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 20 行 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）</summary>
+
+<p><strong>原定位：</strong> <code>**原文事实（官方摘要，未分页）**：系统采用 hierarchical simulation engine，将 inter-stage 与 intra-stage simulation 解耦。</code></p>
+
+![E003 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p001.png)
+
+![E003 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p002.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 22 行 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）</summary>
+
+<p><strong>原定位：</strong> <code>**原文事实（官方摘要，未分页）**：在 16 个 DGX A100 节点上评估，报告平均模拟误差 1.83%，并称可用于选择最优并行策略。</code></p>
+
+![E004 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p001.png)
+
+![E004 - Springer 官方摘要页（网页快照第 1-2 页，非论文 PDF 页）](../evidence_pages/parallelsim/p002.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

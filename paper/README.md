@@ -4,6 +4,13 @@
 
 当前覆盖 19 篇不同论文/系统；Vidur 同时从“成本预测”和“Serving 仿真”两个视角分析，因此共有 20 份单篇笔记。每个方向另有横向总览。
 
+## 原文证据截图
+
+- 20 份单篇笔记中的论文事实定位均带有 `原文截图 E###` 跳转，点击后可到文末对应证据卡片。
+- 证据卡片保留原笔记行号、PDF 物理页码以及原有章节/图/表/算法/段落定位，并嵌入所引用的全部页面；相同 PDF 页只保存一份图片供多处复用。
+- 当前共 428 个证据卡片、221 份去重后的页图/文本面板。生成与核验脚本见 [tools/build_evidence_screenshots.py](tools/build_evidence_screenshots.py) 和 [tools/audit_evidence_screenshots.py](tools/audit_evidence_screenshots.py)。
+- TPDS 综述和 ParallelSim 的来源受限情况会在各自笔记及证据卡片中显著标出：前者是带期刊页码与抽取行号的公开终版文本快照，后者只是 Springer 官方摘要网页快照，二者均不冒充论文 PDF 原页。
+
 ## 推荐阅读顺序
 
 1. [TPDS 2024 分布式 DNN 性能建模综述精读](00_TPDS2024_Distributed_DNN_Performance_Modeling_Survey.md)：先建立方法谱系，并理解论文的 analytical / graph-based / execution-driven 与项目三条路线为什么不能机械一一对应。
@@ -56,6 +63,6 @@ Execution Recipe
 
 - [TPDS 综述来源说明](sources/README.md)
 - [路线一原始 PDF](route1_trace_replay/sources/)
+- [路线二原始 PDF、复用来源与 SHA-256](route2_profile_prediction/sources/README.md)
 - [路线三原文与访问状态](route3_fullstack_training/sources/README.md)
 - [Serving 原始 PDF、版本与 SHA-256](route4_serving_simulation/sources/README.md)
-

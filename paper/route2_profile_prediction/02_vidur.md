@@ -1,5 +1,8 @@
 # Vidur：LLM 推理的 profiling + 随机森林运行时表 + 事件驱动系统仿真
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 > 论文：Amey Agrawal, Nitin Kedia, Jayashree Mohan, Ashish Panwar, Nipun Kwatra, Bhargav S. Gulavani, Ramachandran Ramjee, Alexey Tumanov, **Vidur: A Large-Scale Simulation Framework for LLM Inference**, MLSys 2024。  
 > 原文：[arXiv PDF（2405.05465v2）](https://arxiv.org/pdf/2405.05465)；[arXiv 页面](https://arxiv.org/abs/2405.05465)；[开源仓库](https://github.com/microsoft/vidur)。  
 > 版本核对：PDF 标为 `arXiv:2405.05465v2, 21 May 2024`，正文首页注明 MLSys 2024。Vidur 既是本路线“查表+拟合”的代表，也是一个 serving 事件驱动模拟器；它不是只对静态图求和。  
@@ -9,7 +12,7 @@
 
 Vidur 把 LLM 层分解为少量 token-level、sequence-level 和 communication operator，用单 GPU/离线通信 microbenchmark 采有限样本，再以随机森林插值生成大范围 runtime lookup table；在线仿真时，三层 scheduler、KV-cache memory manager 和事件驱动执行器根据真实请求长度/到达 trace 动态形成 batch，查询 operator 表并推进时间，从而输出 TTFT、TBT、端到端延迟、吞吐、MFU、KV 利用率等指标，并由 Vidur-Search 做 deployment what-if 搜索。
 
-定位：PDF 1–2，Abstract、§1 第 7–12 段；PDF 4–6，§4.1–§4.5、图 2。
+定位：PDF 1–2，Abstract、§1 第 7–12 段；PDF 4–6，§4.1–§4.5、图 2。 〔[原文截图 E001](#evidence-e001)〕
 
 ## 2. 解决的问题与关键挑战
 
@@ -17,7 +20,7 @@ Vidur 把 LLM 层分解为少量 token-level、sequence-level 和 communication 
 
 LLM provider 的配置空间同时包含 TP/PP/replica 数、GPU SKU、scheduler、batch 上限、chunk size 等；最优配置还依赖 workload trace。同模型把一个 trace 的最优配置迁到另一个 trace，成本可恶化至约 2×。真实硬件穷举昂贵，因此需要高保真、低成本、可扩展的推理模拟。
 
-定位：PDF 1–3，§1 第 2–6 段、图 1；§2.3 第 1–3 段。
+定位：PDF 1–3，§1 第 2–6 段、图 1；§2.3 第 1–3 段。 〔[原文截图 E002](#evidence-e002)〕
 
 ### 2.2 为什么训练模拟器不够
 
@@ -27,7 +30,7 @@ LLM provider 的配置空间同时包含 TP/PP/replica 数、GPU SKU、scheduler
 2. prefill/decode、请求长度、在线 batch 大小与混合构成都动态变化；
 3. 单 batch 时间的小误差会改变后续 batching，形成 cascading error，负载接近容量时尤其严重。
 
-定位：PDF 4，§3 的 `Time Scale`、`Varying Iteration Times`、`Cascading Errors` 三段。
+定位：PDF 4，§3 的 `Time Scale`、`Varying Iteration Times`、`Cascading Errors` 三段。 〔[原文截图 E003](#evidence-e003)〕
 
 ### 2.3 输入与输出
 
@@ -39,7 +42,7 @@ LLM provider 的配置空间同时包含 TP/PP/replica 数、GPU SKU、scheduler
 | Simulator | model spec、GPU SKU/拓扑、replica/TP/PP、scheduler 参数、请求长度和到达 trace | event timeline 与 request/replica/cluster metrics |
 | Vidur-Search | 模型、workload、GPU 候选、卡数上限、TTFT/TBT SLO | 最大 QPS/$ 的配置及 Pareto 可视化 |
 
-定位：PDF 4，图 2 与 §4.2；PDF 6–7，§5.2、§6。
+定位：PDF 4，图 2 与 §4.2；PDF 6–7，§5.2、§6。 〔[原文截图 E004](#evidence-e004)〕
 
 ## 3. Profiling 设计与 runtime 表 schema
 
@@ -53,7 +56,7 @@ Vidur 不是统一用 `op + full shape` 作为 key，而是先按 runtime 的最
 | sequence-level | attention | current query tokens + 请求 context；再按 prefill/decode 压缩 |
 | communication | all-reduce、all-gather、send/recv | message data amount；profile 按 topology 区分 |
 
-定位：PDF 5，§4.3 `Operator Triaging` 段与三项列表。
+定位：PDF 5，§4.3 `Operator Triaging` 段与三项列表。 〔[原文截图 E005](#evidence-e005)〕
 
 这是 Vidur 最值得借鉴的 schema 思想：不同 operator 的“shape”要先还原成真实 workload sufficient statistics。
 
@@ -61,7 +64,7 @@ Vidur 不是统一用 `op + full shape` 作为 key，而是先按 runtime 的最
 
 根据 model spec 枚举不同 TP sharding configuration，在单 GPU 上用标准 PyTorch kernel 执行并由 CUPTI 计时。这样不必为每个多 GPU 并行度建真实集群；profile key 至少含 operator type、模型派生矩阵维、TP shard 和 total tokens。
 
-定位：PDF 5，§4.3 `Profiling Token-level Operators` 第 1 段。
+定位：PDF 5，§4.3 `Profiling Token-level Operators` 第 1 段。 〔[原文截图 E006](#evidence-e006)〕
 
 论文没有给出采样点具体网格、重复次数、warmup、数据库列、随机森林超参数或 lookup table 的序列化格式，均应标为**未披露**。
 
@@ -71,7 +74,7 @@ Prefill attention：一批 `P` 个 prompt 长度为 `p_i`，计算量近似正�
 
 Decode attention：论文认为 PagedAttention v2/FlashDecoding 能有效处理 context skew，且 decode 主要 memory-bound，因此用本 batch **总 KV-cache read volume**，而不是完整 per-request context vector 作为 runtime key。
 
-定位：PDF 5–6，§4.3 `Profiling Sequence-level Operators` 两段，公式文字从 `Σ p_i²` 到 `total KV-Cache reads`。
+定位：PDF 5–6，§4.3 `Profiling Sequence-level Operators` 两段，公式文字从 `Σ p_i²` 到 `total KV-Cache reads`。 〔[原文截图 E007](#evidence-e007)〕
 
 这两个降维假设有清晰边界：新的 sparse attention、不同 page/block locality、极端长度 skew、KV 压缩/量化或实现 fallback 可能使相同统计量产生不同 latency。
 
@@ -79,7 +82,7 @@ Decode attention：论文认为 PagedAttention v2/FlashDecoding 能有效处理 
 
 独立、model-agnostic 地对 all-reduce、all-gather、send/recv 在不同 topology/profile 点上建表，key 主要为通信类型、数据量、topology。
 
-定位：PDF 6，§4.3 `Profiling Communication Operators` 段。
+定位：PDF 6，§4.3 `Profiling Communication Operators` 段。 〔[原文截图 E008](#evidence-e008)〕
 
 论文没有给出 group rank placement、算法、protocol、并发流、peer arrival、wait/transit 分解等字段；因此“message bytes 相同”并不等于本项目要求的 distributed-performance 等价。
 
@@ -114,7 +117,7 @@ PredictedRuntimeTable:
 
 有限 profile 无法覆盖所有 tensor 组合。论文比较了三类直觉：MLP 对闭源 CUBLAS/cuDNN 算子通常数据需求大；简单 polynomial regression 又抓不住 tile/wave quantization 造成的非线性；作者发现 Random Forest 在 data frugality 与 fidelity 间最平衡，因此训练小 RF 对未采样参数插值，再生成 operation-wise lookup table供仿真热路径查询。
 
-定位：PDF 5–6，§4.4 全部两段；PDF 5，§4.2 第 1 段（`produces operation-wise runtime lookup tables`）。
+定位：PDF 5–6，§4.4 全部两段；PDF 5，§4.2 第 1 段（`produces operation-wise runtime lookup tables`）。 〔[原文截图 E009](#evidence-e009)〕
 
 原文没有：
 
@@ -134,7 +137,7 @@ PredictedRuntimeTable:
 2. Replica scheduler：batching + KV memory management。memory planner 依据 model spec/parallelism 计算 KV 可用空间；memory manager 为 batching policy 提供 API。论文实现 FasterTransformer、Orca、Sarathi-Serve、vLLM、LightLLM，每种少于 150 行 Python。
 3. Replica-stage scheduler：pipeline stage 内 microbatch 调度；论文版只支持 synchronous PP。
 
-定位：PDF 6，§4.5 第 1–3 段。
+定位：PDF 6，§4.5 第 1–3 段。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 5.2 计算、通信、重叠、排队与状态
 
@@ -148,7 +151,7 @@ PredictedRuntimeTable:
 | KV 状态 | memory planner/manager 跟踪 capacity、分配、preempt/restart 指标 | 不是数值 KV 内容/slot 语义回放 |
 | graph/kernel | profile 自优化 vLLM/CUDA graph 的实际成本 | 不输出/复用原 graph 地址或 kernel DAG |
 
-定位：PDF 5–7，§4.3–§5.2；PDF 8–9，§7.1–§7.2。
+定位：PDF 5–7，§4.3–§5.2；PDF 8–9，§7.1–§7.2。 〔[原文截图 E011](#evidence-e011)〕
 
 ## 6. 冷启动、跨 GPU、跨模型与跨 workload 泛化
 
@@ -156,7 +159,7 @@ PredictedRuntimeTable:
 
 模型 onboarding 分两步：从 declarative spec 自动生成 operator/shard profile 组合；只采最少数据，RF 扩展到大参数域。并行策略由 domain knowledge 在单 GPU 上生成 local shard profile，避免每个 TP/PP 真机部署。
 
-定位：PDF 4–5，§4.1 `Automatic Profiling for Parallelism Strategies`、§4.2、图 2。
+定位：PDF 4–5，§4.1 `Automatic Profiling for Parallelism Strategies`、§4.2、图 2。 〔[原文截图 E012](#evidence-e012)〕
 
 论文没有量化“新增一个模型到底需多少 profile 点/GPU 小时”；但声称通信 profile 可跨模型复用，架构相似让 operator 集较小。
 
@@ -164,19 +167,19 @@ PredictedRuntimeTable:
 
 论文评估 A100 80GB 和 H100 80GB；同一 SKU/拓扑上的 profile 产生对应表。它不像 Habitat/NeuSight 那样重点解决“目标 GPU 未见过且无访问权”的硬件 forecasting；新增 SKU 仍需 initial profiling。
 
-定位：PDF 8，§7.1 `Models and Environment`；PDF 2，§1 对 Vidur 的描述。
+定位：PDF 8，§7.1 `Models and Environment`；PDF 2，§1 对 Vidur 的描述。 〔[原文截图 E013](#evidence-e013)〕
 
 ### 6.3 跨模型
 
 评估 LLaMA2-7B/70B、InternLM-20B、Qwen-72B，TP1/2/4；泛化依赖共同 transformer operators 与 declarative model spec。论文没有验证 MoE、稀疏 attention、量化、speculative decoding 或不同 vendor NPU。
 
-定位：PDF 8，§7.1；PDF 4–5，§4.1–§4.3。
+定位：PDF 8，§7.1；PDF 4–5，§4.1–§4.3。 〔[原文截图 E014](#evidence-e014)〕
 
 ### 6.4 跨 workload
 
 Vidur-Bench 使用 Chat-1M、Arxiv-Summarization、Bilingual-Web-Book 及 4K 截断版本。它们的 prompt/decode 比、长度方差差异很大；最优配置会随 trace 变化，同一 LLaMA2-70B 迁错配置可产生 2× 成本开销。
 
-定位：PDF 6，表 1；PDF 8–10，§7.1 `Workloads`、§7.3、图 1/5/6。
+定位：PDF 6，表 1；PDF 8–10，§7.1 `Workloads`、§7.3、图 1/5/6。 〔[原文截图 E015](#evidence-e015)〕
 
 ## 7. 误差定义与实验结果
 
@@ -184,7 +187,7 @@ Vidur-Bench 使用 Chat-1M、Arxiv-Summarization、Bilingual-Web-Book 及 4K 截
 
 静态 workload：比较 normalized request execution latency，排除 scheduling delay，避免离线队列等待淹没执行误差；动态 workload：normalized E2E latency = request E2E latency / output length，并比较 median/P95。系统还输出 TTFT、TBT、batch、busy/idle、MFU、memory/KV utilization。
 
-定位：PDF 6–7，§5.2；PDF 9，§7.2 `Evaluation Metric` 段。
+定位：PDF 6–7，§5.2；PDF 9，§7.2 `Evaluation Metric` 段。 〔[原文截图 E016](#evidence-e016)〕
 
 ### 7.2 关键结果
 
@@ -195,13 +198,13 @@ Vidur-Bench 使用 Chat-1M、Arxiv-Summarization、Bilingual-Web-Book 及 4K 截
 - 摘要中的代表案例：LLaMA2-70B 找最优配置约 1 小时 CPU，而真机探索需约 42K GPU-hours、约 218K 美元。
 - SLO sensitivity：LLaMA2-70B Chat-1M 的 TBT SLO 从 0.12s 放宽到 0.14s，成本可约降 1.85×。
 
-定位：PDF 1 Abstract；PDF 8–9，图 3/4 与 §7.2；PDF 9–10，§7.3 与图 5/6；PDF 15，附录 A.1/A.2、表 2。
+定位：PDF 1 Abstract；PDF 8–9，图 3/4 与 §7.2；PDF 9–10，§7.3 与图 5/6；PDF 15，附录 A.1/A.2、表 2。 〔[原文截图 E017](#evidence-e017)〕
 
 ### 7.3 误差解释边界
 
 作者明确指出接近 capacity tipping point 时微小 operator/runtime 误差会通过 batching/queue 放大；7B 的 CPU overhead 是主要误差源之一。这与本项目 V0.6“观测时间不能简单当固有算子时间”一致：runtime table 误差只是系统误差的一部分，scheduler 和 host overhead 也必须建模。
 
-定位：PDF 9，§7.2 `Dynamic Workloads` 第 2–3 段；PDF 15，附录 A.1。
+定位：PDF 9，§7.2 `Dynamic Workloads` 第 2–3 段；PDF 15，附录 A.1。 〔[原文截图 E018](#evidence-e018)〕
 
 ## 8. 实现、开源与成熟度
 
@@ -211,7 +214,7 @@ Vidur-Bench 使用 Chat-1M、Arxiv-Summarization、Bilingual-Web-Book 及 4K 截
 
 **成熟度判断：研究系统（中高）。** 代码、预置数据、文档、真实 serving trace 和搜索闭环齐全，明显强于只给算法的 predictor；但不是任意模型/任意硬件开箱即用，模型与 SKU onboarding、runtime table质量、scheduler 语义对齐仍是主要工程成本。
 
-定位：PDF 1 Abstract、PDF 8 §7.1；GitHub README。
+定位：PDF 1 Abstract、PDF 8 §7.1；GitHub README。 〔[原文截图 E019](#evidence-e019)〕
 
 ## 9. 优点、缺点与适用边界
 
@@ -275,3 +278,278 @@ communication:
 ## 11. 最终评价
 
 Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文：它不仅说明怎样建表，还展示了 cost model 如何嵌入 scheduler、KV capacity、请求排队和 configuration search。对本项目最重要的保留项是 operator triaging 与事件驱动组合；最需要补齐的是 value/state/physical binding 与跨-rank因果。若直接把 Vidur 的 `total tokens / total KV reads / message bytes` 当通用特征，会在 MoE、稀疏 attention、复杂 KV allocator 和昇腾 graph/tiling 上失真。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 15 行 - PDF p.1, 2, 4, 5, 6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1–2，Abstract、§1 第 7–12 段；PDF 4–6，§4.1–§4.5、图 2。</code></p>
+
+![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p001.png)
+
+![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p002.png)
+
+![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p004.png)
+
+![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p005.png)
+
+![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 23 行 - PDF p.1, 2, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1–3，§1 第 2–6 段、图 1；§2.3 第 1–3 段。</code></p>
+
+![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p001.png)
+
+![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p002.png)
+
+![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p003.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 33 行 - PDF p.4</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 4，§3 的 `Time Scale`、`Varying Iteration Times`、`Cascading Errors` 三段。</code></p>
+
+![E003 - PDF p.4](../evidence_pages/vidur/p004.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 45 行 - PDF p.4, 6, 7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 4，图 2 与 §4.2；PDF 6–7，§5.2、§6。</code></p>
+
+![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p004.png)
+
+![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p006.png)
+
+![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p007.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 59 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5，§4.3 `Operator Triaging` 段与三项列表。</code></p>
+
+![E005 - PDF p.5](../evidence_pages/vidur/p005.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 67 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5，§4.3 `Profiling Token-level Operators` 第 1 段。</code></p>
+
+![E006 - PDF p.5](../evidence_pages/vidur/p005.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 77 行 - PDF p.5, 6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5–6，§4.3 `Profiling Sequence-level Operators` 两段，公式文字从 `Σ p_i²` 到 `total KV-Cache reads`。</code></p>
+
+![E007 - PDF p.5, 6](../evidence_pages/vidur/p005.png)
+
+![E007 - PDF p.5, 6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 85 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6，§4.3 `Profiling Communication Operators` 段。</code></p>
+
+![E008 - PDF p.6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 120 行 - PDF p.5, 6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5–6，§4.4 全部两段；PDF 5，§4.2 第 1 段（`produces operation-wise runtime lookup tables`）。</code></p>
+
+![E009 - PDF p.5, 6](../evidence_pages/vidur/p005.png)
+
+![E009 - PDF p.5, 6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 140 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6，§4.5 第 1–3 段。</code></p>
+
+![E010 - PDF p.6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 154 行 - PDF p.5, 6, 7, 8, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5–7，§4.3–§5.2；PDF 8–9，§7.1–§7.2。</code></p>
+
+![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p005.png)
+
+![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p006.png)
+
+![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p007.png)
+
+![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p008.png)
+
+![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p009.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 162 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 4–5，§4.1 `Automatic Profiling for Parallelism Strategies`、§4.2、图 2。</code></p>
+
+![E012 - PDF p.4, 5](../evidence_pages/vidur/p004.png)
+
+![E012 - PDF p.4, 5](../evidence_pages/vidur/p005.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 170 行 - PDF p.2, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8，§7.1 `Models and Environment`；PDF 2，§1 对 Vidur 的描述。</code></p>
+
+![E013 - PDF p.2, 8](../evidence_pages/vidur/p002.png)
+
+![E013 - PDF p.2, 8](../evidence_pages/vidur/p008.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 176 行 - PDF p.4, 5, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8，§7.1；PDF 4–5，§4.1–§4.3。</code></p>
+
+![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p004.png)
+
+![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p005.png)
+
+![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p008.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 182 行 - PDF p.6, 8, 9, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6，表 1；PDF 8–10，§7.1 `Workloads`、§7.3、图 1/5/6。</code></p>
+
+![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p006.png)
+
+![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p008.png)
+
+![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p009.png)
+
+![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p010.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 190 行 - PDF p.6, 7, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6–7，§5.2；PDF 9，§7.2 `Evaluation Metric` 段。</code></p>
+
+![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p006.png)
+
+![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p007.png)
+
+![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p009.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 201 行 - PDF p.1, 8, 9, 10, 15</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 Abstract；PDF 8–9，图 3/4 与 §7.2；PDF 9–10，§7.3 与图 5/6；PDF 15，附录 A.1/A.2、表 2。</code></p>
+
+![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p001.png)
+
+![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p008.png)
+
+![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p009.png)
+
+![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p010.png)
+
+![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p015.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 207 行 - PDF p.9, 15</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 9，§7.2 `Dynamic Workloads` 第 2–3 段；PDF 15，附录 A.1。</code></p>
+
+![E018 - PDF p.9, 15](../evidence_pages/vidur/p009.png)
+
+![E018 - PDF p.9, 15](../evidence_pages/vidur/p015.png)
+
+</details>
+
+<a id="evidence-e019"></a>
+
+<details>
+<summary><strong>E019</strong> - 原笔记第 217 行 - PDF p.1, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 Abstract、PDF 8 §7.1；GitHub README。</code></p>
+
+![E019 - PDF p.1, 8](../evidence_pages/vidur/p001.png)
+
+![E019 - PDF p.1, 8](../evidence_pages/vidur/p008.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

@@ -1,5 +1,8 @@
 # NeuSight：以 tile/波次和物理上界约束的跨 GPU 性能预测
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 > 论文：Seonho Lee, Amar Phanishayee, Divya Mahajan, **Forecasting GPU Performance for Deep Learning Training and Inference**, ASPLOS 2025, pp. 493–508。框架名 **NeuSight**。  
 > 原文：[arXiv PDF（2407.13853v3）](https://arxiv.org/pdf/2407.13853)；[arXiv 页面](https://arxiv.org/abs/2407.13853)；[ACM DOI](https://doi.org/10.1145/3669940.3707265)；[开源仓库（已迁移到 scai-tech）](https://github.com/scai-tech/NeuSight)。  
 > 名称核对：用户所称“GPU Forecasting”不是正式论文题名；arXiv 搜索结果有时显示早期元数据 `Data-driven Forecasting of Deep Learning Performance on GPUs`，正式 ASPLOS’25 题名如上。PDF 标 `arXiv:2407.13853v3, 12 Dec 2024`。  
@@ -11,7 +14,7 @@ NeuSight 不让 MLP 直接回归整个 kernel latency，而是把 kernel 分成�
 
 它属于“profiling → ML+解析约束 → 查 tile 表 → 图级组合”，核心目标是**新模型/新 shape 在不可访问的新 GPU 上的 forecasting**，不是 replay 原 trace。
 
-定位：PDF 1–2，Abstract 与 §1 第 5–9 段；PDF 5–8，§4、图 3–6、Eq. (1)–(8)。
+定位：PDF 1–2，Abstract 与 §1 第 5–9 段；PDF 5–8，§4、图 3–6、Eq. (1)–(8)。 〔[原文截图 E001](#evidence-e001)〕
 
 ## 2. 问题、输入与输出
 
@@ -19,7 +22,7 @@ NeuSight 不让 MLP 直接回归整个 kernel latency，而是把 kernel 分成�
 
 新 GPU 贵且难获得，而 kernel latency 受 SM、cache、HBM、warp/tiling 和 cuDNN/CUTLASS 实现共同影响。cycle-accurate simulator 对每代 GPU 维护成本高且很慢；纯 roofline 太粗；直接 latency 的线性回归/MLP 对训练分布外的新 shape/GPU 泛化差。NeuSight 要在不执行“目标模型×目标 GPU”的情况下，预测训练与推理性能。
 
-定位：PDF 2，§1 第 1–8 段；PDF 3–4，§3.1–§3.3、图 2。
+定位：PDF 2，§1 第 1–8 段；PDF 3–4，§3.1–§3.3、图 2。 〔[原文截图 E002](#evidence-e002)〕
 
 ### 2.2 输入
 
@@ -28,7 +31,7 @@ NeuSight 不让 MLP 直接回归整个 kernel latency，而是把 kernel 分成�
 3. 分布式可选输入：DP width、PP depth/schedule、Megatron tensor-model-parallel width、目标 network link bandwidth。
 4. 离线训练资产：operation latency 数据、kernel name、thread-block 数、推断的 tile size、GPU features、预训练五类 MLP。
 
-定位：PDF 5，§4 第 1 段；PDF 7–9，图 6、§5、§6.1；artifact appendix PDF 14；仓库 README `Tool Inputs`。
+定位：PDF 5，§4 第 1 段；PDF 7–9，图 6、§5、§6.1；artifact appendix PDF 14；仓库 README `Tool Inputs`。 〔[原文截图 E003](#evidence-e003)〕
 
 ### 2.3 输出
 
@@ -40,7 +43,7 @@ NeuSight 不让 MLP 直接回归整个 kernel latency，而是把 kernel 分成�
 
 论文的文本生成 inference 指标是 first-token latency，不是在线 serving 的 TTFT（包含排队）或连续 decode TPOT/TBT。
 
-定位：PDF 8，§5；PDF 9，§6.1 `DNN workloads evaluated`；PDF 10–13，§6.2–§6.3。
+定位：PDF 8，§5；PDF 9，§6.1 `DNN workloads evaluated`；PDF 10–13，§6.2–§6.3。 〔[原文截图 E004](#evidence-e004)〕
 
 ## 3. Profiling 数据与查表 schema
 
@@ -58,13 +61,13 @@ NeuSight 不让 MLP 直接回归整个 kernel latency，而是把 kernel 分成�
 
 每个 operation 跑 25 次取平均；输入 tensor 正态随机；主体数据全为 FP32。NVIDIA 侧 PyTorch 2.1/CUDA 12.1，AMD 侧 PyTorch 2.4.1/ROCm 6.1；20% 留作 validation。
 
-定位：PDF 9–10，§6.1 `Generating the training dataset` 及列表。
+定位：PDF 9–10，§6.1 `Generating the training dataset` 及列表。 〔[原文截图 E005](#evidence-e005)〕
 
 ### 3.2 GPU 训练/测试划分
 
 论文表 4 给出 P4、P100、V100、T4、A100-40GB、A100-80GB、L4、H100，以及 AMD MI100/MI210/MI250。NVIDIA 的 OOD 测试包括 A100-80GB、L4、H100；A100-40GB 在训练集而 80GB 版进入测试。AMD 用 MI100/MI210 训练、MI250 测试。
 
-定位：PDF 9，§6.1 `Hardware`、表 4。
+定位：PDF 9，§6.1 `Hardware`、表 4。 〔[原文截图 E006](#evidence-e006)〕
 
 ### 3.3 Tile database
 
@@ -79,7 +82,7 @@ tile_sizes
 
 预测时按 kernel name、input dimensions 和 GPU features 找“closest match”估计 tile size。因此 NeuSight 不是完全无查表：MLP 预测利用率，但 tile regime 由 nearest-neighbor database 提供。
 
-定位：PDF 10，§6.1 `Tile size` 段（定位词 `closest match in the database`）；PDF 8，图 6 的 `NeuSight Tile Database`。
+定位：PDF 10，§6.1 `Tile size` 段（定位词 `closest match in the database`）；PDF 8，图 6 的 `NeuSight Tile Database`。 〔[原文截图 E007](#evidence-e007)〕
 
 论文没有披露 closest-distance 公式、类别特征编码、同距处理、库未命中/OOD 拒绝和 tile table 的覆盖诊断。这是复现和跨 NPU 迁移的关键缺口。
 
@@ -112,7 +115,7 @@ PredictorFeatures:
 
 最后五项来自表 3；原表 PDF 排版把分子/分母拆成多行，语义分别是 per-SM 归一化的 compute、memory、L2/容量压力与 roofline 比。
 
-定位：PDF 7–8，§4.3 最后两段、表 3、图 6。
+定位：PDF 7–8，§4.3 最后两段、表 3、图 6。 〔[原文截图 E008](#evidence-e008)〕
 
 ## 4. 预测方法
 
@@ -128,7 +131,7 @@ PerOpLatency = PerTileLatency × num_waves             Eq. (4)
 
 这里假定每个 SM 一次执行一个 tile，wave 顺序执行；同一 wave 内并行和线程 stall hiding 被后面的 utilization 模型吸收。
 
-定位：PDF 6–7，§4.2 `Tile-granularity prediction`、Eq. (2)–(4)、图 4。
+定位：PDF 6–7，§4.2 `Tile-granularity prediction`、Eq. (2)–(4)、图 4。 〔[原文截图 E009](#evidence-e009)〕
 
 ### 4.2 Roofline 物理边界
 
@@ -141,7 +144,7 @@ achievedBW = rooflineBW × utilization                 Eq. (6)
 
 这样模型不能宣称超过目标 GPU 的峰值 compute/memory bound。
 
-定位：PDF 6，§4.1 `Fundamental performance laws`、Eq. (1)；PDF 7，§4.2 Eq. (5)–(6)。
+定位：PDF 6，§4.1 `Fundamental performance laws`、Eq. (1)；PDF 7，§4.2 Eq. (5)–(6)。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 4.3 MLP 不预测 latency，只预测利用率曲线
 
@@ -154,19 +157,19 @@ alpha, beta = sigmoid(MLP(features))                   Eq. (8)
 
 即 wave 增多时利用率上升、渐近 `alpha`，并受物理上限约束。五个独立 MLP 对应 BMM、FC、element-wise、softmax、layernorm；每个 8 hidden layers×512 ReLU。未知 operator 默认 memory-bound，latency=`memory requirement / memory bandwidth`。
 
-定位：PDF 7，§4.2 `Imposing performance laws`、Eq. (7)–(8)；§4.3 第 1–4 段。
+定位：PDF 7，§4.2 `Imposing performance laws`、Eq. (7)–(8)；§4.3 第 1–4 段。 〔[原文截图 E011](#evidence-e011)〕
 
 ### 4.4 训练设置与误差函数
 
 MLP 用 AdamW+L2，100 epoch，batch 16–128，各 predictor LR 在 `1e-6`–`5e-3`；NeuSight loss 是 symmetric MAPE，基线 Habitat 用 MAPE。正文没有给出每类 predictor 的精确 LR、hidden dropout、early stop 或 alpha/beta label 构造细节。
 
-定位：PDF 10，§6.1 `Training the NeuSight predictor`。
+定位：PDF 10，§6.1 `Training the NeuSight predictor`。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 4.5 Operator fusion
 
 连续 vector kernel fusion：累加 FLOPs，但删除中间结果的 memory traffic，用第一个 op 的 tile metadata 和相应 predictor；GEMM+activation 则用 BMM/FC predictor并修正 compute/memory count。它建模的是已知 fusion pattern 的合成 ABI，不是自动预测编译器会不会 fusion。
 
-定位：PDF 8，§4.4 全部两段。
+定位：PDF 8，§4.4 全部两段。 〔[原文截图 E013](#evidence-e013)〕
 
 ## 5. 模型级与分布式组合
 
@@ -174,7 +177,7 @@ MLP 用 AdamW+L2，100 epoch，batch 16–128，各 predictor LR 在 `1e-6`–`5
 
 Torch.fx 提取 graph，给每个 kernel 标注 op type、tensor dimensions、tile 预测；论文假定主流 framework 中 kernel 在一个 GPU 上顺序执行，因此 per-device latency 是各 kernel latency 之和。
 
-定位：PDF 8，§5 第 1–2 段、图 6；PDF 3，§2.2 `Per-device execution`。
+定位：PDF 8，§5 第 1–2 段、图 6；PDF 3，§2.2 `Per-device execution`。 〔[原文截图 E014](#evidence-e014)〕
 
 这忽略多 stream overlap、CUDA graph launch/host overhead、异步 copy 与动态 scheduler；小模型在 H100 上误差较高，作者归因于 library overhead。
 
@@ -182,7 +185,7 @@ Torch.fx 提取 graph，给每个 kernel 标注 op type、tensor dimensions、ti
 
 NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPipe bubble；DP/TMP 的 ring all-reduce。网络 latency 通过现有机器实测 link utilization，再结合目标 peak link bandwidth缩放。论文版支持单 server NVLink/DGX、GPipe schedule、Megatron TMP，并把计算预测和 network operator 求和。
 
-定位：PDF 8–9，§5.1 全部四段。
+定位：PDF 8–9，§5.1 全部四段。 〔[原文截图 E015](#evidence-e015)〕
 
 ### 5.3 计算通信重叠与排队
 
@@ -194,7 +197,7 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 | 在线 serving queue | 不支持；输入是模型图与 batch，不模拟请求到达/scheduler/KV allocator |
 | 多节点 | 可接 ASTRA-Sim/ns-3；论文给解析外推示例，但无大集群实测验证 |
 
-定位：PDF 8–9，§5；PDF 13，§6.3 `Multi-node distributed execution`。
+定位：PDF 8–9，§5；PDF 13，§6.3 `Multi-node distributed execution`。 〔[原文截图 E016](#evidence-e016)〕
 
 ## 6. 冷启动与泛化
 
@@ -202,20 +205,20 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 
 新模型只要可由支持的五类 op 图覆盖，输入维度可超出训练范围：GPT3-2.7B 的某 BMM 维为 2048，而训练最大 1024，被定义为 OOD model。泛化来自 tile/波次分解与上界，不是模型级 embedding。
 
-定位：PDF 10，§6.2 第 1 段；表 5。
+定位：PDF 10，§6.2 第 1 段；表 5。 〔[原文截图 E017](#evidence-e017)〕
 
 ### 6.2 新 GPU
 
 不需在目标 GPU 上跑目标模型，但需要公开 GPU 规格和一个 tile-size estimate。论文声称 memory/L2/peak 信息通常在新品发布附近公开；H100/L4/A100-80GB 被作为 OOD GPU。
 
-定位：PDF 7，§4.3 `GPU features` 段；PDF 10，§6.2。
+定位：PDF 7，§4.3 `GPU features` 段；PDF 10，§6.2。 〔[原文截图 E018](#evidence-e018)〕
 
 ### 6.3 新 vendor / 新数值类型
 
 - AMD：MI100/MI210 训练、MI250 测试，平均 inference 误差 8.8%、training 15.7%。
 - FP16 Tensor Core：通过调整 memory requirement 与 peak FLOPS 输入，不用 FP32 规格；H100 BMM 平均误差 13%。
 
-定位：PDF 11–12，§6.2 `GPU across vendors`、`New numerical type and hardware unit`、图 9/10。
+定位：PDF 11–12，§6.2 `GPU across vendors`、`New numerical type and hardware unit`、图 9/10。 〔[原文截图 E019](#evidence-e019)〕
 
 需要强调：主体训练数据是 FP32。FP16 只做 BMM/Tensor Core 特例，不等于全面支持 mixed precision 图、quantization、routing 数值漂移。
 
@@ -225,7 +228,7 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 
 正文把“percentage error”定义为相对实测 latency 的 MAPE；NeuSight 训练 loss 为 sMAPE。正文主要报平均与少量最大误差，没有置信区间或预测不确定度。
 
-定位：PDF 2，§1 最后一段；PDF 10，§6.1 training 段。
+定位：PDF 2，§1 最后一段；PDF 10，§6.1 training 段。 〔[原文截图 E020](#evidence-e020)〕
 
 ### 7.2 单卡结果
 
@@ -235,7 +238,7 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 - GPT3 on H100 的训练+推理摘要：NeuSight 2.3%，对比 prior 121.4% 与 30.8%。
 - fusion：BERT-Large/GPT2-Large 跨 L4/A100/H100 的 fused model 平均 15.7%。
 
-定位：PDF 1 Abstract；PDF 10–12，§6.2、图 7/8、表 6/7。
+定位：PDF 1 Abstract；PDF 10–12，§6.2、图 7/8、表 6/7。 〔[原文截图 E021](#evidence-e021)〕
 
 ### 7.3 分布式结果
 
@@ -243,7 +246,7 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 
 多节点 GPT-3 从 1 到 3840 nodes 只给预测，论文明确因资源限制未真机验证。
 
-定位：PDF 2 §1 最后一段；PDF 12–13，§6.3、表 8/9。
+定位：PDF 2 §1 最后一段；PDF 12–13，§6.3、表 8/9。 〔[原文截图 E022](#evidence-e022)〕
 
 ## 8. 实现、开源与落地成熟度
 
@@ -253,7 +256,7 @@ NeuSight 按用户提供的 parallelism 往图中插：PP 的 send/recv 和 GPip
 
 **成熟度判断：可复现实验原型（中）。** artifact 完整度是四篇中最高之一，适合拿来建立第一版 cost-model pipeline；但代码覆盖的是论文定义的 op 集/模型图和规格文件，在线 serving、现代 fused attention/MoE、动态图与大规模通信需要重新工程化。
 
-定位：PDF 13–14，Conclusion、Artifact Appendix A.1–A.6；GitHub README。
+定位：PDF 13–14，Conclusion、Artifact Appendix A.1–A.6；GitHub README。 〔[原文截图 E023](#evidence-e023)〕
 
 ## 9. 优点、缺点与边界
 
@@ -309,3 +312,332 @@ CUDA 的 SM/thread block/tile、kernel-name metadata 与 CUTLASS 规律不能直
 ## 11. 最终评价
 
 NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与其让黑盒模型记忆 latency，不如学习物理上限下的利用率，并显式建模并行波次。但其精度仍依赖目标 stack 的 tile/implementation schema。对昇腾录制回放，应该移植“分解问题+物理约束+OOD 检测”的思想，而不是移植 CUDA 方程和 kernel-name 最近邻本身。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 17 行 - PDF p.1, 2, 5, 6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1–2，Abstract 与 §1 第 5–9 段；PDF 5–8，§4、图 3–6、Eq. (1)–(8)。</code></p>
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p001.png)
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p002.png)
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p005.png)
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p006.png)
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p007.png)
+
+![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p008.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 25 行 - PDF p.2, 3, 4</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，§1 第 1–8 段；PDF 3–4，§3.1–§3.3、图 2。</code></p>
+
+![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p002.png)
+
+![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p003.png)
+
+![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p004.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 34 行 - PDF p.5, 7, 8, 9, 14</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 5，§4 第 1 段；PDF 7–9，图 6、§5、§6.1；artifact appendix PDF 14；仓库 README `Tool Inputs`。</code></p>
+
+![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p005.png)
+
+![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p007.png)
+
+![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p008.png)
+
+![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p009.png)
+
+![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p014.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 46 行 - PDF p.8, 9, 10, 11, 12, 13</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8，§5；PDF 9，§6.1 `DNN workloads evaluated`；PDF 10–13，§6.2–§6.3。</code></p>
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p008.png)
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p009.png)
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p010.png)
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p011.png)
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p012.png)
+
+![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p013.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 64 行 - PDF p.9, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 9–10，§6.1 `Generating the training dataset` 及列表。</code></p>
+
+![E005 - PDF p.9, 10](../evidence_pages/neusight/p009.png)
+
+![E005 - PDF p.9, 10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 70 行 - PDF p.9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 9，§6.1 `Hardware`、表 4。</code></p>
+
+![E006 - PDF p.9](../evidence_pages/neusight/p009.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 85 行 - PDF p.8, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 10，§6.1 `Tile size` 段（定位词 `closest match in the database`）；PDF 8，图 6 的 `NeuSight Tile Database`。</code></p>
+
+![E007 - PDF p.8, 10](../evidence_pages/neusight/p008.png)
+
+![E007 - PDF p.8, 10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 118 行 - PDF p.7, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 7–8，§4.3 最后两段、表 3、图 6。</code></p>
+
+![E008 - PDF p.7, 8](../evidence_pages/neusight/p007.png)
+
+![E008 - PDF p.7, 8](../evidence_pages/neusight/p008.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 134 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6–7，§4.2 `Tile-granularity prediction`、Eq. (2)–(4)、图 4。</code></p>
+
+![E009 - PDF p.6, 7](../evidence_pages/neusight/p006.png)
+
+![E009 - PDF p.6, 7](../evidence_pages/neusight/p007.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 147 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 6，§4.1 `Fundamental performance laws`、Eq. (1)；PDF 7，§4.2 Eq. (5)–(6)。</code></p>
+
+![E010 - PDF p.6, 7](../evidence_pages/neusight/p006.png)
+
+![E010 - PDF p.6, 7](../evidence_pages/neusight/p007.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 160 行 - PDF p.7</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 7，§4.2 `Imposing performance laws`、Eq. (7)–(8)；§4.3 第 1–4 段。</code></p>
+
+![E011 - PDF p.7](../evidence_pages/neusight/p007.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 166 行 - PDF p.10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 10，§6.1 `Training the NeuSight predictor`。</code></p>
+
+![E012 - PDF p.10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 172 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8，§4.4 全部两段。</code></p>
+
+![E013 - PDF p.8](../evidence_pages/neusight/p008.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 180 行 - PDF p.3, 8</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8，§5 第 1–2 段、图 6；PDF 3，§2.2 `Per-device execution`。</code></p>
+
+![E014 - PDF p.3, 8](../evidence_pages/neusight/p003.png)
+
+![E014 - PDF p.3, 8](../evidence_pages/neusight/p008.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 188 行 - PDF p.8, 9</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8–9，§5.1 全部四段。</code></p>
+
+![E015 - PDF p.8, 9](../evidence_pages/neusight/p008.png)
+
+![E015 - PDF p.8, 9](../evidence_pages/neusight/p009.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 200 行 - PDF p.8, 9, 13</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 8–9，§5；PDF 13，§6.3 `Multi-node distributed execution`。</code></p>
+
+![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p008.png)
+
+![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p009.png)
+
+![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p013.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 208 行 - PDF p.10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 10，§6.2 第 1 段；表 5。</code></p>
+
+![E017 - PDF p.10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 214 行 - PDF p.7, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 7，§4.3 `GPU features` 段；PDF 10，§6.2。</code></p>
+
+![E018 - PDF p.7, 10](../evidence_pages/neusight/p007.png)
+
+![E018 - PDF p.7, 10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e019"></a>
+
+<details>
+<summary><strong>E019</strong> - 原笔记第 221 行 - PDF p.11, 12</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 11–12，§6.2 `GPU across vendors`、`New numerical type and hardware unit`、图 9/10。</code></p>
+
+![E019 - PDF p.11, 12](../evidence_pages/neusight/p011.png)
+
+![E019 - PDF p.11, 12](../evidence_pages/neusight/p012.png)
+
+</details>
+
+<a id="evidence-e020"></a>
+
+<details>
+<summary><strong>E020</strong> - 原笔记第 231 行 - PDF p.2, 10</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，§1 最后一段；PDF 10，§6.1 training 段。</code></p>
+
+![E020 - PDF p.2, 10](../evidence_pages/neusight/p002.png)
+
+![E020 - PDF p.2, 10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="evidence-e021"></a>
+
+<details>
+<summary><strong>E021</strong> - 原笔记第 241 行 - PDF p.1, 10, 11, 12</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 Abstract；PDF 10–12，§6.2、图 7/8、表 6/7。</code></p>
+
+![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p001.png)
+
+![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p010.png)
+
+![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p011.png)
+
+![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p012.png)
+
+</details>
+
+<a id="evidence-e022"></a>
+
+<details>
+<summary><strong>E022</strong> - 原笔记第 249 行 - PDF p.2, 12, 13</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2 §1 最后一段；PDF 12–13，§6.3、表 8/9。</code></p>
+
+![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p002.png)
+
+![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p012.png)
+
+![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p013.png)
+
+</details>
+
+<a id="evidence-e023"></a>
+
+<details>
+<summary><strong>E023</strong> - 原笔记第 259 行 - PDF p.13, 14</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 13–14，Conclusion、Artifact Appendix A.1–A.6；GitHub README。</code></p>
+
+![E023 - PDF p.13, 14](../evidence_pages/neusight/p013.png)
+
+![E023 - PDF p.13, 14](../evidence_pages/neusight/p014.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

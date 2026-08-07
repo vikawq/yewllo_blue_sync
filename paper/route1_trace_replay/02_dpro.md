@@ -1,5 +1,8 @@
 # dPRO：跨 worker 全局数据流图、细粒度通信与自动优化
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 ## 0. 文献与证据口径
 
 - 论文：Hao Hu et al., **dPRO: A Generic Performance Diagnosis and Optimization Toolkit for Expediting Distributed DNN Training**，MLSys 2022。
@@ -16,7 +19,7 @@
 
 dPRO 从 TensorFlow/MXNet 与通信库采集跨 worker 的计算和细粒度通信 trace，利用事务 ID 与时钟对齐构造全局 data-flow graph（DFG），再通过资源队列回放、关键路径分析和图优化 pass 自动搜索 op fusion、tensor fusion/partition 等优化。相较 Daydream，它的核心推进是把“单机 kernel DAG”扩展为“跨 worker 的全局算子—通信因果图”。
 
-证据：摘要、§1，PDF pp.1–2；系统框架见 Figure 3、§3，PDF p.4。
+证据：摘要、§1，PDF pp.1–2；系统框架见 Figure 3、§3，PDF p.4。 〔[原文截图 E001](#evidence-e001)〕
 
 ## 2. 要解决的问题
 
@@ -24,20 +27,20 @@ dPRO 从 TensorFlow/MXNet 与通信库采集跨 worker 的计算和细粒度通�
 
 现有 profiler 往往只展示单 worker 或粗粒度通信时间，用户还要人工判断瓶颈、实现优化、再实测。dPRO 希望提供从 profiling、全局回放、关键路径诊断到自动搜索优化方案的一体化工具。
 
-证据：§1，PDF pp.1–2；§3，PDF p.4。
+证据：§1，PDF pp.1–2；§3，PDF p.4。 〔[原文截图 E002](#evidence-e002)〕
 
 ### 2.2 为什么必须构造全局 DFG
 
 分布式训练中的真实关键路径跨越：计算 op、梯度就绪、通信排队、发送/接收、另一 worker 上的后续计算。将 all-reduce 或 push/pull 当一个黑盒持续时间，会把“等待进入通信队列”和“实际传输”混在一起，也无法正确变换 tensor fusion、partition、调度顺序。
 
-证据：§2.2，PDF pp.2–3，特别是 coarse-grained communication profiling 的讨论与对 Daydream 偏差的动机分析。
+证据：§2.2，PDF pp.2–3，特别是 coarse-grained communication profiling 的讨论与对 Daydream 偏差的动机分析。 〔[原文截图 E003](#evidence-e003)〕
 
 ### 2.3 两个跨机难点
 
 1. 各机器时钟存在毫秒或亚毫秒偏移，直接拼 trace 会产生接收早于发送等不可能时间线。
 2. profiler 通常看到的是接收 API/回调何时被调度，不一定是数据在网络中真实到达的时刻；必须借助通信语义匹配事务。
 
-证据：§2.2 和 §4.2，PDF pp.3、5。
+证据：§2.2 和 §4.2，PDF pp.3、5。 〔[原文截图 E004](#evidence-e004)〕
 
 ## 3. 系统组成
 
@@ -47,7 +50,7 @@ dPRO 由三部分组成：
 - **Replayer**：构造全局 DFG，执行时间对齐、回放和关键路径分析；
 - **Optimizer**：以 pass registry 对 DFG 做融合、切分、调度和内存相关变换，并借助局部回放评估候选。
 
-证据：§3、Figure 3，PDF p.4。
+证据：§3、Figure 3，PDF p.4。 〔[原文截图 E005](#evidence-e005)〕
 
 ## 4. Trace、图和跨 rank 因果
 
@@ -58,7 +61,7 @@ dPRO 由三部分组成：
 - 本地框架图为每个张量插入 `In`/`Out` 虚拟节点，明确 producer/consumer 边界。
 - 通信库 trace 记录 tensor/chunk、方向、对端和 step 等标识，以匹配跨 worker 的同一事务。
 
-证据：§4.1 “Global DFG Construction”，PDF pp.4–5。
+证据：§4.1 “Global DFG Construction”，PDF pp.4–5。 〔[原文截图 E006](#evidence-e006)〕
 
 ### 4.2 通信事务 ID 与 Middleman
 
@@ -69,7 +72,7 @@ dPRO 由三部分组成：
 
 这比“通信 op 名称 + duration”强得多，因为它显式保留了消息身份和跨 rank 因果。
 
-证据：§4.1、Figure 4，PDF pp.4–5。
+证据：§4.1、Figure 4，PDF pp.4–5。 〔[原文截图 E007](#evidence-e007)〕
 
 ### 4.3 全局时钟对齐
 
@@ -80,7 +83,7 @@ dPRO 为每个物理节点求一个时钟偏移量 `θ`。优化目标利用两�
 
 同时加入依赖顺序约束，保证校正后的前驱仍早于后继。该约束优化由 CVXPY 求解，论文报告通常数秒完成。
 
-证据：§4.2 “Time Alignment”，PDF p.5，公式与约束位于该小节。
+证据：§4.2 “Time Alignment”，PDF p.5，公式与约束位于该小节。 〔[原文截图 E008](#evidence-e008)〕
 
 本文归纳：这一步得到的是对一次历史观测最自洽的全局时间基准；它并没有自动生成拓扑变化后新的 rank 到达过程，后者仍需图变换和时长模型。
 
@@ -96,13 +99,13 @@ dPRO 使用修改后的 Kahn 拓扑算法：
 - 节点持续时间取多次观测均值，论文实验默认用 warm-up 后 10 个 iteration；
 - 全部设备完成后的最大时间作为一次迭代时间。
 
-证据：§4.3 “Distributed Training Replay”，PDF pp.5–6。
+证据：§4.3 “Distributed Training Replay”，PDF pp.5–6。 〔[原文截图 E009](#evidence-e009)〕
 
 ### 5.2 资源序边与关键路径
 
 原始数据依赖不足以表达共享资源 FIFO。回放会根据实际/模拟调度添加 resource-order edges，使最终 DFG 同时包含数据因果与资源序；随后从迭代终点逆向追踪关键路径。
 
-证据：§4.3，PDF pp.5–6。
+证据：§4.3，PDF pp.5–6。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 5.3 计算、通信、重叠和框架开销
 
@@ -111,7 +114,7 @@ dPRO 使用修改后的 Kahn 拓扑算法：
 - **重叠**：由跨 worker DFG 与不同 computation/communication devices 并行推进自然产生。
 - **框架开销**：取决于框架 graph 与 profiler 可见事件；Python/runtime 内部未建成 kernel 级完整执行图，因此 host 细节不如 Lumos。
 
-证据：§4.1–§4.3，PDF pp.4–6；优化候选时长来源见 §5，PDF pp.6–8。
+证据：§4.1–§4.3，PDF pp.4–6；优化候选时长来源见 §5，PDF pp.6–8。 〔[原文截图 E011](#evidence-e011)〕
 
 ## 6. 优化器与 what-if
 
@@ -123,7 +126,7 @@ dPRO 使用修改后的 Kahn 拓扑算法：
 - **Communication scheduling**：改变通信 task 顺序。
 - **Memory optimization**：论文框架包含相关 pass，并用模型估计峰值内存。
 
-证据：§5.1–§5.3，PDF pp.6–8。
+证据：§5.1–§5.3，PDF pp.6–8。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 6.2 避免组合爆炸
 
@@ -134,13 +137,13 @@ dPRO 不穷举所有变换组合，而是：
 - 用 **Partial Replay** 只回放变换影响的通信子图；
 - 利用 Transformer block 和 worker 间的 **symmetry**，只评估代表结构。
 
-证据：§5.2–§5.4、相关算法/图，PDF pp.6–8。
+证据：§5.2–§5.4、相关算法/图，PDF pp.6–8。 〔[原文截图 E013](#evidence-e013)〕
 
 ### 6.3 what-if 边界
 
 dPRO 擅长对现有图上的局部算子/通信变换做搜索；论文结论提到其思想可扩到 model/pipeline parallelism，但没有提供相应大规模实验。新模型结构、新 kernel、新网络拓扑仍需要额外 cost model 和新的跨 rank 图生成规则。
 
-证据：§7 Conclusion，PDF p.11；本文归纳基于实验覆盖范围。
+证据：§7 Conclusion，PDF p.11；本文归纳基于实验覆盖范围。 〔[原文截图 E014](#evidence-e014)〕
 
 ## 7. 实现、开源与成熟度
 
@@ -152,7 +155,7 @@ dPRO 擅长对现有图上的局部算子/通信变换做搜索；论文结论�
 - 修改/集成 XLA、Horovod、BytePS。
 - CLI 提供 `dpro profile`、`dpro replay`、`dpro optimize`；应用侧 wrapper 约需 2 行。
 
-证据：§6 “Implementation”，PDF p.8。
+证据：§6 “Implementation”，PDF p.8。 〔[原文截图 E015](#evidence-e015)〕
 
 ### 7.2 开源状态
 
@@ -170,7 +173,7 @@ dPRO 擅长对现有图上的局部算子/通信变换做搜索；论文结论�
 - TensorFlow/MXNet；Horovod/BytePS；TCP/RDMA。
 - 默认 16 GPU、每 GPU batch size 32；使用 warm-up 后 10 个 iteration 的均值。
 
-证据：§6.1，PDF p.8。
+证据：§6.1，PDF p.8。 〔[原文截图 E016](#evidence-e016)〕
 
 ### 8.2 回放准确性和采集开销
 
@@ -180,7 +183,7 @@ dPRO 擅长对现有图上的局部算子/通信变换做搜索；论文结论�
 - 峰值内存估计最大误差 5.25%。
 - 128 GPU 伸缩实验中 dPRO 多数仍低于 5%，最大约 5.6%；Daydream 最大约 73.8%。
 
-证据：§6.2、Figures 8–10，PDF pp.8–9；scale-out 结果见 §6.5，PDF p.10。
+证据：§6.2、Figures 8–10，PDF pp.8–9；scale-out 结果见 §6.5，PDF p.10。 〔[原文截图 E017](#evidence-e017)〕
 
 ### 8.3 优化收益与搜索成本
 
@@ -190,7 +193,7 @@ dPRO 擅长对现有图上的局部算子/通信变换做搜索；论文结论�
 - 组合优化相对 XLA 最高 62.95%，相对 Horovod/BytePS 最高 26.44%。
 - 128 GPU 上自动优化相对 XLA 最多达到 3.48×。
 
-证据：§6.3–§6.5、Table/Figures 对应 optimizer evaluation，PDF pp.9–11。
+证据：§6.3–§6.5、Table/Figures 对应 optimizer evaluation，PDF pp.9–11。 〔[原文截图 E018](#evidence-e018)〕
 
 注意：收益数字是特定旧版框架/通信栈的实测对比，不等同于算法在当前 Megatron/DeepSpeed 或 Ascend 上的预期收益。
 
@@ -261,3 +264,251 @@ dPRO 最适合作为本项目 **L3 跨 rank 因果图、通信身份、时钟对
 ## 13. 最终评价
 
 dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消息匹配、时钟对齐、资源队列和自动优化系统性连起来。其方法对当前录制回放最有价值的部分不是“<5%”这一结果，而是跨 rank 因果的身份化表达。不过它的计算粒度、框架版本和并行范式已经落后于现代 LLM；在 Ascend 场景中应提炼其事务 ID、分层建图和 partial replay，而不是直接复刻整套实现。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 22 行 - PDF p.1, 2, 4</summary>
+
+<p><strong>原定位：</strong> <code>证据：摘要、§1，PDF pp.1–2；系统框架见 Figure 3、§3，PDF p.4。</code></p>
+
+![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p001.png)
+
+![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p002.png)
+
+![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p004.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 30 行 - PDF p.1, 2, 4</summary>
+
+<p><strong>原定位：</strong> <code>证据：§1，PDF pp.1–2；§3，PDF p.4。</code></p>
+
+![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p001.png)
+
+![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p002.png)
+
+![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p004.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 36 行 - PDF p.2, 3</summary>
+
+<p><strong>原定位：</strong> <code>证据：§2.2，PDF pp.2–3，特别是 coarse-grained communication profiling 的讨论与对 Daydream 偏差的动机分析。</code></p>
+
+![E003 - PDF p.2, 3](../evidence_pages/dpro/p002.png)
+
+![E003 - PDF p.2, 3](../evidence_pages/dpro/p003.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 43 行 - PDF p.3</summary>
+
+<p><strong>原定位：</strong> <code>证据：§2.2 和 §4.2，PDF pp.3、5。</code></p>
+
+![E004 - PDF p.3](../evidence_pages/dpro/p003.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 53 行 - PDF p.4</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3、Figure 3，PDF p.4。</code></p>
+
+![E005 - PDF p.4](../evidence_pages/dpro/p004.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 64 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.1 “Global DFG Construction”，PDF pp.4–5。</code></p>
+
+![E006 - PDF p.4, 5](../evidence_pages/dpro/p004.png)
+
+![E006 - PDF p.4, 5](../evidence_pages/dpro/p005.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 75 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.1、Figure 4，PDF pp.4–5。</code></p>
+
+![E007 - PDF p.4, 5](../evidence_pages/dpro/p004.png)
+
+![E007 - PDF p.4, 5](../evidence_pages/dpro/p005.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 86 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.2 “Time Alignment”，PDF p.5，公式与约束位于该小节。</code></p>
+
+![E008 - PDF p.5](../evidence_pages/dpro/p005.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 102 行 - PDF p.5, 6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.3 “Distributed Training Replay”，PDF pp.5–6。</code></p>
+
+![E009 - PDF p.5, 6](../evidence_pages/dpro/p005.png)
+
+![E009 - PDF p.5, 6](../evidence_pages/dpro/p006.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 108 行 - PDF p.5, 6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.3，PDF pp.5–6。</code></p>
+
+![E010 - PDF p.5, 6](../evidence_pages/dpro/p005.png)
+
+![E010 - PDF p.5, 6](../evidence_pages/dpro/p006.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 117 行 - PDF p.4, 5, 6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.1–§4.3，PDF pp.4–6；优化候选时长来源见 §5，PDF pp.6–8。</code></p>
+
+![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p004.png)
+
+![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p005.png)
+
+![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p006.png)
+
+![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p007.png)
+
+![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 129 行 - PDF p.6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§5.1–§5.3，PDF pp.6–8。</code></p>
+
+![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p006.png)
+
+![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p007.png)
+
+![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 140 行 - PDF p.6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§5.2–§5.4、相关算法/图，PDF pp.6–8。</code></p>
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p006.png)
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p007.png)
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 146 行 - PDF p.11</summary>
+
+<p><strong>原定位：</strong> <code>证据：§7 Conclusion，PDF p.11；本文归纳基于实验覆盖范围。</code></p>
+
+![E014 - PDF p.11](../evidence_pages/dpro/p011.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 158 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§6 “Implementation”，PDF p.8。</code></p>
+
+![E015 - PDF p.8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 176 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§6.1，PDF p.8。</code></p>
+
+![E016 - PDF p.8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 186 行 - PDF p.8, 9, 10</summary>
+
+<p><strong>原定位：</strong> <code>证据：§6.2、Figures 8–10，PDF pp.8–9；scale-out 结果见 §6.5，PDF p.10。</code></p>
+
+![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p008.png)
+
+![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p009.png)
+
+![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p010.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 196 行 - PDF p.9, 10, 11</summary>
+
+<p><strong>原定位：</strong> <code>证据：§6.3–§6.5、Table/Figures 对应 optimizer evaluation，PDF pp.9–11。</code></p>
+
+![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p009.png)
+
+![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p010.png)
+
+![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p011.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

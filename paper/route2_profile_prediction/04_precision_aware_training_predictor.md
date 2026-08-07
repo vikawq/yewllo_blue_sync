@@ -1,5 +1,8 @@
 # Training Time Prediction for Mixed Precision-based Distributed Training：3 页精度感知训练时间预测器
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 > 论文：Minchul Kang, Changyong Shin, Jinwoo Jeong, Hyunho Lee, Younghun Go, Gyeongmin Kim, Gyeongsik Yang, Chuck Yoo, **Training Time Prediction for Mixed Precision-based Distributed Training**。  
 > 原文：[arXiv PDF（2604.16145v1）](https://arxiv.org/pdf/2604.16145)；[arXiv 页面](https://arxiv.org/abs/2604.16145)。  
 > 版本核对：2026-04-17 提交的 arXiv v1，仅 3 页（含参考文献）；没有会议/期刊发表信息。用户简称“精度感知预测器”与摘要中的 `precision-aware distributed training time predictor` 对应，但这不是系统名。  
@@ -17,13 +20,13 @@
 
 分布式训练的 FP32、FP16 和 mixed precision 会改变 operator dtype、kernel 及通信字节，论文在 8×H100 的 LLaMA 3.1-8B 实验中观察到不同精度的迭代时间相对最小值可差约 2.4×。现有 predictor（文中以 NeuSight、vTrain 为例）基于固定精度的静态计算图，对 mixed/unseen precision 泛化差；作者复现的 baseline 在混合/FP16 设置下 MAPE 可达 130.55%/147.85%。
 
-定位：PDF 1，Abstract；§I 第 2–3 段；§II.B 第 1 段；图 1/图 2。
+定位：PDF 1，Abstract；§I 第 2–3 段；§II.B 第 1 段；图 1/图 2。 〔[原文截图 E001](#evidence-e001)〕
 
 ### 2.2 方法贡献
 
 给定 model 与 job config（precision、DP/TP/PP、batch 等），用 Torch.fx 提取 unique operator 与图；按 DP/TP/PP 将全图分成 GPU-specific subgraph；hook `torch.amp` 得到 mixed precision 下**每个 operator 实际 cast 后 precision**；按实际 shape+precision profile 前向/反向 operation；再用精度感知的 gradient/activation volume 估 DP/TP/PP 通信，合成单 iteration time。
 
-定位：PDF 1–2，§I 第 3 段；§III `Computation graph execution time` 第 1–2 段、Algorithm 1。
+定位：PDF 1–2，§I 第 3 段；§III `Computation graph execution time` 第 1–2 段、Algorithm 1。 〔[原文截图 E002](#evidence-e002)〕
 
 ## 3. 输入与输出
 
@@ -35,7 +38,7 @@
 | Profile input | unique operator、partition 后 local weight/shape、actual operator precision、forward/backward role |
 | 输出 | 单 iteration training time `T(d,t,p)`；不是完整训练到收敛时间 |
 
-定位：PDF 1 脚注 1；PDF 2，§III 第 1–4 段、Eq. (1)–(4)、Algorithm 1。
+定位：PDF 1 脚注 1；PDF 2，§III 第 1–4 段、Eq. (1)–(4)、Algorithm 1。 〔[原文截图 E003](#evidence-e003)〕
 
 ## 4. Graph partition 与 profiling schema
 
@@ -48,7 +51,7 @@
 3. 若 `TP>1` 且该 layer/weight 需要 slice，则按 TP rank 切 weight；
 4. 将结果加入 GPU-specific subgraph 集 `S`。
 
-定位：PDF 2，Algorithm 1 第 1–17 行。
+定位：PDF 2，Algorithm 1 第 1–17 行。 〔[原文截图 E004](#evidence-e004)〕
 
 算法只展示 PP layer 分配和 TP weight slicing；没有处理 uneven layer、virtual PP、interleaved 1F1B、sequence/context/expert parallel、tied weight、optimizer shard、activation checkpoint、FSDP/ZeRO 或动态 graph。
 
@@ -56,13 +59,13 @@
 
 Mixed precision 时 hook `torch.amp` 判定每个 operator 的 casted precision；全 FP32/FP16 时直接用预设 precision。作者强调 mixed precision 不是“全图一个 dtype”：compute-heavy conv/matmul 可能用低精度，softmax/reduction 等保持高精度。
 
-定位：PDF 1，§II.A `Floating-point precision` 第 1 段；PDF 2，§III `Computation graph execution time` 第 2 段。
+定位：PDF 1，§II.A `Floating-point precision` 第 1 段；PDF 2，§III `Computation graph execution time` 第 2 段。 〔[原文截图 E005](#evidence-e005)〕
 
 ### 4.3 Operation profile
 
 shape 随 batch 等 hyperparameter 变化，论文称“using the specific settings from the job config” profile 每个 operator 的 forward 与 backward execution time，再在每个 GPU subgraph 中求和为 `T_comp`。
 
-定位：PDF 2，§III `Computation graph execution time` 第 2 段末。
+定位：PDF 2，§III `Computation graph execution time` 第 2 段末。 〔[原文截图 E006](#evidence-e006)〕
 
 论文未说明未覆盖 shape 如何处理。没有 RF/MLP/插值/解析 extrapolation 的描述；从文字看更接近“对给定 job config 的 unique operation 精确 microbenchmark + 求和”，不是训练一个可跨 shape 泛化的预测模型。
 
@@ -94,7 +97,7 @@ OpObservation:
 T(d,t,p) = T_comp(d,t,p) + T_dp(d) + T_tp(t) + T_pp(p)    Eq. (1)
 ```
 
-定位：PDF 2，§III 首段、Eq. (1)。
+定位：PDF 2，§III 首段、Eq. (1)。 〔[原文截图 E007](#evidence-e007)〕
 
 ### 5.2 DP/TP 通信
 
@@ -107,7 +110,7 @@ T_tp = V_tp / B_link                                           Eq. (3)
 
 `V_dp` 是 backward graph 全部 trainable parameter 的 gradient size，dtype 来自 operation-level precision；`V_tp` 是 Algorithm 1 中被 TP partition 的 operation 的 partial-gradient size。
 
-定位：PDF 2，§III `Communication overhead` 第 1 段、Eq. (2)–(3)。
+定位：PDF 2，§III `Communication overhead` 第 1 段、Eq. (2)–(3)。 〔[原文截图 E008](#evidence-e008)〕
 
 该模型没有 ring/tree 算法系数、group size、latency term、protocol/chunk、rank placement、contention、peer arrival 或计算通信 overlap。严格地说，它把“通信字节/峰值或配置带宽”当传输时间，这对真实 NCCL/HCCL 只是粗下界/一阶近似。
 
@@ -119,7 +122,7 @@ T_pp = T_comp × (PP - 1)                                      Eq. (4)
 
 作者把 PP 主要开销归因于 stage 等待，直接按 PP degree 缩放 compute time。
 
-定位：PDF 2–3，§III `Communication overhead` 第 2 段、Eq. (4)。
+定位：PDF 2–3，§III `Communication overhead` 第 2 段、Eq. (4)。 〔[原文截图 E009](#evidence-e009)〕
 
 该公式没有 microbatch 数、stage imbalance、forward/backward 不同耗时、1F1B/interleaving、send/recv cost 或 schedule，因此不能代表现代 pipeline simulator。
 
@@ -133,13 +136,13 @@ T_pp = T_comp × (PP - 1)                                      Eq. (4)
 
 这是论文的主能力：不同 precision 通过 actual operator dtype 改变 compute profile与 gradient/activation bytes，而不是把 FP32 总时间乘常数。mixed→FP16 被作为 unseen precision 泛化测试。
 
-定位：PDF 1–3，§II.B、§III、§IV 图 2。
+定位：PDF 1–3，§II.B、§III、§IV 图 2。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 6.3 跨 GPU
 
 没有验证。全部实验是 8×H100 NVLink；结论明确把 multi-node heterogeneous GPU 作为 future work。
 
-定位：PDF 1 图 1说明；PDF 3，§IV 与 §V。
+定位：PDF 1 图 1说明；PDF 3，§IV 与 §V。 〔[原文截图 E011](#evidence-e011)〕
 
 ### 6.4 跨模型
 
@@ -164,13 +167,13 @@ T_pp = T_comp × (PP - 1)                                      Eq. (4)
 
 LLaMA 3.1-8B、C4 数据、8×NVIDIA H100、NVLink；遍历 precision setting 与 10 组 `(DP,TP,PP)` 组合，包括 `(8,1,1)`、`(4,1,2)`、`(2,2,2)`、`(1,8,1)`、`(1,2,4)`、`(4,2,1)`、`(2,4,1)`、`(2,1,4)`、`(1,4,2)`、`(1,1,8)`；部分组合 OOM。
 
-定位：PDF 1，图 1；PDF 3，§IV、图 2。
+定位：PDF 1，图 1；PDF 3，§IV、图 2。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 7.2 指标
 
 MAPE。摘要称忽略 precision 可高达 147.85% MAPE；作者复现 FP32 训练的 NeuSight/vTrain 后转到 mixed/FP16，NeuSight error 增约 130.55%，vTrain 达约 147.85%。本文方法 mixed precision 平均 9.8%，unseen FP16 平均 10.64%，相对现有方法约 15.08× 改进。
 
-定位：PDF 1 Abstract、§II.B；PDF 2 图 2；PDF 3 §IV。
+定位：PDF 1 Abstract、§II.B；PDF 2 图 2；PDF 3 §IV。 〔[原文截图 E013](#evidence-e013)〕
 
 ### 7.3 结果能说明什么、不能说明什么
 
@@ -238,3 +241,174 @@ forward/backward/optimizer role
 ## 11. 最终评价
 
 这篇论文不宜和 Habitat/Vidur/NeuSight 等量齐观：它提供了一个重要但窄的设计修正——precision 是 operation-level 一等特征，并影响 local compute 与通信字节；但其 profiling、拟合、分布式时间模型和工程实现都不足以支撑生产录制回放。路线二可以吸收它的 precision-aware schema，不能采用其 `T_comp + V/B + 简化 PP bubble` 作为最终系统模型。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 23 行 - PDF p.1</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1，Abstract；§I 第 2–3 段；§II.B 第 1 段；图 1/图 2。</code></p>
+
+![E001 - PDF p.1](../evidence_pages/precision-aware/p001.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 29 行 - PDF p.1, 2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1–2，§I 第 3 段；§III `Computation graph execution time` 第 1–2 段、Algorithm 1。</code></p>
+
+![E002 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
+
+![E002 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 41 行 - PDF p.1, 2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 脚注 1；PDF 2，§III 第 1–4 段、Eq. (1)–(4)、Algorithm 1。</code></p>
+
+![E003 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
+
+![E003 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 54 行 - PDF p.2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，Algorithm 1 第 1–17 行。</code></p>
+
+![E004 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 62 行 - PDF p.1, 2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1，§II.A `Floating-point precision` 第 1 段；PDF 2，§III `Computation graph execution time` 第 2 段。</code></p>
+
+![E005 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
+
+![E005 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 68 行 - PDF p.2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，§III `Computation graph execution time` 第 2 段末。</code></p>
+
+![E006 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 100 行 - PDF p.2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，§III 首段、Eq. (1)。</code></p>
+
+![E007 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 113 行 - PDF p.2</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2，§III `Communication overhead` 第 1 段、Eq. (2)–(3)。</code></p>
+
+![E008 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 125 行 - PDF p.2, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 2–3，§III `Communication overhead` 第 2 段、Eq. (4)。</code></p>
+
+![E009 - PDF p.2, 3](../evidence_pages/precision-aware/p002.png)
+
+![E009 - PDF p.2, 3](../evidence_pages/precision-aware/p003.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 139 行 - PDF p.1, 2, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1–3，§II.B、§III、§IV 图 2。</code></p>
+
+![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p001.png)
+
+![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p002.png)
+
+![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p003.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 145 行 - PDF p.1, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 图 1说明；PDF 3，§IV 与 §V。</code></p>
+
+![E011 - PDF p.1, 3](../evidence_pages/precision-aware/p001.png)
+
+![E011 - PDF p.1, 3](../evidence_pages/precision-aware/p003.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 170 行 - PDF p.1, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1，图 1；PDF 3，§IV、图 2。</code></p>
+
+![E012 - PDF p.1, 3](../evidence_pages/precision-aware/p001.png)
+
+![E012 - PDF p.1, 3](../evidence_pages/precision-aware/p003.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 176 行 - PDF p.1, 2, 3</summary>
+
+<p><strong>原定位：</strong> <code>定位：PDF 1 Abstract、§II.B；PDF 2 图 2；PDF 3 §IV。</code></p>
+
+![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p001.png)
+
+![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p002.png)
+
+![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p003.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->

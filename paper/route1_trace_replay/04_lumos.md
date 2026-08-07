@@ -1,12 +1,15 @@
 # Lumos：基于 Kineto 全执行栈依赖的现代 LLM trace replay
 
+> 证据截图说明：正文中的 `原文截图 E###` 可跳转到文末证据卡片。截图按 PDF 物理页码生成；原有章节、图表、算法和段落定位保持不变。
+
+
 ## 0. 文献与证据口径
 
 - 论文：Mingyu Liang et al., **Lumos: Efficient Performance Modeling and Estimation for Large-scale LLM Training**，MLSys 2025。
 - MLSys 正式 PDF：<https://proceedings.mlsys.org/paper_files/paper/2025/file/a66caa1703fe34705a4368c3014c1966-Paper-Conference.pdf>
 - 作者页面：<https://mingyu-liang.github.io/files/mlsys25-lumos.pdf>
 - 本地原文：[lumos.pdf](sources/lumos.pdf)
-- 版本：MLSys 2025 终稿，共 13 个 PDF 页；正文至 PDF p.10。
+- 版本：MLSys 2025 终稿，共 13 个 PDF 页；正文至 PDF p.10。 〔[原文截图 E001](#evidence-e001)〕
 - 页码约定：下文“PDF p.N”按阅读器 1-based 页码，对应文本抽取 P(N-1)。同时给出节、Figure/Table/Algorithm 定位。
 - 证据类型：“论文事实”来自原文；“本文归纳/推断”是针对当前录制回放架构的分析；开源核验截至 2026-08-06。
 
@@ -14,7 +17,7 @@
 
 Lumos 直接使用 PyTorch Kineto 产生的 operator、CUDA runtime 与 GPU kernel trace，在 CPU thread、CUDA stream、launch correlation、同步 API 和 CUDA event 间恢复完整依赖图；随后通过带固定/运行时依赖的离散事件模拟，回放现代 LLM 3D 并行训练，并通过图变换预测 DP/PP 与模型层数/hidden size 变化。它是四篇中对真实 CUDA stream/event 物理执行计划刻画最细、对 H100 大模型验证最新的一篇。
 
-证据：摘要、§1，PDF pp.1–2；§3，PDF pp.3–6。
+证据：摘要、§1，PDF pp.1–2；§3，PDF pp.3–6。 〔[原文截图 E002](#evidence-e002)〕
 
 ## 2. 要解决的问题
 
@@ -22,17 +25,17 @@ Lumos 直接使用 PyTorch Kineto 产生的 operator、CUDA runtime 与 GPU kern
 
 LLM 训练使用多 stream、3D parallelism 和大量计算—通信重叠。论文以 GPT-3 175B、TP=8/PP=4/DP=8 为例：dPRO 回放把 overlapped 部分估成 1,691 ms、exposed compute 3,235 ms、exposed communication 1,417 ms；真实值分别为 885、4,287、2,261 ms，端到端被明显低估。
 
-证据：§1、Figure 1，PDF p.2。
+证据：§1、Figure 1，PDF p.2。 〔[原文截图 E003](#evidence-e003)〕
 
 作者认为关键缺口是旧方法未完整恢复跨 stream 依赖，因此把本应串行/等待的工作错误地并发执行。
 
-证据：§1，PDF p.2；§4.2.2，PDF pp.7–8。
+证据：§1，PDF p.2；§4.2.2，PDF pp.7–8。 〔[原文截图 E004](#evidence-e004)〕
 
 ### 2.2 工程接入过重
 
 Daydream/dPRO 需要框架或通信库定制 instrumentation。Lumos 的目标是只依赖框架内置 profiler；论文称不修改 framework/model 内部，应用侧通常增加约 10 行 profiler hook 即可。
 
-证据：§1，PDF p.2；§3.2，Figure 2，PDF p.4；实现说明 §4，PDF p.6。
+证据：§1，PDF p.2；§3.2，Figure 2，PDF p.4；实现说明 §4，PDF p.6。 〔[原文截图 E005](#evidence-e005)〕
 
 ## 3. 工作流
 
@@ -42,7 +45,7 @@ Daydream/dPRO 需要框架或通信库定制 instrumentation。Lumos 的目标�
 4. 用户指定新并行度或模型架构后，对图分层、复制、重排和补通信，产生新图；
 5. simulator 输出完整模拟 trace、迭代时间、时间分解和利用率。
 
-证据：§3.1、Figure 2，PDF pp.3–4。
+证据：§3.1、Figure 2，PDF pp.3–4。 〔[原文截图 E006](#evidence-e006)〕
 
 ## 4. Trace 中记录什么
 
@@ -59,7 +62,7 @@ execution graph 只设两大 task 类：
 - **CPU task**：PyTorch op 与 CUDA runtime event，绑定 CPU thread；
 - **GPU task**：GPU kernel，绑定 CUDA stream。通信 kernel 也作为 GPU task 出现在实际执行图中。
 
-证据：§3.2、§3.3.1，PDF p.4。
+证据：§3.2、§3.3.1，PDF p.4。 〔[原文截图 E007](#evidence-e007)〕
 
 注意：论文的“仅使用内置 trace”不是完全零代码接入；§4 明确说用户需拿到模型源码并插入约 10 行 profiler hook。更准确的说法是“不需要修改框架/模型执行逻辑或通信库”。
 
@@ -70,26 +73,26 @@ execution graph 只设两大 task 类：
 - 同一 thread 的相邻 task 按程序序连接。
 - 不同 thread 的阻塞关系通过显著 execution gap 检测。例如 backward 在线程 2 开始前等待 forward 在线程 1 完成。
 
-证据：§3.3.2、Figure 3，PDF pp.4–5。
+证据：§3.3.2、Figure 3，PDF pp.4–5。 〔[原文截图 E008](#evidence-e008)〕
 
 ### 5.2 CPU→GPU
 
 `cudaLaunchKernel`、`cudaMemsetAsync` 等 runtime event 与对应 GPU kernel 共享 correlation ID，据此建立 launch edge。
 
-证据：§3.3.2，PDF pp.4–5。
+证据：§3.3.2，PDF pp.4–5。 〔[原文截图 E009](#evidence-e009)〕
 
 ### 5.3 GPU→CPU
 
 `cudaDeviceSync`、`cudaStreamSync` 等 CPU 事件要等待相关 GPU kernel 完成，因此形成 GPU→CPU 边。
 
-证据：§3.3.2，PDF p.5。
+证据：§3.3.2，PDF p.5。 〔[原文截图 E010](#evidence-e010)〕
 
 ### 5.4 GPU→GPU
 
 - 同一 stream 内 kernel 串行。
 - 跨 stream 依赖由 `cudaEventRecord` 与 `cudaStreamWaitEvent` 匹配：一个 stream 记录事件，另一个 stream 等待它。
 
-证据：§3.3.2、Figure 3，PDF p.5。
+证据：§3.3.2、Figure 3，PDF p.5。 〔[原文截图 E011](#evidence-e011)〕
 
 这是 Lumos 相对 dPRO 最关键的技术增量：显式恢复 event/wait 后，计算与 NCCL stream 的重叠不会被过度放大。
 
@@ -100,7 +103,7 @@ execution graph 只设两大 task 类：
 - **Fixed dependency**：建图时已经确定，例如同 CPU thread 的程序序。
 - **Runtime dependency**：要在模拟推进时才能确定。例如 `cudaStreamSync` 必须等待该 stream 当时最后一个 kernel，但“最后一个”可能因前面的变换/调度而变化。
 
-证据：§3.5、Algorithm 1 后两段，PDF p.6。
+证据：§3.5、Algorithm 1 后两段，PDF p.6。 〔[原文截图 E012](#evidence-e012)〕
 
 ### 6.2 时间推进
 
@@ -114,11 +117,11 @@ Algorithm 1 初始化 ready set 与每个 processor 的进度。对 ready task�
 
 输出是一份与输入 profiler trace 同结构的模拟 trace，因此不仅能给总时长，还能计算 exposed compute、exposed communication、overlap、idle/other 和时间分辨率下的“SM utilization”。
 
-证据：§3.5、Algorithm 1，PDF p.6；§4.2，PDF pp.7–8。
+证据：§3.5、Algorithm 1，PDF p.6；§4.2，PDF pp.7–8。 〔[原文截图 E013](#evidence-e013)〕
 
 本文归纳：其“SM utilization”并非硬件 occupancy/真实 active warps，而定义为每 1ms 窗内是否至少一个 CUDA stream 正在执行 task 的时间占比。引用该图时不应把它解释成 Nsight 的硬件 SM 利用率。
 
-证据：§4.2.3，Figure 6，PDF p.8。
+证据：§4.2.3，Figure 6，PDF p.8。 〔[原文截图 E014](#evidence-e014)〕
 
 ## 7. 图变换与 what-if
 
@@ -126,7 +129,7 @@ Algorithm 1 初始化 ready set 与每个 processor 的进度。对 ready task�
 
 作者假设每个 worker 的本地计算不变，因此改变 DP 时只更新通信 task 的 duration。
 
-证据：§3.4，PDF p.5。
+证据：§3.4，PDF p.5。 〔[原文截图 E015](#evidence-e015)〕
 
 ### 7.2 Pipeline parallelism
 
@@ -136,13 +139,13 @@ Algorithm 1 初始化 ready set 与每个 processor 的进度。对 ready task�
 4. 重排 task 并在 stage 边界插入通信；
 5. 尽量保持原 trace 的局部依赖模式。
 
-证据：§3.4、Figure 4，PDF pp.5–6。
+证据：§3.4、Figure 4，PDF pp.5–6。 〔[原文截图 E016](#evidence-e016)〕
 
 ### 7.3 Tensor parallelism
 
 当前不支持修改 TP。作者理由是实践中 TP 常固定在节点内且通信开销高，留作未来工作。
 
-证据：§3.4，PDF p.5。
+证据：§3.4，PDF p.5。 〔[原文截图 E017](#evidence-e017)〕
 
 ### 7.4 模型架构
 
@@ -150,13 +153,13 @@ Algorithm 1 初始化 ready set 与每个 processor 的进度。对 ready task�
 - 改 hidden/FFN size：修改相关 op/kernel 的输入 tensor dimension，并更新受影响 task duration。
 - 作者观察主要变化集中在 GEMM 与 communication kernel，因此只更新这些关键 task。
 
-证据：§3.4，PDF pp.5–6；§4.3.2、Table 2、Figure 8，PDF p.9。
+证据：§3.4，PDF pp.5–6；§4.3.2、Table 2、Figure 8，PDF p.9。 〔[原文截图 E018](#evidence-e018)〕
 
 ### 7.5 时长提供器
 
 对新通信或改变 shape 的 kernel，论文使用 Meta 内部、由 fleet traces 构建的 in-house performance model。作者明确说“预测单个 kernel runtime”超出本文范围；替代方案可为 ASTRA-sim/解析通信模型或 computation microbenchmark。
 
-证据：§4.3.1，PDF p.9；§5 “Kernel Execution Time Prediction”，PDF p.10。
+证据：§4.3.1，PDF p.9；§5 “Kernel Execution Time Prediction”，PDF p.10。 〔[原文截图 E019](#evidence-e019)〕
 
 因此 Lumos 的图与 DES 可以复现，但完整 what-if 准确性还依赖未公开的内部 duration provider。
 
@@ -178,7 +181,7 @@ Algorithm 1 初始化 ready set 与每个 processor 的进度。对 ready task�
 
 PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能保存 host launch/sync/idle。但 Python 数据加载、编译、allocator 或分布式控制面若未被 profiler 明确表达，仍可能只以 gap/时间差残留，无法语义化重算。
 
-证据：§3.2–§3.3，PDF pp.4–5；本文归纳其未覆盖部分。
+证据：§3.2–§3.3，PDF pp.4–5；本文归纳其未覆盖部分。 〔[原文截图 E020](#evidence-e020)〕
 
 ## 9. 实现、开源与成熟度
 
@@ -189,7 +192,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 从 trace 建图、图变换到模拟自动化；
 - 单个 workflow 随 trace 复杂度从数秒到数分钟。
 
-证据：§4 开头，PDF p.6。
+证据：§4 开头，PDF p.6。 〔[原文截图 E021](#evidence-e021)〕
 
 ### 9.2 开源状态
 
@@ -206,7 +209,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 最高 512×H100、32 台服务器，每 host 8×400Gbps RoCE。
 - CUDA 12.4、PyTorch 2.5、Transformer Engine 0.12.0、PyTorch Lightning 1.9.4。
 
-证据：§4.1、Table 1，PDF pp.6–7。
+证据：§4.1、Table 1，PDF pp.6–7。 〔[原文截图 E022](#evidence-e022)〕
 
 ### 10.2 原配置 replay
 
@@ -215,7 +218,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 分解为 exposed compute、overlapped、exposed communication、other 后，dPRO 系统性高估 overlap 并低估总时间；Lumos 与真实值更接近。
 - GPT-3 15B、TP=2/PP=2/DP=4 的 1ms 窗口 utilization 曲线与真实 trace 接近；dPRO 波动和偏差更大。
 
-证据：§4.2.1–§4.2.3、Figures 5–6，PDF pp.7–8。
+证据：§4.2.1–§4.2.3、Figures 5–6，PDF pp.7–8。 〔[原文截图 E023](#evidence-e023)〕
 
 ### 10.3 新配置预测
 
@@ -223,7 +226,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 同时扩 DP 与 PP 时平均误差 4.2%。
 - 架构变化覆盖 20B/30B（增 layer）和 28B/44B（增 hidden/FFN）；Figure 8 展示预测时间分解与实测接近，但正文没有给统一的 architecture-change 平均误差数字。
 
-证据：§4.3.1、Figure 7，PDF pp.8–9；§4.3.2、Table 2、Figure 8，PDF p.9。
+证据：§4.3.1、Figure 7，PDF pp.8–9；§4.3.2、Table 2、Figure 8，PDF p.9。 〔[原文截图 E024](#evidence-e024)〕
 
 注意：scale-out/architecture 预测调用了内部 fleet performance model；不能把结果全部归因于依赖图算法。
 
@@ -245,7 +248,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 不预测 FLOPS utilization、memory consumption、bandwidth usage 或 energy efficiency。
 - 新/改变 kernel 的 runtime 预测超出范围。
 
-证据：§5 “Kernel Execution Time Prediction”与“Limitations”，PDF p.10。
+证据：§5 “Kernel Execution Time Prediction”与“Limitations”，PDF p.10。 〔[原文截图 E025](#evidence-e025)〕
 
 ### 12.2 并行策略与工作负载边界
 
@@ -254,7 +257,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 改 layer 数主要复制原 layer，改 hidden 主要更新关键 GEMM/communication；新 fusion、不同 kernel family、allocator 行为和编译选择可能破坏模板复用。
 - inference 只在 Discussion 中声称“可适用”，没有 serving、prefill/decode、continuous batching 或 KV cache 实验。
 
-证据：§3.4，PDF pp.5–6；§5 Adaptability，PDF p.10。
+证据：§3.4，PDF pp.5–6；§5 Adaptability，PDF p.10。 〔[原文截图 E026](#evidence-e026)〕
 
 ### 12.3 Trace 假设与成本
 
@@ -262,7 +265,7 @@ PyTorch operator 与 CUDA runtime 都是 CPU task，因而比纯 GPU 图更能�
 - 单次建图/模拟数秒至数分钟，已适合交互式离线分析；但论文未给 graph 节点数、内存复杂度和千卡级模拟器自身伸缩曲线。
 - 依赖显著 gap 推断跨 CPU thread 因果存在启发式误连/漏连风险。
 
-证据：§5 “Profiling Overhead and Cost”，PDF pp.9–10；流程耗时见 §4，PDF p.6。
+证据：§5 “Profiling Overhead and Cost”，PDF pp.9–10；流程耗时见 §4，PDF p.6。 〔[原文截图 E027](#evidence-e027)〕
 
 ## 13. 与真实录制回放的差异
 
@@ -302,3 +305,360 @@ Lumos 是本项目 **rank-local 物理计划和 stream/event 级 DES** 的最佳
 ## 15. 最终评价
 
 Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复杂的数学模型，而是不要漏掉真实 runtime 依赖。它以较轻的接入成本，在 512×H100 上取得平均 3.3% 原配置回放误差，工程价值很高。但它对新配置的准确性部分依赖未公开 fleet model，且只覆盖 timing、DP/PP 和规则化 GPT 训练。对 Ascend，应优先复刻其四类依赖与运行时依赖机制，再补全跨 rank、动态 workload、状态和内存语义。
+
+<!-- EVIDENCE_SCREENSHOTS:BEGIN -->
+
+## 原文证据截图附录
+
+正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+
+<a id="evidence-e001"></a>
+
+<details>
+<summary><strong>E001</strong> - 原笔记第 12 行 - PDF p.10</summary>
+
+<p><strong>原定位：</strong> <code>- 版本：MLSys 2025 终稿，共 13 个 PDF 页；正文至 PDF p.10。</code></p>
+
+![E001 - PDF p.10](../evidence_pages/lumos/p010.png)
+
+</details>
+
+<a id="evidence-e002"></a>
+
+<details>
+<summary><strong>E002</strong> - 原笔记第 20 行 - PDF p.1, 2, 3, 4, 5, 6</summary>
+
+<p><strong>原定位：</strong> <code>证据：摘要、§1，PDF pp.1–2；§3，PDF pp.3–6。</code></p>
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p001.png)
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p002.png)
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p003.png)
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p004.png)
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p005.png)
+
+![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="evidence-e003"></a>
+
+<details>
+<summary><strong>E003</strong> - 原笔记第 28 行 - PDF p.2</summary>
+
+<p><strong>原定位：</strong> <code>证据：§1、Figure 1，PDF p.2。</code></p>
+
+![E003 - PDF p.2](../evidence_pages/lumos/p002.png)
+
+</details>
+
+<a id="evidence-e004"></a>
+
+<details>
+<summary><strong>E004</strong> - 原笔记第 32 行 - PDF p.2, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§1，PDF p.2；§4.2.2，PDF pp.7–8。</code></p>
+
+![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p002.png)
+
+![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p007.png)
+
+![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p008.png)
+
+</details>
+
+<a id="evidence-e005"></a>
+
+<details>
+<summary><strong>E005</strong> - 原笔记第 38 行 - PDF p.2, 4, 6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§1，PDF p.2；§3.2，Figure 2，PDF p.4；实现说明 §4，PDF p.6。</code></p>
+
+![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p002.png)
+
+![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p004.png)
+
+![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="evidence-e006"></a>
+
+<details>
+<summary><strong>E006</strong> - 原笔记第 48 行 - PDF p.3, 4</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.1、Figure 2，PDF pp.3–4。</code></p>
+
+![E006 - PDF p.3, 4](../evidence_pages/lumos/p003.png)
+
+![E006 - PDF p.3, 4](../evidence_pages/lumos/p004.png)
+
+</details>
+
+<a id="evidence-e007"></a>
+
+<details>
+<summary><strong>E007</strong> - 原笔记第 65 行 - PDF p.4</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.2、§3.3.1，PDF p.4。</code></p>
+
+![E007 - PDF p.4](../evidence_pages/lumos/p004.png)
+
+</details>
+
+<a id="evidence-e008"></a>
+
+<details>
+<summary><strong>E008</strong> - 原笔记第 76 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.3.2、Figure 3，PDF pp.4–5。</code></p>
+
+![E008 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
+
+![E008 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e009"></a>
+
+<details>
+<summary><strong>E009</strong> - 原笔记第 82 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.3.2，PDF pp.4–5。</code></p>
+
+![E009 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
+
+![E009 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e010"></a>
+
+<details>
+<summary><strong>E010</strong> - 原笔记第 88 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.3.2，PDF p.5。</code></p>
+
+![E010 - PDF p.5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e011"></a>
+
+<details>
+<summary><strong>E011</strong> - 原笔记第 95 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.3.2、Figure 3，PDF p.5。</code></p>
+
+![E011 - PDF p.5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e012"></a>
+
+<details>
+<summary><strong>E012</strong> - 原笔记第 106 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.5、Algorithm 1 后两段，PDF p.6。</code></p>
+
+![E012 - PDF p.6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="evidence-e013"></a>
+
+<details>
+<summary><strong>E013</strong> - 原笔记第 120 行 - PDF p.6, 7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.5、Algorithm 1，PDF p.6；§4.2，PDF pp.7–8。</code></p>
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p006.png)
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p007.png)
+
+![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p008.png)
+
+</details>
+
+<a id="evidence-e014"></a>
+
+<details>
+<summary><strong>E014</strong> - 原笔记第 124 行 - PDF p.8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.2.3，Figure 6，PDF p.8。</code></p>
+
+![E014 - PDF p.8](../evidence_pages/lumos/p008.png)
+
+</details>
+
+<a id="evidence-e015"></a>
+
+<details>
+<summary><strong>E015</strong> - 原笔记第 132 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.4，PDF p.5。</code></p>
+
+![E015 - PDF p.5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e016"></a>
+
+<details>
+<summary><strong>E016</strong> - 原笔记第 142 行 - PDF p.5, 6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.4、Figure 4，PDF pp.5–6。</code></p>
+
+![E016 - PDF p.5, 6](../evidence_pages/lumos/p005.png)
+
+![E016 - PDF p.5, 6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="evidence-e017"></a>
+
+<details>
+<summary><strong>E017</strong> - 原笔记第 148 行 - PDF p.5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.4，PDF p.5。</code></p>
+
+![E017 - PDF p.5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e018"></a>
+
+<details>
+<summary><strong>E018</strong> - 原笔记第 156 行 - PDF p.5, 6, 9</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.4，PDF pp.5–6；§4.3.2、Table 2、Figure 8，PDF p.9。</code></p>
+
+![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p005.png)
+
+![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p006.png)
+
+![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p009.png)
+
+</details>
+
+<a id="evidence-e019"></a>
+
+<details>
+<summary><strong>E019</strong> - 原笔记第 162 行 - PDF p.9, 10</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.3.1，PDF p.9；§5 “Kernel Execution Time Prediction”，PDF p.10。</code></p>
+
+![E019 - PDF p.9, 10](../evidence_pages/lumos/p009.png)
+
+![E019 - PDF p.9, 10](../evidence_pages/lumos/p010.png)
+
+</details>
+
+<a id="evidence-e020"></a>
+
+<details>
+<summary><strong>E020</strong> - 原笔记第 184 行 - PDF p.4, 5</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.2–§3.3，PDF pp.4–5；本文归纳其未覆盖部分。</code></p>
+
+![E020 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
+
+![E020 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="evidence-e021"></a>
+
+<details>
+<summary><strong>E021</strong> - 原笔记第 195 行 - PDF p.6</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4 开头，PDF p.6。</code></p>
+
+![E021 - PDF p.6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="evidence-e022"></a>
+
+<details>
+<summary><strong>E022</strong> - 原笔记第 212 行 - PDF p.6, 7</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.1、Table 1，PDF pp.6–7。</code></p>
+
+![E022 - PDF p.6, 7](../evidence_pages/lumos/p006.png)
+
+![E022 - PDF p.6, 7](../evidence_pages/lumos/p007.png)
+
+</details>
+
+<a id="evidence-e023"></a>
+
+<details>
+<summary><strong>E023</strong> - 原笔记第 221 行 - PDF p.7, 8</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.2.1–§4.2.3、Figures 5–6，PDF pp.7–8。</code></p>
+
+![E023 - PDF p.7, 8](../evidence_pages/lumos/p007.png)
+
+![E023 - PDF p.7, 8](../evidence_pages/lumos/p008.png)
+
+</details>
+
+<a id="evidence-e024"></a>
+
+<details>
+<summary><strong>E024</strong> - 原笔记第 229 行 - PDF p.8, 9</summary>
+
+<p><strong>原定位：</strong> <code>证据：§4.3.1、Figure 7，PDF pp.8–9；§4.3.2、Table 2、Figure 8，PDF p.9。</code></p>
+
+![E024 - PDF p.8, 9](../evidence_pages/lumos/p008.png)
+
+![E024 - PDF p.8, 9](../evidence_pages/lumos/p009.png)
+
+</details>
+
+<a id="evidence-e025"></a>
+
+<details>
+<summary><strong>E025</strong> - 原笔记第 251 行 - PDF p.10</summary>
+
+<p><strong>原定位：</strong> <code>证据：§5 “Kernel Execution Time Prediction”与“Limitations”，PDF p.10。</code></p>
+
+![E025 - PDF p.10](../evidence_pages/lumos/p010.png)
+
+</details>
+
+<a id="evidence-e026"></a>
+
+<details>
+<summary><strong>E026</strong> - 原笔记第 260 行 - PDF p.5, 6, 10</summary>
+
+<p><strong>原定位：</strong> <code>证据：§3.4，PDF pp.5–6；§5 Adaptability，PDF p.10。</code></p>
+
+![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p005.png)
+
+![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p006.png)
+
+![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p010.png)
+
+</details>
+
+<a id="evidence-e027"></a>
+
+<details>
+<summary><strong>E027</strong> - 原笔记第 268 行 - PDF p.6, 9, 10</summary>
+
+<p><strong>原定位：</strong> <code>证据：§5 “Profiling Overhead and Cost”，PDF pp.9–10；流程耗时见 §4，PDF p.6。</code></p>
+
+![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p006.png)
+
+![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p009.png)
+
+![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p010.png)
+
+</details>
+
+<!-- EVIDENCE_SCREENSHOTS:END -->
