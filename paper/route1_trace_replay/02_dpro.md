@@ -269,7 +269,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -278,11 +278,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：摘要、§1，PDF pp.1–2；系统框架见 Figure 3、§3，PDF p.4。</code></p>
 
-![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p001.png)
-
-![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p002.png)
-
-![E001 - PDF p.1, 2, 4](../evidence_pages/dpro/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -293,11 +289,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§1，PDF pp.1–2；§3，PDF p.4。</code></p>
 
-![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p001.png)
-
-![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p002.png)
-
-![E002 - PDF p.1, 2, 4](../evidence_pages/dpro/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -308,9 +300,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§2.2，PDF pp.2–3，特别是 coarse-grained communication profiling 的讨论与对 Daydream 偏差的动机分析。</code></p>
 
-![E003 - PDF p.2, 3](../evidence_pages/dpro/p002.png)
-
-![E003 - PDF p.2, 3](../evidence_pages/dpro/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -321,7 +311,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§2.2 和 §4.2，PDF pp.3、5。</code></p>
 
-![E004 - PDF p.3](../evidence_pages/dpro/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -332,7 +322,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§3、Figure 3，PDF p.4。</code></p>
 
-![E005 - PDF p.4](../evidence_pages/dpro/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -343,9 +333,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.1 “Global DFG Construction”，PDF pp.4–5。</code></p>
 
-![E006 - PDF p.4, 5](../evidence_pages/dpro/p004.png)
-
-![E006 - PDF p.4, 5](../evidence_pages/dpro/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -356,9 +344,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.1、Figure 4，PDF pp.4–5。</code></p>
 
-![E007 - PDF p.4, 5](../evidence_pages/dpro/p004.png)
-
-![E007 - PDF p.4, 5](../evidence_pages/dpro/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -369,7 +355,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.2 “Time Alignment”，PDF p.5，公式与约束位于该小节。</code></p>
 
-![E008 - PDF p.5](../evidence_pages/dpro/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -380,9 +366,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.3 “Distributed Training Replay”，PDF pp.5–6。</code></p>
 
-![E009 - PDF p.5, 6](../evidence_pages/dpro/p005.png)
-
-![E009 - PDF p.5, 6](../evidence_pages/dpro/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -393,9 +377,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.3，PDF pp.5–6。</code></p>
 
-![E010 - PDF p.5, 6](../evidence_pages/dpro/p005.png)
-
-![E010 - PDF p.5, 6](../evidence_pages/dpro/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -406,15 +388,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§4.1–§4.3，PDF pp.4–6；优化候选时长来源见 §5，PDF pp.6–8。</code></p>
 
-![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p004.png)
-
-![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p005.png)
-
-![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p006.png)
-
-![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p007.png)
-
-![E011 - PDF p.4, 5, 6, 7, 8](../evidence_pages/dpro/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -425,11 +399,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§5.1–§5.3，PDF pp.6–8。</code></p>
 
-![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p006.png)
-
-![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p007.png)
-
-![E012 - PDF p.6, 7, 8](../evidence_pages/dpro/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -440,11 +410,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§5.2–§5.4、相关算法/图，PDF pp.6–8。</code></p>
 
-![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p006.png)
-
-![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p007.png)
-
-![E013 - PDF p.6, 7, 8](../evidence_pages/dpro/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -455,7 +421,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§7 Conclusion，PDF p.11；本文归纳基于实验覆盖范围。</code></p>
 
-![E014 - PDF p.11](../evidence_pages/dpro/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -466,7 +432,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§6 “Implementation”，PDF p.8。</code></p>
 
-![E015 - PDF p.8](../evidence_pages/dpro/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -477,7 +443,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§6.1，PDF p.8。</code></p>
 
-![E016 - PDF p.8](../evidence_pages/dpro/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -488,11 +454,7 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§6.2、Figures 8–10，PDF pp.8–9；scale-out 结果见 §6.5，PDF p.10。</code></p>
 
-![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p008.png)
-
-![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p009.png)
-
-![E017 - PDF p.8, 9, 10](../evidence_pages/dpro/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -503,11 +465,110 @@ dPRO 将 trace replay 从单机关键路径推进到全局 DFG，并首次把消
 
 <p><strong>原定位：</strong> <code>证据：§6.3–§6.5、Table/Figures 对应 optimizer evaluation，PDF pp.9–11。</code></p>
 
-![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
-![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p010.png)
+</details>
 
-![E018 - PDF p.9, 10, 11](../evidence_pages/dpro/p011.png)
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E002 引用</summary>
+
+![PDF p.1](../evidence_pages/dpro/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002、E003 引用</summary>
+
+![PDF p.2](../evidence_pages/dpro/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E003、E004 引用</summary>
+
+![PDF p.3](../evidence_pages/dpro/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E001、E002、E005、E006、E007、E011 引用</summary>
+
+![PDF p.4](../evidence_pages/dpro/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E006、E007、E008、E009、E010、E011 引用</summary>
+
+![PDF p.5](../evidence_pages/dpro/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E009、E010、E011、E012、E013 引用</summary>
+
+![PDF p.6](../evidence_pages/dpro/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E011、E012、E013 引用</summary>
+
+![PDF p.7](../evidence_pages/dpro/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E011、E012、E013、E015、E016、E017 引用</summary>
+
+![PDF p.8](../evidence_pages/dpro/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E017、E018 引用</summary>
+
+![PDF p.9](../evidence_pages/dpro/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E017、E018 引用</summary>
+
+![PDF p.10](../evidence_pages/dpro/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E014、E018 引用</summary>
+
+![PDF p.11](../evidence_pages/dpro/p011.png)
 
 </details>
 

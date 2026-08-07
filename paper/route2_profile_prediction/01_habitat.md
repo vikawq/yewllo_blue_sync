@@ -282,7 +282,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -291,11 +291,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 2–3/印刷 503–504，Abstract、§1 第 7–10 段及贡献列表；PDF 5/印刷 506，§3.2 第 1–3 段。</code></p>
 
-![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p002.png)
-
-![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p003.png)
-
-![E001 - PDF p.2, 3, 5](../evidence_pages/habitat/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -306,13 +302,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 2–3/印刷 503–504，§1 第 1–10 段；PDF 4/印刷 505，§2.2–§2.5；PDF 5/印刷 506，§3.2 第 1 段。</code></p>
 
-![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p002.png)
-
-![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p003.png)
-
-![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p004.png)
-
-![E002 - PDF p.2, 3, 4, 5](../evidence_pages/habitat/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -323,7 +313,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.1 的 Observation 1–3 三段。</code></p>
 
-![E003 - PDF p.5](../evidence_pages/habitat/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -334,11 +324,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1 与其后第 1–4 段；PDF 5/印刷 506，§3.2；PDF 6/印刷 507，§4.1。</code></p>
 
-![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p003.png)
-
-![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p005.png)
-
-![E004 - PDF p.3, 5, 6](../evidence_pages/habitat/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -349,7 +335,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§4.1 第 1–3 段（定位词 `monkey patching`、`re-runs each operation independently`、`Kernel metadata and metrics`）。</code></p>
 
-![E005 - PDF p.6](../evidence_pages/habitat/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -360,7 +346,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 7/印刷 508，§4.2 最后一段（定位词 `cache measured metrics`、`99.5th percentile`）。</code></p>
 
-![E006 - PDF p.7](../evidence_pages/habitat/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -371,9 +357,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 7–8/印刷 508–509，§4.3.1、表 1，第 1–6 段。</code></p>
 
-![E007 - PDF p.7, 8](../evidence_pages/habitat/p007.png)
-
-![E007 - PDF p.7, 8](../evidence_pages/habitat/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -384,9 +368,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.2 第 3 段；PDF 10/印刷 511，§5.2.3 第 1–3 段。</code></p>
 
-![E008 - PDF p.5, 10](../evidence_pages/habitat/p005.png)
-
-![E008 - PDF p.5, 10](../evidence_pages/habitat/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -397,9 +379,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§3.3、Eq. (1)–(2)；PDF 7/印刷 508，§4.2、图 2、Eq. (3)。</code></p>
 
-![E009 - PDF p.6, 7](../evidence_pages/habitat/p006.png)
-
-![E009 - PDF p.6, 7](../evidence_pages/habitat/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -410,9 +390,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 6/印刷 507，§3.4 第 2–3 段；PDF 8/印刷 509，§4.3.2–§4.3.3、表 1。</code></p>
 
-![E010 - PDF p.6, 8](../evidence_pages/habitat/p006.png)
-
-![E010 - PDF p.6, 8](../evidence_pages/habitat/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -423,9 +401,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 5/印刷 506，§3.2 第 2 段；PDF 9/印刷 510，§5.1 `Metrics` 段。</code></p>
 
-![E011 - PDF p.5, 9](../evidence_pages/habitat/p005.png)
-
-![E011 - PDF p.5, 9](../evidence_pages/habitat/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -436,13 +412,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1；PDF 6–8/印刷 507–509，§4.1–§4.3；开源仓库 README 的 Running From Source。</code></p>
 
-![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p003.png)
-
-![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p006.png)
-
-![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p007.png)
-
-![E012 - PDF p.3, 6, 7, 8](../evidence_pages/habitat/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -453,9 +423,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 8–9/印刷 509–510，表 2、§5.2 第 1 段。</code></p>
 
-![E013 - PDF p.8, 9](../evidence_pages/habitat/p008.png)
-
-![E013 - PDF p.8, 9](../evidence_pages/habitat/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -466,11 +434,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 8–10/印刷 509–511，表 4、§5.2.1–§5.2.4。</code></p>
 
-![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p008.png)
-
-![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p009.png)
-
-![E014 - PDF p.8, 9, 10](../evidence_pages/habitat/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -481,9 +445,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 12–13/印刷 513–514，§6.1.1–§6.1.3。</code></p>
 
-![E015 - PDF p.12, 13](../evidence_pages/habitat/p012.png)
-
-![E015 - PDF p.12, 13](../evidence_pages/habitat/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -494,9 +456,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 8–9/印刷 509–510，§4.3.3 的公式与 §5.1 `Measurements` 段。</code></p>
 
-![E016 - PDF p.8, 9](../evidence_pages/habitat/p008.png)
-
-![E016 - PDF p.8, 9](../evidence_pages/habitat/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -507,17 +467,7 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 4/印刷 505，图 1；PDF 9–10/印刷 510–511，图 3–5、§5.2；PDF 11–12/印刷 512–513，图 6–7、§5.3；PDF 13/印刷 514，§6.1.2。</code></p>
 
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p004.png)
-
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p009.png)
-
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p010.png)
-
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p011.png)
-
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p012.png)
-
-![E017 - PDF p.4, 9, 10, 11, 12, 13](../evidence_pages/habitat/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -528,11 +478,119 @@ Habitat 最有价值的思想不是“MLP 预测 latency”，而是：真实源
 
 <p><strong>原定位：</strong> <code>定位：PDF 3/印刷 504，Listing 1 与开源声明；PDF 6/印刷 507，§4；PDF 8/印刷 509，§5.1；仓库 README。</code></p>
 
-![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
-![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p006.png)
+</details>
 
-![E018 - PDF p.3, 6, 8](../evidence_pages/habitat/p008.png)
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002 引用</summary>
+
+![PDF p.2](../evidence_pages/habitat/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E001、E002、E004、E012、E018 引用</summary>
+
+![PDF p.3](../evidence_pages/habitat/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E017 引用</summary>
+
+![PDF p.4](../evidence_pages/habitat/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E001、E002、E003、E004、E008、E011 引用</summary>
+
+![PDF p.5](../evidence_pages/habitat/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E004、E005、E009、E010、E012、E018 引用</summary>
+
+![PDF p.6](../evidence_pages/habitat/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E006、E007、E009、E012 引用</summary>
+
+![PDF p.7](../evidence_pages/habitat/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E007、E010、E012、E013、E014、E016、E018 引用</summary>
+
+![PDF p.8](../evidence_pages/habitat/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E011、E013、E014、E016、E017 引用</summary>
+
+![PDF p.9](../evidence_pages/habitat/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E008、E014、E017 引用</summary>
+
+![PDF p.10](../evidence_pages/habitat/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E017 引用</summary>
+
+![PDF p.11](../evidence_pages/habitat/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E015、E017 引用</summary>
+
+![PDF p.12](../evidence_pages/habitat/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E015、E017 引用</summary>
+
+![PDF p.13](../evidence_pages/habitat/p013.png)
 
 </details>
 

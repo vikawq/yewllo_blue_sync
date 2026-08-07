@@ -142,7 +142,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -151,17 +151,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>&gt; 论文：*Vidur: A Large-Scale Simulation Framework for LLM Inference*，MLSys 2024，arXiv:2405.05465v2。本文引用的“PDF 第 N 页”是下载文件的物理页码；论文正文印刷页码与 PDF 第 1–11 页一致，参考文献和附录位于 PDF 第 11–16 页。</code></p>
 
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p011.png)
-
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p012.png)
-
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p013.png)
-
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p014.png)
-
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p015.png)
-
-![E001 - PDF p.11, 12, 13, 14, 15, 16](../evidence_pages/vidur/p016.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a> · <a href="#source-page-p014">PDF p.14</a> · <a href="#source-page-p015">PDF p.15</a> · <a href="#source-page-p016">PDF p.16</a></p>
 
 </details>
 
@@ -172,7 +162,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Vidur 要解决的是：LLM serving 的迭代很短、每轮 batch 构成不断变化，单轮运行时间的小误差还会改变后续 batching，从而级联成端到端误差。论文把挑战概括为 time scale、varying iteration times、cascading errors（PDF 第 4 页，§3 三个小标题；其中 “Cascading Errors” 段说明预测误差会改变 batching pattern）。</code></p>
 
-![E002 - PDF p.4](../evidence_pages/vidur/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -183,7 +173,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>框架由两部分组成（PDF 第 4 页，§4 开头第 1 段，Figure 2）：</code></p>
 
-![E003 - PDF p.4](../evidence_pages/vidur/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -194,11 +184,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>其关键取舍不是对每个输入形状查表，而是先把算子按决定运行时间的变量分类，再用少量 profile 与回归模型预测未见形状（PDF 第 4–6 页，§4.1–§4.3）。因此 Vidur 同时属于“查表+拟合”和“事件驱动 serving 仿真”：cost model 负责单轮服务时间，scheduler/runtime 负责让误差通过真实的动态 batching 传播。</code></p>
 
-![E004 - PDF p.4, 5, 6](../evidence_pages/vidur/p004.png)
-
-![E004 - PDF p.4, 5, 6](../evidence_pages/vidur/p005.png)
-
-![E004 - PDF p.4, 5, 6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -209,7 +195,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Vidur 将算子分成三类（PDF 第 5 页，§4.2；该节围绕 token-level、sequence-length-dependent、communication 三类展开）：</code></p>
 
-![E005 - PDF p.5](../evidence_pages/vidur/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -220,9 +206,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>Prefill attention 用等效长度降低维度：若 batch 中 prompt 长度为 p_i，总工作量与 Σp_i² 成正比，等效为长度 sqrt(Σp_i²) 的单请求（PDF 第 5 页，§4.3 “Attention Operations” 第 1 段）。Decode attention 则用总 KV-cache 读取量建模，并假设 PagedAttention v2/FlashDecoding 已能较好处理序列长度不均（PDF 第 6 页，§4.3 延续段，定位词 “total amount of KV-cache”）。</code></p>
 
-![E006 - PDF p.5, 6](../evidence_pages/vidur/p005.png)
-
-![E006 - PDF p.5, 6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -233,7 +217,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 运行时间预测器使用随机森林；作者认为其可表达分段、非线性关系且推理开销低（PDF 第 6 页，§4.3 “Runtime Estimation”）。通信中的 all-reduce、all-gather、send/receive 按数据量、设备数及实际互联拓扑 profile（PDF 第 6 页，§4.3 “Communication Operations”）。</code></p>
 
-![E007 - PDF p.6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -244,7 +228,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[综合判断]** 模型学习的是“聚合形状 → 时延”，而不是“原始执行路径 → 时延”。特别是 decode attention 将整个 batch 压缩为总 KV 读取量，无法表达 KV 页碎片、不同请求尾长、不同 kernel 分支、CUDA Graph padding、prefix cache 命中、speculative decoding 接受率等现代运行时状态。论文附录也显示，在 95% 容量附近，LLaMA2-7B 的最大误差达到 12.65%，作者将其归因于 CPU overhead 及级联误差（PDF 第 15 页，Appendix A，Figure 9 相邻段）。</code></p>
 
-![E008 - PDF p.15](../evidence_pages/vidur/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -255,7 +239,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 论文使用三类真实 trace（PDF 第 7 页，§5.1，Table 1）：</code></p>
 
-![E009 - PDF p.7](../evidence_pages/vidur/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -266,7 +250,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>动态验证中请求按 Poisson 到达，并把负载设到实机容量的 85%（PDF 第 9 页，§7.2，Figure 4 前后段）。因此它能研究 arrival rate、prompt/decode 长度与 batching 的联合作用，但论文没有声称恢复生产 trace 中更复杂的 burst、相关性、会话轮次或工具调用等待。</code></p>
 
-![E010 - PDF p.9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -277,7 +261,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 层次化 scheduler 分为（PDF 第 6 页，§4.4）：</code></p>
 
-![E011 - PDF p.6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -288,9 +272,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>作者明确把异步通信、sequence parallelism、speculative pipeline 等列为未来工作（PDF 第 6 页，§4.4 末段）。Sarathi 的 chunked prefill 可作为配置搜索变量，chunk size 为 512/1K/2K（PDF 第 9 页，§7.3，Figure 5 相邻实验设置）。</code></p>
 
-![E012 - PDF p.6, 9](../evidence_pages/vidur/p006.png)
-
-![E012 - PDF p.6, 9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -301,9 +283,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Replica scheduler 跟踪 memory capacity、KV-cache 占用、请求 admission，并记录 preempt/restart 次数（PDF 第 6 页，§4.4 “Replica Scheduler”；PDF 第 7 页，§5.2 指标段）。</code></p>
 
-![E013 - PDF p.6, 7](../evidence_pages/vidur/p006.png)
-
-![E013 - PDF p.6, 7](../evidence_pages/vidur/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -314,9 +294,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 指标覆盖：每请求 scheduling delay、prefill completion、TTFT、TBT、preempt/restart；每 replica 的 batch、token、busy/idle、memory、compute；集群的 FLOPs、显存等（PDF 第 7 页，§5.2）。配置搜索使用 P90 TTFT &lt; 2 s、P99 TBT &lt; 200 ms 等 SLO，并优化 QPS/$（PDF 第 9 页，§7.3）。论文使用 TBT 术语，未细分现代文献中 ITL/TPOT 的统计口径；读者不应直接把其均值或 percentile 与其他论文混用。</code></p>
 
-![E014 - PDF p.7, 9](../evidence_pages/vidur/p007.png)
-
-![E014 - PDF p.7, 9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -327,7 +305,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Vidur 以请求到达和每次迭代完成为推进点，scheduler 根据当前队列、KV 容量与策略形成 batch，runtime estimator 给出该 batch 的运行时间，再更新请求进度与指标（架构见 PDF 第 4 页 Figure 2；调度器见第 6 页 §4.4）。</code></p>
 
-![E015 - PDF p.4](../evidence_pages/vidur/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -338,7 +316,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 实机基线是优化过的 vLLM fork；硬件为 A100/H100 80GB，4 GPU 机内互联为 pairwise NVLink（PDF 第 8 页，§7.1）。</code></p>
 
-![E016 - PDF p.8](../evidence_pages/vidur/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -349,7 +327,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>- 静态 batch 的 P95 normalized execution latency 最大误差 3.33%（PDF 第 8 页，§7.2，Figure 3）；</code></p>
 
-![E017 - PDF p.8](../evidence_pages/vidur/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -360,7 +338,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>- Poisson 动态负载、85% capacity 下，多数组合端到端误差小于 5%（PDF 第 9 页，§7.2，Figure 4）；</code></p>
 
-![E018 - PDF p.9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -371,7 +349,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>- 在 95% capacity 的附录压力测试中，小模型最大误差 12.65%（PDF 第 15 页，Appendix A，Figure 9）；</code></p>
 
-![E019 - PDF p.15](../evidence_pages/vidur/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -382,7 +360,7 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>- 全部搜索共 35,565 次仿真，若实机运行预计消耗约 113.99 万美元 GPU 成本；仿真约 12.5 小时 CPU、125 美元（PDF 第 15 页，Appendix B）。</code></p>
 
-![E020 - PDF p.15](../evidence_pages/vidur/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -393,9 +371,128 @@ Vidur 是“用少量 profile 驱动动态 serving 仿真”的经典基线：�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** What-if 案例显示：Qwen 的 MHA 相比 LLaMA 的 GQA 读取约 8 倍 KV 数据，成本约高 2 倍；将 TBT SLO 从 0.12 s 放宽到 0.14 s，某案例成本约下降 1.85 倍（PDF 第 9–10 页，§7.3，Figure 5–6 相邻分析）。这些是特定模型、trace、硬件和 SLO 下的实验结果，不应外推为通用比例。</code></p>
 
-![E021 - PDF p.9, 10](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
-![E021 - PDF p.9, 10](../evidence_pages/vidur/p010.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E003、E004、E015 引用</summary>
+
+![PDF p.4](../evidence_pages/vidur/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E004、E005、E006 引用</summary>
+
+![PDF p.5](../evidence_pages/vidur/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E004、E006、E007、E011、E012、E013 引用</summary>
+
+![PDF p.6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E009、E013、E014 引用</summary>
+
+![PDF p.7](../evidence_pages/vidur/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E016、E017 引用</summary>
+
+![PDF p.8](../evidence_pages/vidur/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E010、E012、E014、E018、E021 引用</summary>
+
+![PDF p.9](../evidence_pages/vidur/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E021 引用</summary>
+
+![PDF p.10](../evidence_pages/vidur/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E001 引用</summary>
+
+![PDF p.11](../evidence_pages/vidur/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E001 引用</summary>
+
+![PDF p.12](../evidence_pages/vidur/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E001 引用</summary>
+
+![PDF p.13](../evidence_pages/vidur/p013.png)
+
+</details>
+
+<a id="source-page-p014"></a>
+
+<details>
+<summary><strong>PDF p.14</strong> - 被 E001 引用</summary>
+
+![PDF p.14](../evidence_pages/vidur/p014.png)
+
+</details>
+
+<a id="source-page-p015"></a>
+
+<details>
+<summary><strong>PDF p.15</strong> - 被 E001、E008、E019、E020 引用</summary>
+
+![PDF p.15](../evidence_pages/vidur/p015.png)
+
+</details>
+
+<a id="source-page-p016"></a>
+
+<details>
+<summary><strong>PDF p.16</strong> - 被 E001 引用</summary>
+
+![PDF p.16](../evidence_pages/vidur/p016.png)
 
 </details>
 

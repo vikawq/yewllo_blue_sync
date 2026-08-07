@@ -402,7 +402,7 @@ def build_appendix(
         "",
         "## 原文证据截图附录",
         "",
-        "正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。",
+        "正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。",
         "",
     ]
     if spec.source_kind == "tpds_extract":
@@ -421,6 +421,17 @@ def build_appendix(
         )
 
     for item in evidence:
+        page_links = []
+        for page in item.pages:
+            if spec.source_kind == "tpds_extract":
+                label = f"物理 p.{page} / 期刊 p.{2462 + page}"
+            elif spec.source_kind == "web_abstract":
+                label = f"Springer 网页快照 p.{page}"
+            else:
+                label = f"PDF p.{page}"
+            page_links.append(
+                f'<a href="#source-page-p{page:03d}">{html.escape(label)}</a>'
+            )
         sections.extend(
             [
                 f'<a id="evidence-{item.evidence_id.lower()}"></a>',
@@ -430,24 +441,57 @@ def build_appendix(
                 "",
                 f"<p><strong>原定位：</strong> <code>{html.escape(item.locator_line)}</code></p>",
                 "",
+                f"<p><strong>页图：</strong> {' · '.join(page_links)}</p>",
+                "",
             ]
         )
+        sections.extend(["</details>", ""])
+
+    sections.extend(
+        [
+            "## 原文页面图库（按页去重）",
+            "",
+            "同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。",
+            "",
+        ]
+    )
+    evidence_by_page: dict[int, list[str]] = {}
+    for item in evidence:
         for page in item.pages:
-            for image_path in rendered[page]:
-                rel = image_path.relative_to(note_path.parent) if image_path.is_relative_to(note_path.parent) else None
-                if rel is None:
-                    rel_path = Path(
-                        Path(image_path).relative_to(PAPER_ROOT)
-                    )
-                    # Notes are at most one directory below PAPER_ROOT.
-                    prefix = "" if note_path.parent == PAPER_ROOT else "../"
-                    markdown_path = prefix + rel_path.as_posix()
-                else:
-                    markdown_path = rel.as_posix()
-                sections.append(
-                    f"![{item.evidence_id} - {item.page_label}]({markdown_path})"
-                )
-                sections.append("")
+            evidence_by_page.setdefault(page, []).append(item.evidence_id)
+
+    for page in sorted(evidence_by_page):
+        if spec.source_kind == "tpds_extract":
+            page_title = f"物理 p.{page} / 期刊 p.{2462 + page}（文本抽取面板）"
+        elif spec.source_kind == "web_abstract":
+            page_title = f"Springer 官方网页快照 p.{page}（非论文 PDF）"
+        else:
+            page_title = f"PDF p.{page}"
+        cited_by = "、".join(evidence_by_page[page])
+        sections.extend(
+            [
+                f'<a id="source-page-p{page:03d}"></a>',
+                "",
+                "<details>",
+                f"<summary><strong>{html.escape(page_title)}</strong> - 被 {cited_by} 引用</summary>",
+                "",
+            ]
+        )
+        for image_path in rendered[page]:
+            rel = image_path.relative_to(note_path.parent) if image_path.is_relative_to(note_path.parent) else None
+            if rel is None:
+                rel_path = Path(Path(image_path).relative_to(PAPER_ROOT))
+                # Notes are at most one directory below PAPER_ROOT.
+                prefix = "" if note_path.parent == PAPER_ROOT else "../"
+                markdown_path = prefix + rel_path.as_posix()
+            else:
+                markdown_path = rel.as_posix()
+            sections.extend(
+                [
+                    f"![{page_title}]({markdown_path})",
+                    "",
+                ]
+            )
         sections.extend(["</details>", ""])
     sections.extend([APPENDIX_END, ""])
     return "\n".join(sections)

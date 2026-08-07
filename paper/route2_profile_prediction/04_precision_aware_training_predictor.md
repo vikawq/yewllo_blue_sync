@@ -246,7 +246,7 @@ forward/backward/optimizer role
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -255,7 +255,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1，Abstract；§I 第 2–3 段；§II.B 第 1 段；图 1/图 2。</code></p>
 
-![E001 - PDF p.1](../evidence_pages/precision-aware/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -266,9 +266,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1–2，§I 第 3 段；§III `Computation graph execution time` 第 1–2 段、Algorithm 1。</code></p>
 
-![E002 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
-
-![E002 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -279,9 +277,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 脚注 1；PDF 2，§III 第 1–4 段、Eq. (1)–(4)、Algorithm 1。</code></p>
 
-![E003 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
-
-![E003 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -292,7 +288,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，Algorithm 1 第 1–17 行。</code></p>
 
-![E004 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -303,9 +299,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1，§II.A `Floating-point precision` 第 1 段；PDF 2，§III `Computation graph execution time` 第 2 段。</code></p>
 
-![E005 - PDF p.1, 2](../evidence_pages/precision-aware/p001.png)
-
-![E005 - PDF p.1, 2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -316,7 +310,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，§III `Computation graph execution time` 第 2 段末。</code></p>
 
-![E006 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -327,7 +321,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，§III 首段、Eq. (1)。</code></p>
 
-![E007 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -338,7 +332,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，§III `Communication overhead` 第 1 段、Eq. (2)–(3)。</code></p>
 
-![E008 - PDF p.2](../evidence_pages/precision-aware/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -349,9 +343,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 2–3，§III `Communication overhead` 第 2 段、Eq. (4)。</code></p>
 
-![E009 - PDF p.2, 3](../evidence_pages/precision-aware/p002.png)
-
-![E009 - PDF p.2, 3](../evidence_pages/precision-aware/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -362,11 +354,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1–3，§II.B、§III、§IV 图 2。</code></p>
 
-![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p001.png)
-
-![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p002.png)
-
-![E010 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -377,9 +365,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 图 1说明；PDF 3，§IV 与 §V。</code></p>
 
-![E011 - PDF p.1, 3](../evidence_pages/precision-aware/p001.png)
-
-![E011 - PDF p.1, 3](../evidence_pages/precision-aware/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -390,9 +376,7 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1，图 1；PDF 3，§IV、图 2。</code></p>
 
-![E012 - PDF p.1, 3](../evidence_pages/precision-aware/p001.png)
-
-![E012 - PDF p.1, 3](../evidence_pages/precision-aware/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -403,11 +387,38 @@ forward/backward/optimizer role
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 Abstract、§II.B；PDF 2 图 2；PDF 3 §IV。</code></p>
 
-![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
-![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p002.png)
+</details>
 
-![E013 - PDF p.1, 2, 3](../evidence_pages/precision-aware/p003.png)
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E002、E003、E005、E010、E011、E012、E013 引用</summary>
+
+![PDF p.1](../evidence_pages/precision-aware/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E002、E003、E004、E005、E006、E007、E008、E009、E010、E013 引用</summary>
+
+![PDF p.2](../evidence_pages/precision-aware/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E009、E010、E011、E012、E013 引用</summary>
+
+![PDF p.3](../evidence_pages/precision-aware/p003.png)
 
 </details>
 

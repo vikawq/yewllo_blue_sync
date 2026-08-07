@@ -413,7 +413,7 @@ Execution Recipe / Trace Graph
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 > **来源限制：** IEEE/ResearchGate 的终版 PDF 下载端点在当前环境被 418/403 拒绝。以下图片由公开终版 PDF 的逐页文本抽取生成，保留期刊页码和抽取行号，但不保持双栏版式；不应称为版式截图。
 
@@ -424,9 +424,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 大规模 DNN 训练需要选择并行策略、硬件集群、通信实现和各种超参数。直接在真实集群上逐一部署、运行、对比的成本很高；性能模型试图在部署前，以低成本预测训练时间或运行 Trace，从而辅助策略搜索、资源配置和系统设计。定位：PDF p.2 / 2464，§II-A 第 1 段，首句 “Although distributed training can accelerate training...” 及 Fig. 1。</code></p>
 
-![E001 - PDF p.2](evidence_pages/tpds2024-survey/p002-a.png)
-
-![E001 - PDF p.2](evidence_pages/tpds2024-survey/p002-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">物理 p.2 / 期刊 p.2464</a></p>
 
 </details>
 
@@ -437,13 +435,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 并行策略 | 数据并行、模型并行、流水并行，以及多维混合策略；不同切分带来计算、通信和内存差异 | PDF p.2–3 / 2464–2465，§II-B.1；Fig. 2 |</code></p>
 
-![E002 - PDF p.2, 3](evidence_pages/tpds2024-survey/p002-a.png)
-
-![E002 - PDF p.2, 3](evidence_pages/tpds2024-survey/p002-b.png)
-
-![E002 - PDF p.2, 3](evidence_pages/tpds2024-survey/p003-a.png)
-
-![E002 - PDF p.2, 3](evidence_pages/tpds2024-survey/p003-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">物理 p.2 / 期刊 p.2464</a> · <a href="#source-page-p003">物理 p.3 / 期刊 p.2465</a></p>
 
 </details>
 
@@ -454,9 +446,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 计算 | 不同设备、不同算子、输入 shape、算法与 kernel 对计算时间的影响 | PDF p.3 / 2465，§II-B.2 |</code></p>
 
-![E003 - PDF p.3](evidence_pages/tpds2024-survey/p003-a.png)
-
-![E003 - PDF p.3](evidence_pages/tpds2024-survey/p003-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">物理 p.3 / 期刊 p.2465</a></p>
 
 </details>
 
@@ -467,13 +457,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 通信 | collective/P2P、通信算法、消息量、拓扑、带宽/时延以及计算通信重叠 | PDF p.3–4 / 2465–2466，§II-B.3；Fig. 3 |</code></p>
 
-![E004 - PDF p.3, 4](evidence_pages/tpds2024-survey/p003-a.png)
-
-![E004 - PDF p.3, 4](evidence_pages/tpds2024-survey/p003-b.png)
-
-![E004 - PDF p.3, 4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E004 - PDF p.3, 4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">物理 p.3 / 期刊 p.2465</a> · <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -484,13 +468,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 内存与数据加载 | 参数、激活、优化器状态、显存限制、数据读取和预处理 | PDF p.3–4 / 2465–2466，§II-B.4 |</code></p>
 
-![E005 - PDF p.3, 4](evidence_pages/tpds2024-survey/p003-a.png)
-
-![E005 - PDF p.3, 4](evidence_pages/tpds2024-survey/p003-b.png)
-
-![E005 - PDF p.3, 4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E005 - PDF p.3, 4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">物理 p.3 / 期刊 p.2465</a> · <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -501,9 +479,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 集群设计 | 设备数量与类型、服务器与网络拓扑、异构部署 | PDF p.4 / 2466，§II-B.5 |</code></p>
 
-![E006 - PDF p.4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E006 - PDF p.4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -514,9 +490,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 协同设计 | 模型、并行策略、硬件和网络之间的联合选择，而非局部最优 | PDF p.4 / 2466，§II-B.6，首句 “A collaborative design...” |</code></p>
 
-![E007 - PDF p.4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E007 - PDF p.4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -527,13 +501,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 论文自述的贡献包括：梳理性能建模的设计空间；按方法学将已有工作分为解析、图和执行驱动三类；总结代表方法的输入、输出、支持范围、精度、开源/Profiling/运行环境要求；选择三种代表实现进行比较；给出应用和模型选择建议；讨论五类挑战与机会。定位：PDF p.1 / 2463，§I 末段，首句 “This paper presents a comprehensive survey...” 以及 PDF p.4 / 2466，§III 开头。</code></p>
 
-![E008 - PDF p.1, 4](evidence_pages/tpds2024-survey/p001-a.png)
-
-![E008 - PDF p.1, 4](evidence_pages/tpds2024-survey/p001-b.png)
-
-![E008 - PDF p.1, 4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E008 - PDF p.1, 4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">物理 p.1 / 期刊 p.2463</a> · <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -544,9 +512,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>论文在 PDF p.4 / 2466，§III 开头、首句 “According to the methodology of modeling and prediction...” 给出三类顶层定义。</code></p>
 
-![E009 - PDF p.4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E009 - PDF p.4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -557,9 +523,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 解析方法把训练过程分解为可用数学公式描述的部分，通常分别估算计算与通信，再根据串行、并行或重叠关系合成总时间。其具体公式往往与并行策略、框架执行方式和硬件假设绑定。定位：PDF p.4 / 2466，§III-A 开头。</code></p>
 
-![E010 - PDF p.4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E010 - PDF p.4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -570,11 +534,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Yan et al. [81] | 分别估算单 GPU 计算、参数服务器通信以及重叠，预测分布式训练性能 | 表 I 汇总其支持范围与实现条件 | 针对特定数据并行/PS 工作流；对更复杂并行与动态重叠扩展困难 | PDF p.4–5 / 2466–2467，§III-A.1 首段，首句 “In early work...” |</code></p>
 
-![E011 - PDF p.4, 5](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E011 - PDF p.4, 5](evidence_pages/tpds2024-survey/p004-b.png)
-
-![E011 - PDF p.4, 5](evidence_pages/tpds2024-survey/p005-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a> · <a href="#source-page-p005">物理 p.5 / 期刊 p.2467</a></p>
 
 </details>
 
@@ -585,11 +545,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Li et al. [76] | 对通信模式建模；论文综述称其在 7 个网络的 All-Reduce 场景平均误差小于 1.7% | 有实验验证 | 对其他数据并行场景效果“不令人满意”，作者因此又采用执行驱动方法 | PDF p.5–6 / 2467–2468，§III-A.1，首句 “In the research presented by Li...” 及 Table I |</code></p>
 
-![E012 - PDF p.5, 6](evidence_pages/tpds2024-survey/p005-a.png)
-
-![E012 - PDF p.5, 6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E012 - PDF p.5, 6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">物理 p.5 / 期刊 p.2467</a> · <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -600,9 +556,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Zeng et al. [69] | 面向异构集群，建立设备计算、通信和同步关系的解析模型 | 被本文选作横向实验的解析代表；有可运行公开实现 | 公式依赖所建模的并行与集群假设 | PDF p.6 / 2468，首句 “When a computing cluster...” |</code></p>
 
-![E013 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E013 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -613,9 +567,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| AMPeD [72] | 预测 Transformer 的 DP、pipeline MP、tensor MP、EP 四种策略；分别建模线性/非线性计算、各策略通信、流水 bubble 和梯度更新 | 表 I 汇总实现条件 | 对新算子、调度和通信语义需补公式 | PDF p.6 / 2468，首句 “AMPeD...” |</code></p>
 
-![E014 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E014 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -626,9 +578,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Calculon [80] | 用解析模型探索 Megatron Transformer/LLM 的多维并行和硬件/系统设计空间，预测 batch time 和内存 | 适合极大策略空间快速筛选 | 精度受抽象层级、利用率与重叠假设约束 | PDF p.6 / 2468，首句 “Calculon...” |</code></p>
 
-![E015 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E015 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -639,9 +589,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| FasterMoE [78] | 为 MoE 专家并行建立代价模型并据此优化；文中报告最高 17.87× 训练效率提升 | 有落地优化系统；17.87× 是优化后的训练效率提升，不是预测精度 | 面向特定 MoE/EP 机制，不能直接泛化为通用回放 | PDF p.6 / 2468，首句 “In order to optimize EP...” |</code></p>
 
-![E016 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E016 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -652,9 +600,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| SMSG [77] | 不直接预测绝对执行时间，而用无需 Profiling 的相对代价比较并行方案 | 规避了获取精确设备参数的困难 | 不能提供绝对端到端时间线 | PDF p.6 / 2468，首句 “Unlike the previous work...” |</code></p>
 
-![E017 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E017 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -665,9 +611,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Cynthia、DTS、[87] | 将性能公式用于云上成本/资源与分布式训练配置搜索 | 有系统原型或实验 | 目标偏配置优化，模型完整性服从搜索需求 | PDF p.6 / 2468，首句 “In addition...” |</code></p>
 
-![E018 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E018 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -678,9 +622,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** §III-A.2 总结：解析模型通常预测速度最快，适合快速扫描大规模设计空间；但公式可能包含难以获得、必须在真实机器上 Profile 的变量，通用性和可扩展性较弱，运行流程或并行策略一变就可能需要重新设计公式。定位：PDF p.6 / 2468，§III-A.2 及其两个要点。</code></p>
 
-![E019 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E019 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -691,7 +633,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 图方法用有向图描述训练工作流，节点代表计算、通信、I/O 或其他任务，边代表数据、控制或同步依赖。相较只输出一个总时间的公式，图能显式呈现执行顺序、并发、重叠和关键路径，也便于通过增删/替换节点与边进行 what-if 分析。定位：PDF p.7 / 2469，§III-B 开头。</code></p>
 
-![E020 - PDF p.7](evidence_pages/tpds2024-survey/p007-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a></p>
 
 </details>
 
@@ -702,7 +644,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Paleo [90] | 从 DNN 结构生成 DAG；节点为计算或 I/O。计算时间由 FLOPs/FLOPS、内存访问/带宽等解析估计，通信由数据量/带宽估计；同步分支取最大完成时间 | 预测 DNN 训练性能，比较模型/平台 | 本综述选作图模型横向实验代表；有公开端到端代码 | 虽是图模型，节点代价仍高度解析化；不是 Trace 回放 | PDF p.7 / 2469，§III-B.1 第 1 段，首句 “Earlier, Paleo...” |</code></p>
 
-![E021 - PDF p.7](evidence_pages/tpds2024-survey/p007-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a></p>
 
 </details>
 
@@ -713,7 +655,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| FlexFlow [93] | 输入计算图、设备拓扑和并行策略，生成包含计算/通信节点的 task graph；计算代价通过 Profile，通信用数据量/带宽；用 Metropolis-Hastings 搜索策略 | 搜索低成本并行策略 | 有系统实现并用于策略搜索 | 依赖候选硬件 Profiling；任务图由框架生成，不是实测运行 Trace | PDF p.7 / 2469，第 2 段，首句 “Jia et al...” |</code></p>
 
-![E022 - PDF p.7](evidence_pages/tpds2024-survey/p007-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a></p>
 
 </details>
 
@@ -724,7 +666,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| DayDream [95] | 用 CUPTI 采集 GPU kernel、CPU、数据与通信活动，构建 kernel 级依赖图；通过修改图模拟优化 | 对已运行 workload 做细粒度 what-if，例如改变 kernel/通信/依赖 | 有原型和论文实验 | 依赖底层 Profiler 和源平台；Trace 只看到已执行路径，跨框架/硬件需重建语义与代价 | PDF p.7 / 2469，第 3 段，首句 “Zhu et al...” |</code></p>
 
-![E023 - PDF p.7](evidence_pages/tpds2024-survey/p007-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a></p>
 
 </details>
 
@@ -735,9 +677,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| dPRO [98] | Profiler 采集各 worker 的本地计算子 DFG 和全局通信子 DFG；Replayer 用 Kahn 拓扑过程回放；Optimizer 对图做 fuse/split 等变换 | 重建全局时间线并自动优化分布式训练 | 有 profiler/replayer/optimizer；文中汇总最高 3.48× 优化加速 | 全局图构建与采集开销高；图编辑正确性依赖跨 rank 通信和依赖语义 | PDF p.8 / 2470，第 1 段，首句 “Similarly, Hu...” |</code></p>
 
-![E024 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E024 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -748,9 +688,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| DistSim [99] | 由模型、超参数与并行策略生成每节点子图，再生成计算/通信事件并组合时间线；重复事件去重，只 Profile 唯一事件 | 降低分布式训练性能预测的 Profile 成本 | 有系统实现，利用事件复用加速预测 | 对重复等价性的判定和未覆盖事件的泛化敏感 | PDF p.8 / 2470，第 2 段，首句 “Another graph-based...” |</code></p>
 
-![E025 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E025 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -761,9 +699,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Proteus [102] | 用 policy tree 表示并行策略，编译器生成执行图，包含计算/张量节点及通信、数据、控制依赖；考虑带宽冲突和重叠；计算用 Profile，通信用 alpha-beta | 同时预测吞吐与内存，评估复杂并行策略 | 论文综述称约 3% 预测误差 | 需要 Profile 计算事件；alpha-beta 对拥塞/网络动态刻画有限 | PDF p.8 / 2470，第 3 段，首句 “To better model...” |</code></p>
 
-![E026 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E026 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -774,9 +710,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| TAG [104] | 用 GNN 引导 MCTS 在计算图中选 cut，把部分 All-Reduce/PS 通信替换为 sufficient-factor broadcasting；再生成分布式训练图，用基于 FIFO 队列的虚拟运行时和 Profile 数据评估 | 面向设备拓扑的图部署与通信优化 | 有论文原型；论文称可用于未见过的拓扑和 DNN，而无需重新训练搜索模型 | 表达重点是图切分与部署优化，不等同于实测 Trace 的因果回放 | PDF p.8 / 2470，第 4 段 |</code></p>
 
-![E027 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E027 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -787,9 +721,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** §III-B.2 认为图模型能自然表达节点依赖，便于分析计算/通信重叠及通过图修改评估优化；缺点是许多方法仍要在真实硬件上 Profile 节点时间，图的大小和处理复杂度会随模型与集群规模快速上升。定位：PDF p.8 / 2470，§III-B.2。</code></p>
 
-![E028 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E028 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -800,9 +732,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 执行驱动模型让一个定制模拟器、组合模拟器或真实软件平台按照事件与依赖推进“虚拟执行”，而不是只对公式求值或在静态图上简单累计。它能插入更详细的队列、网络、设备和运行时模型。定位：PDF p.8 / 2470，§III-C 开头，首句 “In both analytical...” 及 Table III。</code></p>
 
-![E029 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E029 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -813,7 +743,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| [114]、[116]、Li et al. [76] | 分别使用排队网络/平均值分析、离散事件等方式模拟参数服务器或数据并行训练；部分计算/通信代价来自 Profile，并对 gRPC 等环境作修正 | 预测特定分布式训练运行时间与扩展性 | 有研究原型/实验 | 多面向特定框架和 DP/PS，离“全栈通用模拟”仍有距离 | PDF p.9 / 2471，§III-C.1 第 1 段 |</code></p>
 
-![E030 - PDF p.9](evidence_pages/tpds2024-survey/p009-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a></p>
 
 </details>
 
@@ -824,7 +754,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Perfestimator [117] | 单节点 Profile 计算时间，通信由 SimGrid 模拟；用缩放参数校准模拟时间 | 预测不同集群规模下的数据并行训练 | 组合真实 Profile 与网络模拟 | 对 Profile 平台和缩放假设敏感 | PDF p.9 / 2471，首句 “Yang et al...” |</code></p>
 
-![E031 - PDF p.9](evidence_pages/tpds2024-survey/p009-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a></p>
 
 </details>
 
@@ -835,7 +765,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| DNNEmu [119] | 先 Profile 算子数据集；见过的配置查表，未见配置用 GBDT 预测；修改 MXNet，以 sleep 模拟计算耗时，同时保留其他真实框架过程 | 在较少真实计算成本下仿真端到端分布式训练 | 有修改后的框架原型；是“查表+ML+执行驱动”的典型混合 | sleep 不能复现真实设备资源占用与 kernel 并发；模型迁移需新数据 | PDF p.9 / 2471，首句 “Similarly, DNNEmu...” |</code></p>
 
-![E032 - PDF p.9](evidence_pages/tpds2024-survey/p009-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a></p>
 
 </details>
 
@@ -846,7 +776,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| DistIR [125] | 用基于 MLIR 的 IR 表示分布式程序；各设备按依赖单线程执行，不同设备可并行；节点代价可解析或 Profile | 预测时间和内存，评估分布式策略 | 有 IR 与模拟器实现 | 结果受 IR 是否覆盖真实框架调度以及代价函数质量限制 | PDF p.9 / 2471，首句 “Santhanam et al...” |</code></p>
 
-![E033 - PDF p.9](evidence_pages/tpds2024-survey/p009-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a></p>
 
 </details>
 
@@ -857,9 +787,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| ASTRA-Sim [66] | workload、system、network 三层。workload 提供逐层计算时间、collective、数据量；计算可接 Scale-Sim；system 负责通信调度 FIFO/LIFO；network 可接 Garnet/ns-3 并描述拓扑 | 输出逐层计算、详细通信和瓶颈，联合研究 DNN/系统/网络 | 开源且被本文选作执行驱动代表；ASTRA-Sim 2.0 加入 Trace 驱动、解析网络、内存模型和更多拓扑 | 高保真后端很慢；输入计算时间和 workload 语义仍需外部提供；不同后端精度不一致 | PDF p.9–10 / 2471–2472，首句 “To provide a simulator...” |</code></p>
 
-![E034 - PDF p.9, 10](evidence_pages/tpds2024-survey/p009-a.png)
-
-![E034 - PDF p.9, 10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a> · <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -870,7 +798,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** §III-C.2 认为执行驱动方法更适合复现复杂运行时过程，且模块化地替换计算、通信或网络后端；代价是运行开销最大、速度最慢、扩展到大模型和大集群最困难。定位：PDF p.10 / 2472，§III-C.2。</code></p>
 
-![E035 - PDF p.10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -881,7 +809,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 作者从三类方法中各选择一个代表：Zeng et al. [69]（解析）、Paleo [90]（图）、ASTRA-Sim [66]（执行驱动）。选择理由是它们提供维护较好的端到端公开代码，并且不要求复杂的 Profiling 环境。定位：PDF p.10 / 2472，§IV-A 第 1–2 段及 Table IV。</code></p>
 
-![E036 - PDF p.10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -892,7 +820,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>实验平台为两台服务器、NVIDIA Quadro RTX 4000 GPU、1 GbE；Ubuntu 18.04、Python 3.7、CUDA 10.2；图像输入为 ImageNet 的 `3×224×224`。定位：PDF p.10 / 2472，Table IV 及相邻正文。</code></p>
 
-![E037 - PDF p.10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -903,11 +831,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>定位：PDF p.10–11 / 2472–2473，§IV-A Table IV 后的结果讨论。</code></p>
 
-![E038 - PDF p.10, 11](evidence_pages/tpds2024-survey/p010-a.png)
-
-![E038 - PDF p.10, 11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E038 - PDF p.10, 11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a> · <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -918,9 +842,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>**[论文事实]** §IV-C 给出五步建议：先按应用场景确定大类；再按并行策略、超参数和目标范围过滤；综合预测时间与精度；优先考虑有代码、少 Profiling、少真实环境依赖的模型；若没有完全匹配的方法，可基于最相近的开放实现修改。定位：PDF p.11 / 2473，§IV-C 五个要点。</code></p>
 
-![E039 - PDF p.11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E039 - PDF p.11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -931,9 +853,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>定位：PDF p.11 / 2473，§IV-B.1–3。</code></p>
 
-![E040 - PDF p.11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E040 - PDF p.11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -944,13 +864,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 计算与内存建模 | 只用固定 FLOPS 会忽略内存与数据移动；实测又依赖目标硬件。可接 GPGPU-Sim、Gem5-APU、DRAMsim3，ASTRA-Sim 可接 Scale-Sim/Trace，但 cycle-level 模拟很慢 | 为关键 kernel/内存状态保留高保真后端；普通重复算子不必全部 cycle-level | PDF p.11–12 / 2473–2474，§V-A |</code></p>
 
-![E041 - PDF p.11, 12](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E041 - PDF p.11, 12](evidence_pages/tpds2024-survey/p011-b.png)
-
-![E041 - PDF p.11, 12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E041 - PDF p.11, 12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a> · <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -961,9 +875,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 网络建模 | alpha-beta 和历史 Trace 难以表示拥塞；可接 SimGrid、ns-3、OPNET，但同样有精度—速度权衡 | 通信不能只回放一个 duration；应重建消息、依赖、到达与拓扑竞争 | PDF p.12 / 2474，§V-B |</code></p>
 
-![E042 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E042 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -974,9 +886,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 统一 Benchmark | 现有论文的 DNN、硬件和评价指标不同，难横比；建议 MLPerf 式套件，并提到 Chakra Trace | 项目需要固定 workload、capacity、路径和状态指标，并保存可交换 Trace/Recipe | PDF p.12 / 2474，§V-C |</code></p>
 
-![E043 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E043 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -987,9 +897,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 适应新设计空间 | 图和执行驱动较模块化；固定解析公式适应性差；可组合经过验证的解析子模型 | 把语义、物理绑定和节点代价解耦，允许替换局部模型 | PDF p.12 / 2474，§V-D |</code></p>
 
-![E044 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E044 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -1000,13 +908,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| AI 辅助建模 | 用 AI 黑盒替代计算昂贵或非研究重点的模块；DNNEmu 的 GBDT 是例子；也可从少量迭代学习动态优化策略，但高维超参数困难 | 建议多保真混合：关键状态和通信显式模拟，低风险事件用学习模型 | PDF p.12–13 / 2474–2475，§V-E |</code></p>
 
-![E045 - PDF p.12, 13](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E045 - PDF p.12, 13](evidence_pages/tpds2024-survey/p012-b.png)
-
-![E045 - PDF p.12, 13](evidence_pages/tpds2024-survey/p013-a.png)
-
-![E045 - PDF p.12, 13](evidence_pages/tpds2024-survey/p013-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a> · <a href="#source-page-p013">物理 p.13 / 期刊 p.2475</a></p>
 
 </details>
 
@@ -1017,9 +919,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 论文目标与贡献 | PDF p.1 / 2463，Abstract；§I 末段 “This paper presents...” |</code></p>
 
-![E046 - PDF p.1](evidence_pages/tpds2024-survey/p001-a.png)
-
-![E046 - PDF p.1](evidence_pages/tpds2024-survey/p001-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">物理 p.1 / 期刊 p.2463</a></p>
 
 </details>
 
@@ -1030,9 +930,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 性能预测动机与 Fig. 1 | PDF p.2 / 2464，§II-A 第 1 段 |</code></p>
 
-![E047 - PDF p.2](evidence_pages/tpds2024-survey/p002-a.png)
-
-![E047 - PDF p.2](evidence_pages/tpds2024-survey/p002-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">物理 p.2 / 期刊 p.2464</a></p>
 
 </details>
 
@@ -1043,17 +941,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 六类设计空间 | PDF p.2–4 / 2464–2466，§II-B.1–6；Fig. 2、Fig. 3 |</code></p>
 
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p002-a.png)
-
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p002-b.png)
-
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p003-a.png)
-
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p003-b.png)
-
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E048 - PDF p.2, 3, 4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">物理 p.2 / 期刊 p.2464</a> · <a href="#source-page-p003">物理 p.3 / 期刊 p.2465</a> · <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -1064,9 +952,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 三类方法定义 | PDF p.4 / 2466，§III 开头首段及三项列举 |</code></p>
 
-![E049 - PDF p.4](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E049 - PDF p.4](evidence_pages/tpds2024-survey/p004-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a></p>
 
 </details>
 
@@ -1077,15 +963,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 解析模型与 Table I | PDF p.4–6 / 2466–2468，§III-A；Table I 跨 p.5–6 |</code></p>
 
-![E050 - PDF p.4, 5, 6](evidence_pages/tpds2024-survey/p004-a.png)
-
-![E050 - PDF p.4, 5, 6](evidence_pages/tpds2024-survey/p004-b.png)
-
-![E050 - PDF p.4, 5, 6](evidence_pages/tpds2024-survey/p005-a.png)
-
-![E050 - PDF p.4, 5, 6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E050 - PDF p.4, 5, 6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">物理 p.4 / 期刊 p.2466</a> · <a href="#source-page-p005">物理 p.5 / 期刊 p.2467</a> · <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -1096,9 +974,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 解析模型优缺点 | PDF p.6 / 2468，§III-A.2 |</code></p>
 
-![E051 - PDF p.6](evidence_pages/tpds2024-survey/p006-a.png)
-
-![E051 - PDF p.6](evidence_pages/tpds2024-survey/p006-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">物理 p.6 / 期刊 p.2468</a></p>
 
 </details>
 
@@ -1109,11 +985,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 图模型与 Table II | PDF p.7–8 / 2469–2470，§III-B；Table II 在 p.7 |</code></p>
 
-![E052 - PDF p.7, 8](evidence_pages/tpds2024-survey/p007-a.png)
-
-![E052 - PDF p.7, 8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E052 - PDF p.7, 8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a> · <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -1124,7 +996,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Paleo/FlexFlow/DayDream | PDF p.7 / 2469，§III-B.1 前 3 段 |</code></p>
 
-![E053 - PDF p.7](evidence_pages/tpds2024-survey/p007-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">物理 p.7 / 期刊 p.2469</a></p>
 
 </details>
 
@@ -1135,9 +1007,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| dPRO/DistSim/Proteus/TAG | PDF p.8 / 2470，§III-B.1 后续段落 |</code></p>
 
-![E054 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E054 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -1148,9 +1018,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 图模型优缺点 | PDF p.8 / 2470，§III-B.2 |</code></p>
 
-![E055 - PDF p.8](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E055 - PDF p.8](evidence_pages/tpds2024-survey/p008-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a></p>
 
 </details>
 
@@ -1161,13 +1029,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 执行驱动定义与 Table III | PDF p.8–10 / 2470–2472，§III-C；Table III 在 p.9 |</code></p>
 
-![E056 - PDF p.8, 9, 10](evidence_pages/tpds2024-survey/p008-a.png)
-
-![E056 - PDF p.8, 9, 10](evidence_pages/tpds2024-survey/p008-b.png)
-
-![E056 - PDF p.8, 9, 10](evidence_pages/tpds2024-survey/p009-a.png)
-
-![E056 - PDF p.8, 9, 10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">物理 p.8 / 期刊 p.2470</a> · <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a> · <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -1178,7 +1040,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| Perfestimator/DNNEmu/DistIR | PDF p.9 / 2471，§III-C.1 |</code></p>
 
-![E057 - PDF p.9](evidence_pages/tpds2024-survey/p009-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a></p>
 
 </details>
 
@@ -1189,9 +1051,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| ASTRA-Sim/2.0 | PDF p.9–10 / 2471–2472，§III-C.1 “To provide a simulator...” |</code></p>
 
-![E058 - PDF p.9, 10](evidence_pages/tpds2024-survey/p009-a.png)
-
-![E058 - PDF p.9, 10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">物理 p.9 / 期刊 p.2471</a> · <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -1202,7 +1062,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 执行驱动优缺点 | PDF p.10 / 2472，§III-C.2 |</code></p>
 
-![E059 - PDF p.10](evidence_pages/tpds2024-survey/p010-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a></p>
 
 </details>
 
@@ -1213,11 +1073,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 三代表横评与 Table IV | PDF p.10–11 / 2472–2473，§IV-A；Table IV 在 p.10 |</code></p>
 
-![E060 - PDF p.10, 11](evidence_pages/tpds2024-survey/p010-a.png)
-
-![E060 - PDF p.10, 11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E060 - PDF p.10, 11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">物理 p.10 / 期刊 p.2472</a> · <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -1228,9 +1084,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 三类应用 | PDF p.11 / 2473，§IV-B.1–3 |</code></p>
 
-![E061 - PDF p.11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E061 - PDF p.11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -1241,9 +1095,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 五步选择建议 | PDF p.11 / 2473，§IV-C |</code></p>
 
-![E062 - PDF p.11](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E062 - PDF p.11](evidence_pages/tpds2024-survey/p011-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a></p>
 
 </details>
 
@@ -1254,13 +1106,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 计算/内存挑战 | PDF p.11–12 / 2473–2474，§V-A |</code></p>
 
-![E063 - PDF p.11, 12](evidence_pages/tpds2024-survey/p011-a.png)
-
-![E063 - PDF p.11, 12](evidence_pages/tpds2024-survey/p011-b.png)
-
-![E063 - PDF p.11, 12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E063 - PDF p.11, 12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">物理 p.11 / 期刊 p.2473</a> · <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -1271,9 +1117,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 网络挑战 | PDF p.12 / 2474，§V-B |</code></p>
 
-![E064 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E064 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -1284,9 +1128,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 统一 benchmark/Chakra | PDF p.12 / 2474，§V-C |</code></p>
 
-![E065 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E065 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -1297,9 +1139,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 新设计空间与模块化 | PDF p.12 / 2474，§V-D |</code></p>
 
-![E066 - PDF p.12](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E066 - PDF p.12](evidence_pages/tpds2024-survey/p012-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a></p>
 
 </details>
 
@@ -1310,13 +1150,7 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| AI 辅助建模 | PDF p.12–13 / 2474–2475，§V-E |</code></p>
 
-![E067 - PDF p.12, 13](evidence_pages/tpds2024-survey/p012-a.png)
-
-![E067 - PDF p.12, 13](evidence_pages/tpds2024-survey/p012-b.png)
-
-![E067 - PDF p.12, 13](evidence_pages/tpds2024-survey/p013-a.png)
-
-![E067 - PDF p.12, 13](evidence_pages/tpds2024-survey/p013-b.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">物理 p.12 / 期刊 p.2474</a> · <a href="#source-page-p013">物理 p.13 / 期刊 p.2475</a></p>
 
 </details>
 
@@ -1327,9 +1161,146 @@ Execution Recipe / Trace Graph
 
 <p><strong>原定位：</strong> <code>| 结论 | PDF p.13 / 2475，§VI |</code></p>
 
-![E068 - PDF p.13](evidence_pages/tpds2024-survey/p013-a.png)
+<p><strong>页图：</strong> <a href="#source-page-p013">物理 p.13 / 期刊 p.2475</a></p>
 
-![E068 - PDF p.13](evidence_pages/tpds2024-survey/p013-b.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>物理 p.1 / 期刊 p.2463（文本抽取面板）</strong> - 被 E008、E046 引用</summary>
+
+![物理 p.1 / 期刊 p.2463（文本抽取面板）](evidence_pages/tpds2024-survey/p001-a.png)
+
+![物理 p.1 / 期刊 p.2463（文本抽取面板）](evidence_pages/tpds2024-survey/p001-b.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>物理 p.2 / 期刊 p.2464（文本抽取面板）</strong> - 被 E001、E002、E047、E048 引用</summary>
+
+![物理 p.2 / 期刊 p.2464（文本抽取面板）](evidence_pages/tpds2024-survey/p002-a.png)
+
+![物理 p.2 / 期刊 p.2464（文本抽取面板）](evidence_pages/tpds2024-survey/p002-b.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>物理 p.3 / 期刊 p.2465（文本抽取面板）</strong> - 被 E002、E003、E004、E005、E048 引用</summary>
+
+![物理 p.3 / 期刊 p.2465（文本抽取面板）](evidence_pages/tpds2024-survey/p003-a.png)
+
+![物理 p.3 / 期刊 p.2465（文本抽取面板）](evidence_pages/tpds2024-survey/p003-b.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>物理 p.4 / 期刊 p.2466（文本抽取面板）</strong> - 被 E004、E005、E006、E007、E008、E009、E010、E011、E048、E049、E050 引用</summary>
+
+![物理 p.4 / 期刊 p.2466（文本抽取面板）](evidence_pages/tpds2024-survey/p004-a.png)
+
+![物理 p.4 / 期刊 p.2466（文本抽取面板）](evidence_pages/tpds2024-survey/p004-b.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>物理 p.5 / 期刊 p.2467（文本抽取面板）</strong> - 被 E011、E012、E050 引用</summary>
+
+![物理 p.5 / 期刊 p.2467（文本抽取面板）](evidence_pages/tpds2024-survey/p005-a.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>物理 p.6 / 期刊 p.2468（文本抽取面板）</strong> - 被 E012、E013、E014、E015、E016、E017、E018、E019、E050、E051 引用</summary>
+
+![物理 p.6 / 期刊 p.2468（文本抽取面板）](evidence_pages/tpds2024-survey/p006-a.png)
+
+![物理 p.6 / 期刊 p.2468（文本抽取面板）](evidence_pages/tpds2024-survey/p006-b.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>物理 p.7 / 期刊 p.2469（文本抽取面板）</strong> - 被 E020、E021、E022、E023、E052、E053 引用</summary>
+
+![物理 p.7 / 期刊 p.2469（文本抽取面板）](evidence_pages/tpds2024-survey/p007-a.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>物理 p.8 / 期刊 p.2470（文本抽取面板）</strong> - 被 E024、E025、E026、E027、E028、E029、E052、E054、E055、E056 引用</summary>
+
+![物理 p.8 / 期刊 p.2470（文本抽取面板）](evidence_pages/tpds2024-survey/p008-a.png)
+
+![物理 p.8 / 期刊 p.2470（文本抽取面板）](evidence_pages/tpds2024-survey/p008-b.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>物理 p.9 / 期刊 p.2471（文本抽取面板）</strong> - 被 E030、E031、E032、E033、E034、E056、E057、E058 引用</summary>
+
+![物理 p.9 / 期刊 p.2471（文本抽取面板）](evidence_pages/tpds2024-survey/p009-a.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>物理 p.10 / 期刊 p.2472（文本抽取面板）</strong> - 被 E034、E035、E036、E037、E038、E056、E058、E059、E060 引用</summary>
+
+![物理 p.10 / 期刊 p.2472（文本抽取面板）](evidence_pages/tpds2024-survey/p010-a.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>物理 p.11 / 期刊 p.2473（文本抽取面板）</strong> - 被 E038、E039、E040、E041、E060、E061、E062、E063 引用</summary>
+
+![物理 p.11 / 期刊 p.2473（文本抽取面板）](evidence_pages/tpds2024-survey/p011-a.png)
+
+![物理 p.11 / 期刊 p.2473（文本抽取面板）](evidence_pages/tpds2024-survey/p011-b.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>物理 p.12 / 期刊 p.2474（文本抽取面板）</strong> - 被 E041、E042、E043、E044、E045、E063、E064、E065、E066、E067 引用</summary>
+
+![物理 p.12 / 期刊 p.2474（文本抽取面板）](evidence_pages/tpds2024-survey/p012-a.png)
+
+![物理 p.12 / 期刊 p.2474（文本抽取面板）](evidence_pages/tpds2024-survey/p012-b.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>物理 p.13 / 期刊 p.2475（文本抽取面板）</strong> - 被 E045、E067、E068 引用</summary>
+
+![物理 p.13 / 期刊 p.2475（文本抽取面板）](evidence_pages/tpds2024-survey/p013-a.png)
+
+![物理 p.13 / 期刊 p.2475（文本抽取面板）](evidence_pages/tpds2024-survey/p013-b.png)
 
 </details>
 

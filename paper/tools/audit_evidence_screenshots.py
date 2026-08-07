@@ -16,6 +16,8 @@ END = "<!-- EVIDENCE_SCREENSHOTS:END -->"
 ANCHOR_RE = re.compile(r'<a id="evidence-(e\d{3})"></a>')
 LINK_RE = re.compile(r'\[原文截图 (E\d{3})\]\(#evidence-(e\d{3})\)')
 IMAGE_RE = re.compile(r'!\[[^]]*\]\(([^)]+\.png)\)')
+PAGE_LINK_RE = re.compile(r'href="#source-page-(p\d{3})"')
+PAGE_ANCHOR_RE = re.compile(r'<a id="source-page-(p\d{3})"></a>')
 DETAIL_RE = re.compile(
     r'<summary><strong>(E\d{3})</strong> - 原笔记第 (\d+) 行 - .*?</summary>\s*'
     r'<p><strong>原定位：</strong> <code>(.*?)</code></p>',
@@ -41,6 +43,11 @@ def main() -> None:
         link_pairs = LINK_RE.findall(body)
         links = [label.lower() for label, target in link_pairs]
         images = IMAGE_RE.findall(appendix)
+        page_links = PAGE_LINK_RE.findall(appendix)
+        page_anchors = PAGE_ANCHOR_RE.findall(appendix)
+        duplicate_image_embeds = sorted(
+            image for image in set(images) if images.count(image) > 1
+        )
         line_mismatches: list[dict[str, object]] = []
         body_lines = body.rstrip().splitlines()
         for evidence_id, line_number_text, locator_html in DETAIL_RE.findall(appendix):
@@ -83,6 +90,9 @@ def main() -> None:
             or missing
             or mismatched_links
             or line_mismatches
+            or set(page_links) != set(page_anchors)
+            or len(page_anchors) != len(set(page_anchors))
+            or duplicate_image_embeds
             or text.count(BEGIN) != 1
             or text.count(END) != 1
         ):
@@ -94,6 +104,13 @@ def main() -> None:
                     "missing_images": missing,
                     "mismatched_links": mismatched_links,
                     "line_mismatches": line_mismatches,
+                    "page_links_without_matching_anchor": sorted(
+                        set(page_links) - set(page_anchors)
+                    ),
+                    "page_anchors_without_link": sorted(
+                        set(page_anchors) - set(page_links)
+                    ),
+                    "duplicate_image_embeds": duplicate_image_embeds,
                 }
             )
 
@@ -103,6 +120,7 @@ def main() -> None:
                 "cards": len(anchors),
                 "image_embeds": len(images),
                 "unique_images": len(set(images)),
+                "duplicate_image_embeds": len(images) - len(set(images)),
             }
         )
 

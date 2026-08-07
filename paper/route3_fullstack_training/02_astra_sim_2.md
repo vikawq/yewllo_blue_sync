@@ -116,7 +116,7 @@
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -125,7 +125,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：ASTRA-sim 2.0 用统一 execution trace 表示 compute、memory、collective/P2P 节点和依赖，以可组合的多维拓扑、集合通信算法、解析或外部网络后端、局部/远端内存模型执行大规模训练时序。（PDF p.1，Abstract；p.3–8，§III–IV）</code></p>
 
-![E001 - PDF p.1](../evidence_pages/astra-sim-2/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -136,11 +136,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：论文面向大模型训练系统的模型并行、层次网络、in-network collective 与 disaggregated memory 联合设计。作者认为旧版 ASTRA-sim 的 workload 表达难以容纳任意并行依赖，网络接口也限制层次/异构拓扑和大规模快速探索。（PDF p.1–3，Abstract、§I、§II）</code></p>
 
-![E002 - PDF p.1, 2, 3](../evidence_pages/astra-sim-2/p001.png)
-
-![E002 - PDF p.1, 2, 3](../evidence_pages/astra-sim-2/p002.png)
-
-![E002 - PDF p.1, 2, 3](../evidence_pages/astra-sim-2/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -151,7 +147,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：2.0 的扩展包括：图式 training loop、参数化多维拓扑、解析网络后端、内存模型以及 in-network collectives/远端内存案例。（PDF p.3，§III，Fig. 1）</code></p>
 
-![E003 - PDF p.3](../evidence_pages/astra-sim-2/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -162,7 +158,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Fig. 1 把系统分为 workload、system、network 三层。Workload 负责训练图；system 处理 collective、调度与 compute/communication overlap；network 可接解析模型或更细模拟器。计算时间可来自外部 NPU model 或实机测量。（PDF p.3，§III 第1–5段，Fig. 1）</code></p>
 
-![E004 - PDF p.3](../evidence_pages/astra-sim-2/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -173,7 +169,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：ASTRA-sim 可通过 PyTorch Execution Graph Observer 在不改模型代码的情况下抓图，也可接 FlexFlow execution trace；每个 NPU 有独立 graph engine，节点在所有 parent 完成后 ready。（PDF p.4，§IV-A，Snippet 1 后第1–4段）</code></p>
 
-![E005 - PDF p.4](../evidence_pages/astra-sim-2/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -184,7 +180,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：统一 ET 节点分三类：compute 节点记录 tensor size/FLOPs 并用内部 roofline 估计周期；memory 节点记录读写 tensor size；communication 节点记录 collective/P2P 类型和通信量，随后由 system/network 转为延迟。（PDF p.5，§IV-A 第1–2段，Fig. 1 右上角）</code></p>
 
-![E006 - PDF p.5](../evidence_pages/astra-sim-2/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -195,9 +191,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者用 Ring、FullyConnected、Switch 三种 building block 按层次堆叠任意维网络，并为每一维选择 topology-aware collective；示例涵盖 TPU、DGX、Dragonfly 等 2D/3D 结构。（PDF p.5–6，§IV-B，Fig. 3，Table I）</code></p>
 
-![E007 - PDF p.5, 6](../evidence_pages/astra-sim-2/p005.png)
-
-![E007 - PDF p.5, 6](../evidence_pages/astra-sim-2/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -208,7 +202,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：解析后端的核心式为 `Time = LinkLatency × Hops + MessageSize / LinkBandwidth`，完成后经 callback 通知 system 层；它依赖已知的、congestion-free 的 topology-aware collective。论文脚注明确说非平凡拥塞/oversubscription 的估计仍是限制与未来工作。（PDF p.6，§IV-C，Snippet 2 前后、脚注 4）</code></p>
 
-![E008 - PDF p.6](../evidence_pages/astra-sim-2/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -219,7 +213,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：64 MB–1.5 GB all-reduce 在 4/16 张 V100 ring 上的平均误差为 5%；64 NPU 3D torus 案例中，Garnet 需 21.42 分钟，解析后端 1.70 秒（756×），并在 3.14 秒内模拟 4K NPU。（PDF p.6，§IV-C “Validation”与“Simulation speed”，Fig. 4）</code></p>
 
-![E009 - PDF p.6](../evidence_pages/astra-sim-2/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -230,11 +224,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：local memory 用启动延迟与 `size/bandwidth` 估计；remote memory 引入分层 pool 和 pipeline，把请求在设备/网络阶段组合。论文还建模 in-switch collectives。（PDF p.6–8，§IV-D，Fig. 5–8及相邻公式）</code></p>
 
-![E010 - PDF p.6, 7, 8](../evidence_pages/astra-sim-2/p006.png)
-
-![E010 - PDF p.6, 7, 8](../evidence_pages/astra-sim-2/p007.png)
-
-![E010 - PDF p.6, 7, 8](../evidence_pages/astra-sim-2/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -245,7 +235,7 @@
 
 <p><strong>原定位：</strong> <code>- **依赖（原文事实）**：节点由 parent 完成事件激活，各 NPU 独立推进 execution graph。（PDF p.4，§IV-A）</code></p>
 
-![E011 - PDF p.4](../evidence_pages/astra-sim-2/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -256,9 +246,7 @@
 
 <p><strong>原定位：</strong> <code>- **collective（原文事实）**：system 层把 communication 节点交给所选 collective/网络后端，并通过完成 callback 恢复图执行。（PDF p.5–6，§IV-B–C）</code></p>
 
-![E012 - PDF p.5, 6](../evidence_pages/astra-sim-2/p005.png)
-
-![E012 - PDF p.5, 6](../evidence_pages/astra-sim-2/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -269,7 +257,7 @@
 
 <p><strong>原定位：</strong> <code>- **重叠（原文事实）**：system 层职责明确包含 compute/communication overlap；论文没有证明它复刻 PyTorch/NCCL 的全部 stream/launch 次序。（PDF p.3，§III，Fig. 1）</code></p>
 
-![E013 - PDF p.3](../evidence_pages/astra-sim-2/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -280,7 +268,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：所有 §V 案例统一假定 A100 的实测 234 TFLOPS 计算能力。（PDF p.8，§V 开头）</code></p>
 
-![E014 - PDF p.8](../evidence_pages/astra-sim-2/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -291,9 +279,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者比较 512 NPU 的 wafer-scale 与 conventional 多维拓扑，并引入 Themis 调度。对 AllReduce/DLRM，在等带宽条件下 conventional 可接近 wafer；GPT-3/Transformer-1T 因并行映射不同，wafer 更占优。scale-up wafer 的 collective 加速最高 2.51×。（PDF p.8–9，§V-A，Table II–IV，Fig. 9）</code></p>
 
-![E015 - PDF p.8, 9](../evidence_pages/astra-sim-2/p008.png)
-
-![E015 - PDF p.8, 9](../evidence_pages/astra-sim-2/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -304,9 +290,101 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：分层远端内存案例中，未优化 HierMem 与 Zero-Infinity 接近（后者约快 0.1%）；优化后的 HierMem 相对基线最高 4.6×。（PDF p.9–10，§V-B，Fig. 11，Table V）</code></p>
 
-![E016 - PDF p.9, 10](../evidence_pages/astra-sim-2/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
-![E016 - PDF p.9, 10](../evidence_pages/astra-sim-2/p010.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E002 引用</summary>
+
+![PDF p.1](../evidence_pages/astra-sim-2/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E002 引用</summary>
+
+![PDF p.2](../evidence_pages/astra-sim-2/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002、E003、E004、E013 引用</summary>
+
+![PDF p.3](../evidence_pages/astra-sim-2/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E005、E011 引用</summary>
+
+![PDF p.4](../evidence_pages/astra-sim-2/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E006、E007、E012 引用</summary>
+
+![PDF p.5](../evidence_pages/astra-sim-2/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E007、E008、E009、E010、E012 引用</summary>
+
+![PDF p.6](../evidence_pages/astra-sim-2/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E010 引用</summary>
+
+![PDF p.7](../evidence_pages/astra-sim-2/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E010、E014、E015 引用</summary>
+
+![PDF p.8](../evidence_pages/astra-sim-2/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E015、E016 引用</summary>
+
+![PDF p.9](../evidence_pages/astra-sim-2/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E016 引用</summary>
+
+![PDF p.10](../evidence_pages/astra-sim-2/p010.png)
 
 </details>
 

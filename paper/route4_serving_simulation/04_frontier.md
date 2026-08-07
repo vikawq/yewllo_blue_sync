@@ -192,7 +192,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -201,9 +201,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Frontier 认为旧仿真器的主要误差不再只来自算子时延，而来自现代 runtime 状态：co-location、prefill/decode disaggregation（PDD）、attention/FFN disaggregation（AFD）、CUDA Graph、speculative/MTP decoding、prefix cache、chunked prefill、MoE/EP、分层 KV cache，以及 reasoning/agent/RL 的多轮状态（PDF 第 1–2 页，Abstract、§1，Table 1）。</code></p>
 
-![E001 - PDF p.1, 2](../evidence_pages/frontier/p001.png)
-
-![E001 - PDF p.1, 2](../evidence_pages/frontier/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -214,9 +212,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>论文给出的直接例子包括（PDF 第 3–4 页，§2，Figure 1–5、Table 2）：</code></p>
 
-![E002 - PDF p.3, 4](../evidence_pages/frontier/p003.png)
-
-![E002 - PDF p.3, 4](../evidence_pages/frontier/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -227,9 +223,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Frontier 包含四层（PDF 第 4–5 页，§3.1，Figure 6）：</code></p>
 
-![E003 - PDF p.4, 5](../evidence_pages/frontier/p004.png)
-
-![E003 - PDF p.4, 5](../evidence_pages/frontier/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -240,7 +234,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>每个 cluster 有独立 event queue 和一个执行线程；跨 cluster 通过队列传递事件。运行时跟踪 per-request history、batch trace、TTFT/TPOT、吞吐、E2E 与内存（PDF 第 5 页，§3.1 “Discrete-event execution” 段）。</code></p>
 
-![E004 - PDF p.5](../evidence_pages/frontier/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -251,11 +245,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>见 PDF 第 5–6 页，§3.2 “Parallelism and dependencies” 延续段；更完整伪代码见 PDF 第 17 页，Appendix A.2，Algorithm 1。</code></p>
 
-![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p005.png)
-
-![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p006.png)
-
-![E005 - PDF p.5, 6, 17](../evidence_pages/frontier/p017.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p017">PDF p.17</a></p>
 
 </details>
 
@@ -266,7 +256,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 常规请求携带 arrival、prompt/decode 计划；解耦架构会在角色 worker 间传递 KV 或 activation。对 reasoning/agent workload，论文增加 stateful request abstraction：每个请求包含 round 数、每轮 prefill/decode token 计划、工具执行延迟；每轮完成后发 ThinkingRequeueEvent，并通过 session affinity 回到同一 replica 以复用 KV/prefix（PDF 第 6 页，§3.2 “Agentic Reasoning”）。</code></p>
 
-![E006 - PDF p.6](../evidence_pages/frontier/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -277,7 +267,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 在 batch 形成前，Control Plane 固定 capacity envelope 与运行时契约：Graph capture sizes、prefix eligibility、speculative decoding token allowances、watermark 与 preemption。KV manager 以 block 数检查容量，超 watermark 触发 preemption（PDF 第 6 页，§3.2 “Runtime invariants”）。</code></p>
 
-![E007 - PDF p.6](../evidence_pages/frontier/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -288,7 +278,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Frontier 把现代优化写成适配 scheduler-batch-engine loop 的 Runtime Adapters（PDF 第 6 页，§3.3）：</code></p>
 
-![E008 - PDF p.6](../evidence_pages/frontier/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -299,9 +289,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]**（PDF 第 6–7 页，§3.4）：</code></p>
 
-![E009 - PDF p.6, 7](../evidence_pages/frontier/p006.png)
-
-![E009 - PDF p.6, 7](../evidence_pages/frontier/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -312,9 +300,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Frontier 复用 vLLM dummy profile：加载权重、记录 torch peak 和 non-torch residency，再计算可用 KV blocks；运行中由 scheduler 依据 block watermark 做 admission/preemption（PDF 第 6–7 页，§3.4 “Memory-Capacity Model”）。</code></p>
 
-![E010 - PDF p.6, 7](../evidence_pages/frontier/p006.png)
-
-![E010 - PDF p.6, 7](../evidence_pages/frontier/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -325,7 +311,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 根据 domain 与规模选择 ASTRA-sim 或 HTSim，支持 collective 与 point-to-point；PDD/AFD 的 transfer 通过显式事件连接不同 cluster（PDF 第 7 页，§3.4 “Communication Backend”）。</code></p>
 
-![E011 - PDF p.7](../evidence_pages/frontier/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -336,9 +322,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 实机为 2 台服务器、每台 8×H800 SXM，机内 NVLink 400GB/s，机间 400Gb NDR IB/GPU；vLLM 0.10.2 V1。模型包括 Qwen3-30B MoE、Step3-316B、Llama3.1-8B；workload 包括 prefill-heavy 2048/256、decode-heavy 256/2048、balanced 1024/1024 与 ShareGPT（PDF 第 7–8 页，§5.1，Table 3）。AFD ground truth 来自作者 in-house、未公开实现（PDF 第 8 页脚注）。</code></p>
 
-![E012 - PDF p.7, 8](../evidence_pages/frontier/p007.png)
-
-![E012 - PDF p.7, 8](../evidence_pages/frontier/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -349,7 +333,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** H800 BF16 的 p50/p95 相对误差：attention 3.5%/14.2%，linear 3.3%/6.4%，GMM 1.4%/5.3%；对比 Vidur 特征，attention 达 55.4%/376.1%。FP8 attention p95 为 8.8%（PDF 第 8 页，§5.2，Figure 7）。</code></p>
 
-![E013 - PDF p.8](../evidence_pages/frontier/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -360,7 +344,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>KV 初始预算误差在 1.89% 内，而解析模型为 14.1–39.73%；ShareGPT 运行中最大差 294 blocks，即 115.6MB；makespan 在 7.6% 内（PDF 第 8 页，§5.3，Figure 8、Table 4）。</code></p>
 
-![E014 - PDF p.8](../evidence_pages/frontier/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -371,9 +355,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]**（PDF 第 9–10 页，§5.4–§5.5）：</code></p>
 
-![E015 - PDF p.9, 10](../evidence_pages/frontier/p009.png)
-
-![E015 - PDF p.9, 10](../evidence_pages/frontier/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -384,9 +366,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- 256×H800 搜索 483,536 个候选，65,190 个 OOM，496 个满足 SLA；输出 Pareto frontier（PDF 第 10–11 页，§6.1，Figure 12）；</code></p>
 
-![E016 - PDF p.10, 11](../evidence_pages/frontier/p010.png)
-
-![E016 - PDF p.10, 11](../evidence_pages/frontier/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -397,9 +377,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- 宽松 TTFT 下 PDD 可达 137.4K，AFD 116.2K、co-located 27.7K；TTFT 收紧到 500ms 后 AFD 116.2K，PDD 100.7K（PDF 第 10–11 页，§6.1）；</code></p>
 
-![E017 - PDF p.10, 11](../evidence_pages/frontier/p010.png)
-
-![E017 - PDF p.10, 11](../evidence_pages/frontier/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -410,9 +388,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- 1,024 个异构 H800/H20 可搜索角色分配与成本效率（PDF 第 11–12 页，§6.2）；</code></p>
 
-![E018 - PDF p.11, 12](../evidence_pages/frontier/p011.png)
-
-![E018 - PDF p.11, 12](../evidence_pages/frontier/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -423,7 +399,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- reasoning 场景的 phase-aware scheduler 把 answer-visible TTFT p95 降低 30.4%，planning throughput 提升 23.2%；trace 为 4K–32K prompt、每轮约 0.2K decode（PDF 第 12 页，§6.3，Figure 14）；</code></p>
 
-![E019 - PDF p.12](../evidence_pages/frontier/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -434,9 +410,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- RL 训练/rollout 根据 active requests 从 DP32/PP16/TP2 切到 DP8/PP16/TP8，重配置 4.52s，makespan 从 528.8s 降到 259.1s，约 2.04×（PDF 第 12–13 页，§6.4，Figure 15）。</code></p>
 
-![E020 - PDF p.12, 13](../evidence_pages/frontier/p012.png)
-
-![E020 - PDF p.12, 13](../evidence_pages/frontier/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -447,7 +421,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 论文称实现约 70K Python LoC，并基于/重构 Vidur；支持 HuggingFace config、PyTorch/vLLM/FlashInfer operator library（PDF 第 7 页，§4）。官方仓库为 https://github.com/NetX-lab/Frontier ，MIT 许可。</code></p>
 
-![E021 - PDF p.7](../evidence_pages/frontier/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -458,7 +432,7 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- 主要校准 vLLM，SGLang/TensorRT-LLM 尚未同等验证（PDF 第 13 页，§7）；</code></p>
 
-![E022 - PDF p.13](../evidence_pages/frontier/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -469,7 +443,137 @@ Frontier 把现代 LLM serving 的“状态改变时间线”做成了真正的 
 
 <p><strong>原定位：</strong> <code>- CPU overhead 模型可能不稳，论文假设大规模场景约 90% 时间在 GPU，并把 CUDA API interception 列为未来工作（PDF 第 13 页，§7）；</code></p>
 
-![E023 - PDF p.13](../evidence_pages/frontier/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p013">PDF p.13</a></p>
+
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001 引用</summary>
+
+![PDF p.1](../evidence_pages/frontier/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001 引用</summary>
+
+![PDF p.2](../evidence_pages/frontier/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002 引用</summary>
+
+![PDF p.3](../evidence_pages/frontier/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E003 引用</summary>
+
+![PDF p.4](../evidence_pages/frontier/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E003、E004、E005 引用</summary>
+
+![PDF p.5](../evidence_pages/frontier/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E005、E006、E007、E008、E009、E010 引用</summary>
+
+![PDF p.6](../evidence_pages/frontier/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E009、E010、E011、E012、E021 引用</summary>
+
+![PDF p.7](../evidence_pages/frontier/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E012、E013、E014 引用</summary>
+
+![PDF p.8](../evidence_pages/frontier/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E015 引用</summary>
+
+![PDF p.9](../evidence_pages/frontier/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E015、E016、E017 引用</summary>
+
+![PDF p.10](../evidence_pages/frontier/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E016、E017、E018 引用</summary>
+
+![PDF p.11](../evidence_pages/frontier/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E018、E019、E020 引用</summary>
+
+![PDF p.12](../evidence_pages/frontier/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E020、E022、E023 引用</summary>
+
+![PDF p.13](../evidence_pages/frontier/p013.png)
+
+</details>
+
+<a id="source-page-p017"></a>
+
+<details>
+<summary><strong>PDF p.17</strong> - 被 E005 引用</summary>
+
+![PDF p.17](../evidence_pages/frontier/p017.png)
 
 </details>
 

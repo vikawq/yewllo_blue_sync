@@ -310,7 +310,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -319,7 +319,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>- 版本：MLSys 2025 终稿，共 13 个 PDF 页；正文至 PDF p.10。</code></p>
 
-![E001 - PDF p.10](../evidence_pages/lumos/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -330,17 +330,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：摘要、§1，PDF pp.1–2；§3，PDF pp.3–6。</code></p>
 
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p001.png)
-
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p002.png)
-
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p003.png)
-
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p004.png)
-
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p005.png)
-
-![E002 - PDF p.1, 2, 3, 4, 5, 6](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -351,7 +341,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§1、Figure 1，PDF p.2。</code></p>
 
-![E003 - PDF p.2](../evidence_pages/lumos/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -362,11 +352,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§1，PDF p.2；§4.2.2，PDF pp.7–8。</code></p>
 
-![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p002.png)
-
-![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p007.png)
-
-![E004 - PDF p.2, 7, 8](../evidence_pages/lumos/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -377,11 +363,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§1，PDF p.2；§3.2，Figure 2，PDF p.4；实现说明 §4，PDF p.6。</code></p>
 
-![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p002.png)
-
-![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p004.png)
-
-![E005 - PDF p.2, 4, 6](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -392,9 +374,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.1、Figure 2，PDF pp.3–4。</code></p>
 
-![E006 - PDF p.3, 4](../evidence_pages/lumos/p003.png)
-
-![E006 - PDF p.3, 4](../evidence_pages/lumos/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -405,7 +385,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.2、§3.3.1，PDF p.4。</code></p>
 
-![E007 - PDF p.4](../evidence_pages/lumos/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -416,9 +396,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.3.2、Figure 3，PDF pp.4–5。</code></p>
 
-![E008 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
-
-![E008 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -429,9 +407,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.3.2，PDF pp.4–5。</code></p>
 
-![E009 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
-
-![E009 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -442,7 +418,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.3.2，PDF p.5。</code></p>
 
-![E010 - PDF p.5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -453,7 +429,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.3.2、Figure 3，PDF p.5。</code></p>
 
-![E011 - PDF p.5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -464,7 +440,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.5、Algorithm 1 后两段，PDF p.6。</code></p>
 
-![E012 - PDF p.6](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -475,11 +451,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.5、Algorithm 1，PDF p.6；§4.2，PDF pp.7–8。</code></p>
 
-![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p006.png)
-
-![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p007.png)
-
-![E013 - PDF p.6, 7, 8](../evidence_pages/lumos/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -490,7 +462,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4.2.3，Figure 6，PDF p.8。</code></p>
 
-![E014 - PDF p.8](../evidence_pages/lumos/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -501,7 +473,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.4，PDF p.5。</code></p>
 
-![E015 - PDF p.5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -512,9 +484,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.4、Figure 4，PDF pp.5–6。</code></p>
 
-![E016 - PDF p.5, 6](../evidence_pages/lumos/p005.png)
-
-![E016 - PDF p.5, 6](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -525,7 +495,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.4，PDF p.5。</code></p>
 
-![E017 - PDF p.5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -536,11 +506,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.4，PDF pp.5–6；§4.3.2、Table 2、Figure 8，PDF p.9。</code></p>
 
-![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p005.png)
-
-![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p006.png)
-
-![E018 - PDF p.5, 6, 9](../evidence_pages/lumos/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -551,9 +517,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4.3.1，PDF p.9；§5 “Kernel Execution Time Prediction”，PDF p.10。</code></p>
 
-![E019 - PDF p.9, 10](../evidence_pages/lumos/p009.png)
-
-![E019 - PDF p.9, 10](../evidence_pages/lumos/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -564,9 +528,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.2–§3.3，PDF pp.4–5；本文归纳其未覆盖部分。</code></p>
 
-![E020 - PDF p.4, 5](../evidence_pages/lumos/p004.png)
-
-![E020 - PDF p.4, 5](../evidence_pages/lumos/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -577,7 +539,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4 开头，PDF p.6。</code></p>
 
-![E021 - PDF p.6](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -588,9 +550,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4.1、Table 1，PDF pp.6–7。</code></p>
 
-![E022 - PDF p.6, 7](../evidence_pages/lumos/p006.png)
-
-![E022 - PDF p.6, 7](../evidence_pages/lumos/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -601,9 +561,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4.2.1–§4.2.3、Figures 5–6，PDF pp.7–8。</code></p>
 
-![E023 - PDF p.7, 8](../evidence_pages/lumos/p007.png)
-
-![E023 - PDF p.7, 8](../evidence_pages/lumos/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -614,9 +572,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§4.3.1、Figure 7，PDF pp.8–9；§4.3.2、Table 2、Figure 8，PDF p.9。</code></p>
 
-![E024 - PDF p.8, 9](../evidence_pages/lumos/p008.png)
-
-![E024 - PDF p.8, 9](../evidence_pages/lumos/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -627,7 +583,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§5 “Kernel Execution Time Prediction”与“Limitations”，PDF p.10。</code></p>
 
-![E025 - PDF p.10](../evidence_pages/lumos/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -638,11 +594,7 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§3.4，PDF pp.5–6；§5 Adaptability，PDF p.10。</code></p>
 
-![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p005.png)
-
-![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p006.png)
-
-![E026 - PDF p.5, 6, 10](../evidence_pages/lumos/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -653,11 +605,101 @@ Lumos 证明，在现代 LLM 上准确 replay 的首要问题往往不是更复�
 
 <p><strong>原定位：</strong> <code>证据：§5 “Profiling Overhead and Cost”，PDF pp.9–10；流程耗时见 §4，PDF p.6。</code></p>
 
-![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
-![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p009.png)
+</details>
 
-![E027 - PDF p.6, 9, 10](../evidence_pages/lumos/p010.png)
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E002 引用</summary>
+
+![PDF p.1](../evidence_pages/lumos/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E002、E003、E004、E005 引用</summary>
+
+![PDF p.2](../evidence_pages/lumos/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002、E006 引用</summary>
+
+![PDF p.3](../evidence_pages/lumos/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E005、E006、E007、E008、E009、E020 引用</summary>
+
+![PDF p.4](../evidence_pages/lumos/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E002、E008、E009、E010、E011、E015、E016、E017、E018、E020、E026 引用</summary>
+
+![PDF p.5](../evidence_pages/lumos/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E002、E005、E012、E013、E016、E018、E021、E022、E026、E027 引用</summary>
+
+![PDF p.6](../evidence_pages/lumos/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E004、E013、E022、E023 引用</summary>
+
+![PDF p.7](../evidence_pages/lumos/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E004、E013、E014、E023、E024 引用</summary>
+
+![PDF p.8](../evidence_pages/lumos/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E018、E019、E024、E027 引用</summary>
+
+![PDF p.9](../evidence_pages/lumos/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E001、E019、E025、E026、E027 引用</summary>
+
+![PDF p.10](../evidence_pages/lumos/p010.png)
 
 </details>
 

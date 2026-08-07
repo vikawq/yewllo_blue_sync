@@ -160,7 +160,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -169,7 +169,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** APEX 解决的是 LLM serving 并行策略组合爆炸：模型计算、显存、通信、请求动态 batching 和硬件拓扑相互耦合，手工选择 TP/PP/DP/EP 往往不是最优。其方法是把模型表示成 Transformer IR，基于 Parallel Templates 枚举 cell 级并行方案，将逻辑设备映射到物理拓扑，再用请求级 batching simulator 与 profile database 评估 TTFT、TPOT、吞吐、能耗和 SLO（PDF 第 2 页，§1 贡献段；第 3–6 页，§3，Figure 2–5）。</code></p>
 
-![E001 - PDF p.2](../evidence_pages/apex/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -180,9 +180,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>框架的核心模块为（PDF 第 3–4 页，§3.1，Figure 2）：</code></p>
 
-![E002 - PDF p.3, 4](../evidence_pages/apex/p003.png)
-
-![E002 - PDF p.3, 4](../evidence_pages/apex/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -193,9 +191,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 模型被拆成 Transformer blocks；每个 block 再拆成 attention、MLP 等 cells，cell 内是 GEMM/attention/collective 等 tasks。Tokenization 和 positional embedding 被忽略，理由是其占比小（PDF 第 3–4 页，§3.1，Figure 3 相邻段）。对录制回放而言，这意味着端到端前后处理不在其因果图中。</code></p>
 
-![E003 - PDF p.3, 4](../evidence_pages/apex/p003.png)
-
-![E003 - PDF p.3, 4](../evidence_pages/apex/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -206,7 +202,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Parallel Templates 定义 cell 的数据切分、task mapping 和同步 collective。Figure 5 展示两设备 MHA/MLP 的 TP、DP 与 AllReduce/AllGather；Algorithm 1 从 model-level DP 开始，自顶向下选择 PP stage，再在 cell 内组合 TP/DP/EP，必要时插入 reshard collective（PDF 第 5 页，§3.2.2，Figure 5、Algorithm 1）。</code></p>
 
-![E004 - PDF p.5](../evidence_pages/apex/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -217,7 +213,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>论文支持的设计空间包括 DP、PP、TP、EP，以及更细的 cell-level data parallel。后者在当时 vLLM/SGLang 中未必可执行，因此作者把结果分成 feasible optimal 与 unconstrained APEX（PDF 第 7 页，§4.2，Table 2 前后段）。</code></p>
 
-![E005 - PDF p.7](../evidence_pages/apex/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -228,7 +224,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Device Mapper 先把逻辑设备映射到低层、带宽更高的物理连接，再逐级扩展；通信重的 cell 尽量放在 NVLink 等低层域，较粗粒度并行可跨更高层网络（PDF 第 5 页，§3.2.3）。</code></p>
 
-![E006 - PDF p.5](../evidence_pages/apex/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -239,7 +235,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 每个请求包含 context length、generation length、arrival time，按 Poisson 到达。Table 1 给出三类 trace（PDF 第 6 页，§3.5，Table 1）：</code></p>
 
-![E007 - PDF p.6](../evidence_pages/apex/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -250,9 +246,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Batching Module 维护 active request list；每轮给每个 decode 请求生成一个 token，记录 generated length，并在显存允许时贪心接纳新请求。若超过显存，会临时移除最近加入的请求及其 token，随后重新进入处理（PDF 第 5–6 页，§3.3，定位词 “active request list” 与 “most recently added requests”）。</code></p>
 
-![E008 - PDF p.5, 6](../evidence_pages/apex/p005.png)
-
-![E008 - PDF p.5, 6](../evidence_pages/apex/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -263,9 +257,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>默认实现是 contiguous batching。作为可扩展性例子，作者约用 100 行代码加入 Sarathi 式 chunked prefill：增加 chunk-size 与 request counter（PDF 第 9–10 页，§4.5 “Batching Schemes”）。</code></p>
 
-![E009 - PDF p.9, 10](../evidence_pages/apex/p009.png)
-
-![E009 - PDF p.9, 10](../evidence_pages/apex/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -276,7 +268,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Prefill 查询完整 context length；decode 将 batch 折叠为 context length n 的查询，并假设每请求每轮一个 token。单 block 代价外推到全模型，PP iteration time 取最慢 stage，能耗为各 stage 求和（PDF 第 6 页，§3.4）。指标包括 TTFT、TPOT、P95 latency、MFU、MBU 和能耗（同页 §3.4 末段）。</code></p>
 
-![E010 - PDF p.6](../evidence_pages/apex/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -287,7 +279,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** APEX 离线 profile attention、GEMM 与 collective；未见形状用相邻采样点线性插值。通信 profile 覆盖 AllReduce、ReduceScatter 等，不同传输大小、设备数与跨节点配置；新集群只需一次 profile（PDF 第 6 页，§3.5 “Profiling Database”）。</code></p>
 
-![E011 - PDF p.6](../evidence_pages/apex/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -298,9 +290,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 请求按 arrival 加入队列，每个 iteration 形成 batch；并行执行计划给出 cell/task 与设备映射，模拟器汇总 PP stages 的耗时并推进请求（PDF 第 5–6 页，§3.3–§3.4）。</code></p>
 
-![E012 - PDF p.5, 6](../evidence_pages/apex/p005.png)
-
-![E012 - PDF p.5, 6](../evidence_pages/apex/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -311,7 +301,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 实验主机为 Xeon 6530；实机基线使用 vLLM 0.6.0 与 SGLang 0.4.5，集群包括 8×H100 80GB、16×H100 多机和 8×H200 141GB（PDF 第 7 页，§4.1）。</code></p>
 
-![E013 - PDF p.7](../evidence_pages/apex/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -322,9 +312,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- Table 2：unconstrained APEX 方案最高 3.37×；只保留当前 serving 系统可实现方案时最高 1.75×（PDF 第 7–8 页，§4.2，Table 2）；</code></p>
 
-![E014 - PDF p.7, 8](../evidence_pages/apex/p007.png)
-
-![E014 - PDF p.7, 8](../evidence_pages/apex/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -335,7 +323,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- H200 上最高 2.76×，405B 模型在 16×H100 上最高 1.88×（PDF 第 8 页，§4.2 末段）；</code></p>
 
-![E015 - PDF p.8](../evidence_pages/apex/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -346,9 +334,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- 相对 speedup 平均误差 10.7%（PDF 第 8–9 页，§4.3，Figure 6–7）；Mixtral EP 的误差为 28%/17%/15%，作者归因于 SGLang EP 实现不如模拟器假设的理想实现（同节）；</code></p>
 
-![E016 - PDF p.8, 9](../evidence_pages/apex/p008.png)
-
-![E016 - PDF p.8, 9](../evidence_pages/apex/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -359,7 +345,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- APEX 的绝对 TPOT 系统性偏低，因为省略了 “other operations”，但相对趋势较准（PDF 第 9 页，§4.3 “Absolute Performance” 段）；</code></p>
 
-![E017 - PDF p.9](../evidence_pages/apex/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -370,7 +356,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- 搜索若实机运行约需 160 GPUh；APEX 少于 2.5 CPUh，71× 更快，估算成本 8,889 美元 vs 7.20 美元，约 1,234.5×（PDF 第 9 页，§4.4）；profile 约 40 GPUh，但可复用；</code></p>
 
-![E018 - PDF p.9](../evidence_pages/apex/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -381,7 +367,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>- 同频能耗最多下降 19%；降频到 0.8GHz 可最多下降 45%，代价是 TTFT/TPOT 增加（PDF 第 8 页，§4.2，Energy Table）。</code></p>
 
-![E019 - PDF p.8](../evidence_pages/apex/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -392,7 +378,7 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Trillion-parameter 实验是把 Llama-70B 配置放大 16 倍得到的合成模型，不是实机 trillion 模型验证（PDF 第 9 页，§4.4 末段）。</code></p>
 
-![E020 - PDF p.9](../evidence_pages/apex/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -403,9 +389,92 @@ APEX 擅长低成本发现并行策略和拓扑映射机会，但其 serving 状
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 作者报告新增 unknown cell 约 50–150 LoC/1–2h，device cluster 约 20 LoC/6–8h，batching 约 100 LoC/1–2h，parallelism 约 50–200 LoC/1–2h（PDF 第 9–10 页，§4.5）。这些是作者经验，不等价于第三方复现成本。</code></p>
 
-![E021 - PDF p.9, 10](../evidence_pages/apex/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
-![E021 - PDF p.9, 10](../evidence_pages/apex/p010.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001 引用</summary>
+
+![PDF p.2](../evidence_pages/apex/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002、E003 引用</summary>
+
+![PDF p.3](../evidence_pages/apex/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E003 引用</summary>
+
+![PDF p.4](../evidence_pages/apex/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E004、E006、E008、E012 引用</summary>
+
+![PDF p.5](../evidence_pages/apex/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E007、E008、E010、E011、E012 引用</summary>
+
+![PDF p.6](../evidence_pages/apex/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E005、E013、E014 引用</summary>
+
+![PDF p.7](../evidence_pages/apex/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E014、E015、E016、E019 引用</summary>
+
+![PDF p.8](../evidence_pages/apex/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E009、E016、E017、E018、E020、E021 引用</summary>
+
+![PDF p.9](../evidence_pages/apex/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E009、E021 引用</summary>
+
+![PDF p.10](../evidence_pages/apex/p010.png)
 
 </details>
 

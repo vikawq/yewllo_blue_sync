@@ -129,7 +129,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -138,9 +138,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** LLMServingSim 面向的是硬件/系统协同设计：现有 LLM serving 仿真要么缺少迭代级动态调度，要么逐算子、逐层硬件模拟太慢，也难把异构加速器编译/模拟栈接入。论文提出三点（PDF 第 1–2 页，Abstract 与 §1 贡献段）：</code></p>
 
-![E001 - PDF p.1, 2](../evidence_pages/llmservingsim/p001.png)
-
-![E001 - PDF p.1, 2](../evidence_pages/llmservingsim/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -151,7 +149,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>Figure 4 给出完整工作流（PDF 第 4 页，§4.1）：Request Trace/Scheduler、Execution Engine Stack、Graph Converter、ASTRA-sim 通过 Chakra execution graph 串联。它不是只给整个 batch 一个经验时延，而是先产生算子图，再由硬件模拟器给节点代价，最终由系统模拟器重建跨设备时间线。</code></p>
 
-![E002 - PDF p.4](../evidence_pages/llmservingsim/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -162,9 +160,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Artifact Appendix 规定输入 trace 为 TSV，每行包含 input length、output length、arrival time（PDF 第 15 页，Appendix A.4 “Data sets”）。实验使用 ShareGPT 与 Alpaca，模型覆盖 GPT-3/LLaMA 7B–175B（PDF 第 8 页 §6.1；第 14 页 Artifact checklist）。ShareGPT 请求按 Poisson 到达（PDF 第 8 页，§6.2，Figure 6 相邻设置）。</code></p>
 
-![E003 - PDF p.8, 15](../evidence_pages/llmservingsim/p008.png)
-
-![E003 - PDF p.8, 15](../evidence_pages/llmservingsim/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -175,9 +171,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Scheduler 比较 request arrival time 与内部 timer，选择当前可调度请求；每轮硬件/系统仿真结束后，把结果反馈给 scheduler，更新时间并形成下一轮 batch（PDF 第 5 页，§4.1 “Iteration-level scheduling” 第 2 段）。论文采用 Orca 式 selective/iteration-level batching：不同序列长度的 attention 可以分开处理，其他算子共享 batch（PDF 第 3 页，§2；PDF 第 5 页该小节）。</code></p>
 
-![E004 - PDF p.3, 5](../evidence_pages/llmservingsim/p003.png)
-
-![E004 - PDF p.3, 5](../evidence_pages/llmservingsim/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -188,7 +182,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>Artifact 配置包含 max batch、batch delay、Orca scheduling、TP/PP/hybrid、设备内存与 vLLM KV management 等约 16 个参数（PDF 第 15 页，Appendix A.4 “How to run”）。因此它具备 continuous batching 的核心闭环，但论文没有给出 vLLM 当前版本中 priority、deadline、prefix-aware routing、chunked prefill 或 speculative decoding 的详细状态机。</code></p>
 
-![E005 - PDF p.15](../evidence_pages/llmservingsim/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -199,7 +193,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 这是该论文比 Vidur 更细的一点。Scheduler 根据每个请求长度计算所需 KV page，并按迭代增长动态分配；若设备内存不足，会把最后加入请求的完整 KV pages 与 sequence 移到 host memory，后续容量允许时再 reload。Graph converter 显式插入 memory store/load transfer operators，并把传输时间交给系统模拟器（PDF 第 5 页，§4.1 “KV cache-aware memory modeling”；Figure 5 左侧相邻段）。</code></p>
 
-![E006 - PDF p.5](../evidence_pages/llmservingsim/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -210,9 +204,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Graph converter 支持 tensor parallel、pipeline parallel 及 hybrid；TP 会在执行图中插入 AllReduce，PP 将 decoder blocks 分配到不同节点并串接（PDF 第 5 页，§4.1 “Supporting for LLM parallelism strategies”）。Algorithm 1 将 request lengths、devices、free KV memory、current time 作为输入，依次进行 batch formatting、sub-batch partition、operator profiling/mapping、execution engine、scheduling 与 graph conversion（PDF 第 6 页，Algorithm 1）。</code></p>
 
-![E007 - PDF p.5, 6](../evidence_pages/llmservingsim/p005.png)
-
-![E007 - PDF p.5, 6](../evidence_pages/llmservingsim/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -223,9 +215,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>异构 NPU/PIM 场景中，operator mapper 把不同算子放入 NPU/PIM pool，插入数据搬运节点；greedy scheduler 同时考虑依赖与设备 availability，允许不同 sub-batch 在不同 accelerator 上重叠（PDF 第 6–7 页，§4.2，Figure 5 与 Algorithm 1 后续段）。</code></p>
 
-![E008 - PDF p.6, 7](../evidence_pages/llmservingsim/p006.png)
-
-![E008 - PDF p.6, 7](../evidence_pages/llmservingsim/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -236,11 +226,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 系统层以 Chakra execution graph 驱动 ASTRA-sim，因此 collective、interconnect、数据传输在系统仿真中推进，而非单纯相加（PDF 第 4–6 页，§4.1）。不过论文实验主要是抽象 NPU/PIM 拓扑，未展示生产以太网/IB 的拥塞校准，也没有逐 peer arrival/wait 的实机 profiler 对账。</code></p>
 
-![E009 - PDF p.4, 5, 6](../evidence_pages/llmservingsim/p004.png)
-
-![E009 - PDF p.4, 5, 6](../evidence_pages/llmservingsim/p005.png)
-
-![E009 - PDF p.4, 5, 6](../evidence_pages/llmservingsim/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -251,7 +237,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 原型接入 GeneSys 作为 NPU compiler/simulator，另有 PolyMath 与 in-house PIM simulator（PDF 第 8 页，§6.1）。为避免每轮、每层重复模拟：</code></p>
 
-![E010 - PDF p.8](../evidence_pages/llmservingsim/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -262,9 +248,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>该机制见 PDF 第 7 页，§4.3 “Accelerating the simulation”，并在 Figure 9 验证：缓存/复用带来 6.4–12.2× 加速，某些任务从 198–215.7 s 降到 16.3–33.6 s（PDF 第 9 页，§6.4，Figure 9）。</code></p>
 
-![E011 - PDF p.7, 9](../evidence_pages/llmservingsim/p007.png)
-
-![E011 - PDF p.7, 9](../evidence_pages/llmservingsim/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -275,7 +259,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 每个 iteration 的执行图在 ASTRA-sim 完成后推进 scheduler timer；输出包括请求吞吐、仿真吞吐和 simulation time TSV（PDF 第 5 页 §4.1；第 15 页 Appendix A.4）。正文主要比较 cycle、throughput 与 request latency，没有像 Vidur/Frontier 那样系统报告 TTFT、TBT/ITL、TPOT percentile 或 SLO violation。</code></p>
 
-![E012 - PDF p.5](../evidence_pages/llmservingsim/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -286,7 +270,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>可探索的 what-if 包括：TP/PP/hybrid、设备数、NPU/PIM 配比、batch size/delay、Orca scheduling、KV 内存和网络。论文从 8 扩到 2048 NPUs；GPT-3 175B 在 2048 NPU 上模拟一个 iteration 仍需 4.13 小时，揭示 cycle-level backend 的可扩展性上限（PDF 第 10 页，§6.5，Figure 10）。</code></p>
 
-![E013 - PDF p.10](../evidence_pages/llmservingsim/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -297,7 +281,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 实机验证平台为 4×RTX 3090 24GB、Xeon Gold 6326、vLLM；仿真主机为 Xeon 6226R 96GB。模拟 NPU 为 128×128 systolic array、1GHz、24GB，链路 64GB/s、100ns；PIM 为 32GB、1TB/s（PDF 第 8 页，§6.1）。</code></p>
 
-![E014 - PDF p.8](../evidence_pages/llmservingsim/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -308,7 +292,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>- 对 vLLM 的 GPT-3/LLaMA 7B/30B、TP=1/4，论文报告性能趋势吻合，Abstract 汇总误差小于 14.7%（PDF 第 1 页 Abstract；详细图见第 8–9 页 Figure 6）；</code></p>
 
-![E015 - PDF p.1](../evidence_pages/llmservingsim/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -319,7 +303,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>- 对 NeuPIMs 的 NPU-PIM 场景，Alpaca 256 requests，误差小于 20%，几何平均 8.88%（PDF 第 9 页，§6.3，Figure 7）；</code></p>
 
-![E016 - PDF p.9](../evidence_pages/llmservingsim/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -330,7 +314,7 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>- 相比 mNPUsim、GeneSys、NeuPIMs，平均仿真加速分别为 490.98×、34.71×、44.97×（PDF 第 9 页，§6.4，Figure 8）。</code></p>
 
-![E017 - PDF p.9](../evidence_pages/llmservingsim/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -341,9 +325,119 @@ LLMServingSim 把“serving 调度—硬件执行—网络仿真”真正连成�
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Artifact Appendix 给出公开 C++/Python 实现、MIT/CC4 许可、Zenodo DOI 10.5281/zenodo.12803583；建议 Ubuntu 18.04、x86-64、约 30GB 空间，完整 artifact 可从几十秒运行到 24 小时（PDF 第 14–15 页）。官方仓库为 https://github.com/casys-kaist/LLMServingSim 。</code></p>
 
-![E018 - PDF p.14, 15](../evidence_pages/llmservingsim/p014.png)
+<p><strong>页图：</strong> <a href="#source-page-p014">PDF p.14</a> · <a href="#source-page-p015">PDF p.15</a></p>
 
-![E018 - PDF p.14, 15](../evidence_pages/llmservingsim/p015.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E015 引用</summary>
+
+![PDF p.1](../evidence_pages/llmservingsim/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001 引用</summary>
+
+![PDF p.2](../evidence_pages/llmservingsim/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E004 引用</summary>
+
+![PDF p.3](../evidence_pages/llmservingsim/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E009 引用</summary>
+
+![PDF p.4](../evidence_pages/llmservingsim/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E004、E006、E007、E009、E012 引用</summary>
+
+![PDF p.5](../evidence_pages/llmservingsim/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E007、E008、E009 引用</summary>
+
+![PDF p.6](../evidence_pages/llmservingsim/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E008、E011 引用</summary>
+
+![PDF p.7](../evidence_pages/llmservingsim/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E003、E010、E014 引用</summary>
+
+![PDF p.8](../evidence_pages/llmservingsim/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E011、E016、E017 引用</summary>
+
+![PDF p.9](../evidence_pages/llmservingsim/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E013 引用</summary>
+
+![PDF p.10](../evidence_pages/llmservingsim/p010.png)
+
+</details>
+
+<a id="source-page-p014"></a>
+
+<details>
+<summary><strong>PDF p.14</strong> - 被 E018 引用</summary>
+
+![PDF p.14](../evidence_pages/llmservingsim/p014.png)
+
+</details>
+
+<a id="source-page-p015"></a>
+
+<details>
+<summary><strong>PDF p.15</strong> - 被 E003、E005、E018 引用</summary>
+
+![PDF p.15](../evidence_pages/llmservingsim/p015.png)
 
 </details>
 

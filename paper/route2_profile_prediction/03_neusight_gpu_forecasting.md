@@ -317,7 +317,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -326,17 +326,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1–2，Abstract 与 §1 第 5–9 段；PDF 5–8，§4、图 3–6、Eq. (1)–(8)。</code></p>
 
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p001.png)
-
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p002.png)
-
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p005.png)
-
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p006.png)
-
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p007.png)
-
-![E001 - PDF p.1, 2, 5, 6, 7, 8](../evidence_pages/neusight/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -347,11 +337,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，§1 第 1–8 段；PDF 3–4，§3.1–§3.3、图 2。</code></p>
 
-![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p002.png)
-
-![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p003.png)
-
-![E002 - PDF p.2, 3, 4](../evidence_pages/neusight/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -362,15 +348,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5，§4 第 1 段；PDF 7–9，图 6、§5、§6.1；artifact appendix PDF 14；仓库 README `Tool Inputs`。</code></p>
 
-![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p005.png)
-
-![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p007.png)
-
-![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p008.png)
-
-![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p009.png)
-
-![E003 - PDF p.5, 7, 8, 9, 14](../evidence_pages/neusight/p014.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p014">PDF p.14</a></p>
 
 </details>
 
@@ -381,17 +359,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8，§5；PDF 9，§6.1 `DNN workloads evaluated`；PDF 10–13，§6.2–§6.3。</code></p>
 
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p008.png)
-
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p009.png)
-
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p010.png)
-
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p011.png)
-
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p012.png)
-
-![E004 - PDF p.8, 9, 10, 11, 12, 13](../evidence_pages/neusight/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -402,9 +370,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 9–10，§6.1 `Generating the training dataset` 及列表。</code></p>
 
-![E005 - PDF p.9, 10](../evidence_pages/neusight/p009.png)
-
-![E005 - PDF p.9, 10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -415,7 +381,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 9，§6.1 `Hardware`、表 4。</code></p>
 
-![E006 - PDF p.9](../evidence_pages/neusight/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -426,9 +392,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 10，§6.1 `Tile size` 段（定位词 `closest match in the database`）；PDF 8，图 6 的 `NeuSight Tile Database`。</code></p>
 
-![E007 - PDF p.8, 10](../evidence_pages/neusight/p008.png)
-
-![E007 - PDF p.8, 10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -439,9 +403,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 7–8，§4.3 最后两段、表 3、图 6。</code></p>
 
-![E008 - PDF p.7, 8](../evidence_pages/neusight/p007.png)
-
-![E008 - PDF p.7, 8](../evidence_pages/neusight/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -452,9 +414,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6–7，§4.2 `Tile-granularity prediction`、Eq. (2)–(4)、图 4。</code></p>
 
-![E009 - PDF p.6, 7](../evidence_pages/neusight/p006.png)
-
-![E009 - PDF p.6, 7](../evidence_pages/neusight/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -465,9 +425,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6，§4.1 `Fundamental performance laws`、Eq. (1)；PDF 7，§4.2 Eq. (5)–(6)。</code></p>
 
-![E010 - PDF p.6, 7](../evidence_pages/neusight/p006.png)
-
-![E010 - PDF p.6, 7](../evidence_pages/neusight/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -478,7 +436,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 7，§4.2 `Imposing performance laws`、Eq. (7)–(8)；§4.3 第 1–4 段。</code></p>
 
-![E011 - PDF p.7](../evidence_pages/neusight/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -489,7 +447,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 10，§6.1 `Training the NeuSight predictor`。</code></p>
 
-![E012 - PDF p.10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -500,7 +458,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8，§4.4 全部两段。</code></p>
 
-![E013 - PDF p.8](../evidence_pages/neusight/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -511,9 +469,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8，§5 第 1–2 段、图 6；PDF 3，§2.2 `Per-device execution`。</code></p>
 
-![E014 - PDF p.3, 8](../evidence_pages/neusight/p003.png)
-
-![E014 - PDF p.3, 8](../evidence_pages/neusight/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -524,9 +480,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8–9，§5.1 全部四段。</code></p>
 
-![E015 - PDF p.8, 9](../evidence_pages/neusight/p008.png)
-
-![E015 - PDF p.8, 9](../evidence_pages/neusight/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -537,11 +491,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8–9，§5；PDF 13，§6.3 `Multi-node distributed execution`。</code></p>
 
-![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p008.png)
-
-![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p009.png)
-
-![E016 - PDF p.8, 9, 13](../evidence_pages/neusight/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -552,7 +502,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 10，§6.2 第 1 段；表 5。</code></p>
 
-![E017 - PDF p.10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -563,9 +513,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 7，§4.3 `GPU features` 段；PDF 10，§6.2。</code></p>
 
-![E018 - PDF p.7, 10](../evidence_pages/neusight/p007.png)
-
-![E018 - PDF p.7, 10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -576,9 +524,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 11–12，§6.2 `GPU across vendors`、`New numerical type and hardware unit`、图 9/10。</code></p>
 
-![E019 - PDF p.11, 12](../evidence_pages/neusight/p011.png)
-
-![E019 - PDF p.11, 12](../evidence_pages/neusight/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -589,9 +535,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 2，§1 最后一段；PDF 10，§6.1 training 段。</code></p>
 
-![E020 - PDF p.2, 10](../evidence_pages/neusight/p002.png)
-
-![E020 - PDF p.2, 10](../evidence_pages/neusight/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -602,13 +546,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 Abstract；PDF 10–12，§6.2、图 7/8、表 6/7。</code></p>
 
-![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p001.png)
-
-![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p010.png)
-
-![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p011.png)
-
-![E021 - PDF p.1, 10, 11, 12](../evidence_pages/neusight/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -619,11 +557,7 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 2 §1 最后一段；PDF 12–13，§6.3、表 8/9。</code></p>
 
-![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p002.png)
-
-![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p012.png)
-
-![E022 - PDF p.2, 12, 13](../evidence_pages/neusight/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -634,9 +568,137 @@ NeuSight 是四篇里对“跨未见硬件外推”最有启发的工作：与�
 
 <p><strong>原定位：</strong> <code>定位：PDF 13–14，Conclusion、Artifact Appendix A.1–A.6；GitHub README。</code></p>
 
-![E023 - PDF p.13, 14](../evidence_pages/neusight/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p013">PDF p.13</a> · <a href="#source-page-p014">PDF p.14</a></p>
 
-![E023 - PDF p.13, 14](../evidence_pages/neusight/p014.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E021 引用</summary>
+
+![PDF p.1](../evidence_pages/neusight/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002、E020、E022 引用</summary>
+
+![PDF p.2](../evidence_pages/neusight/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002、E014 引用</summary>
+
+![PDF p.3](../evidence_pages/neusight/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002 引用</summary>
+
+![PDF p.4](../evidence_pages/neusight/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E001、E003 引用</summary>
+
+![PDF p.5](../evidence_pages/neusight/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E001、E009、E010 引用</summary>
+
+![PDF p.6](../evidence_pages/neusight/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E001、E003、E008、E009、E010、E011、E018 引用</summary>
+
+![PDF p.7](../evidence_pages/neusight/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E001、E003、E004、E007、E008、E013、E014、E015、E016 引用</summary>
+
+![PDF p.8](../evidence_pages/neusight/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E003、E004、E005、E006、E015、E016 引用</summary>
+
+![PDF p.9](../evidence_pages/neusight/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E004、E005、E007、E012、E017、E018、E020、E021 引用</summary>
+
+![PDF p.10](../evidence_pages/neusight/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E004、E019、E021 引用</summary>
+
+![PDF p.11](../evidence_pages/neusight/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E004、E019、E021、E022 引用</summary>
+
+![PDF p.12](../evidence_pages/neusight/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E004、E016、E022、E023 引用</summary>
+
+![PDF p.13](../evidence_pages/neusight/p013.png)
+
+</details>
+
+<a id="source-page-p014"></a>
+
+<details>
+<summary><strong>PDF p.14</strong> - 被 E003、E023 引用</summary>
+
+![PDF p.14](../evidence_pages/neusight/p014.png)
 
 </details>
 

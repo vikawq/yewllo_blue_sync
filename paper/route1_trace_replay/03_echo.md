@@ -290,7 +290,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -299,13 +299,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：摘要、§1，PDF pp.1–2；架构 Figure 4、§4，PDF pp.5–6。</code></p>
 
-![E001 - PDF p.1, 2, 5, 6](../evidence_pages/echo/p001.png)
-
-![E001 - PDF p.1, 2, 5, 6](../evidence_pages/echo/p002.png)
-
-![E001 - PDF p.1, 2, 5, 6](../evidence_pages/echo/p005.png)
-
-![E001 - PDF p.1, 2, 5, 6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -316,13 +310,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§1、§3，PDF pp.1–4；SimAI 例子与 overlap 观察见 §3，PDF p.4。</code></p>
 
-![E002 - PDF p.1, 2, 3, 4](../evidence_pages/echo/p001.png)
-
-![E002 - PDF p.1, 2, 3, 4](../evidence_pages/echo/p002.png)
-
-![E002 - PDF p.1, 2, 3, 4](../evidence_pages/echo/p003.png)
-
-![E002 - PDF p.1, 2, 3, 4](../evidence_pages/echo/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -333,9 +321,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§2、Table 1，PDF pp.2–3。</code></p>
 
-![E003 - PDF p.2, 3](../evidence_pages/echo/p002.png)
-
-![E003 - PDF p.2, 3](../evidence_pages/echo/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -346,7 +332,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4、Figure 4，PDF p.5。</code></p>
 
-![E004 - PDF p.5](../evidence_pages/echo/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -357,9 +343,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4.1 “Ex-situ Workload Tracing”，PDF pp.5–6。</code></p>
 
-![E005 - PDF p.5, 6](../evidence_pages/echo/p005.png)
-
-![E005 - PDF p.5, 6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -370,9 +354,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4.1，PDF pp.5–6。</code></p>
 
-![E006 - PDF p.5, 6](../evidence_pages/echo/p005.png)
-
-![E006 - PDF p.5, 6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -383,9 +365,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4.1、Figure 5 附近，PDF pp.5–6。</code></p>
 
-![E007 - PDF p.5, 6](../evidence_pages/echo/p005.png)
-
-![E007 - PDF p.5, 6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -396,7 +376,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4.2 “Timeline Composition”，PDF p.6。</code></p>
 
-![E008 - PDF p.6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -407,9 +387,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§4.2 和 §5，PDF pp.6–7。</code></p>
 
-![E009 - PDF p.6, 7](../evidence_pages/echo/p006.png)
-
-![E009 - PDF p.6, 7](../evidence_pages/echo/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -420,7 +398,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§5.1，PDF p.6。</code></p>
 
-![E010 - PDF p.6](../evidence_pages/echo/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -431,9 +409,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§5.2、Equation (1)–(5)，PDF pp.6–7。</code></p>
 
-![E011 - PDF p.6, 7](../evidence_pages/echo/p006.png)
-
-![E011 - PDF p.6, 7](../evidence_pages/echo/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -444,9 +420,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§5.3，PDF p.7；实现细节 §7，PDF p.8。</code></p>
 
-![E012 - PDF p.7, 8](../evidence_pages/echo/p007.png)
-
-![E012 - PDF p.7, 8](../evidence_pages/echo/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -457,7 +431,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§9 Limitations，PDF p.12。</code></p>
 
-![E013 - PDF p.12](../evidence_pages/echo/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -468,7 +442,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§3、Figures 2–3，PDF p.4。</code></p>
 
-![E014 - PDF p.4](../evidence_pages/echo/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -479,9 +453,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§6，PDF pp.7–8；实现 §7，PDF p.8。</code></p>
 
-![E015 - PDF p.7, 8](../evidence_pages/echo/p007.png)
-
-![E015 - PDF p.7, 8](../evidence_pages/echo/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -492,21 +464,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：Figure 4、§4–§8，PDF pp.5–12。</code></p>
 
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p005.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p006.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p007.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p008.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p009.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p010.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p011.png)
-
-![E016 - PDF p.5, 6, 7, 8, 9, 10, 11, 12](../evidence_pages/echo/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -517,7 +475,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§9，PDF p.12。</code></p>
 
-![E017 - PDF p.12](../evidence_pages/echo/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -528,7 +486,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§7 Implementation，PDF p.8。</code></p>
 
-![E018 - PDF p.8](../evidence_pages/echo/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -539,9 +497,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§8.1，PDF pp.8–9。</code></p>
 
-![E019 - PDF p.8, 9](../evidence_pages/echo/p008.png)
-
-![E019 - PDF p.8, 9](../evidence_pages/echo/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -552,11 +508,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§8.2–§8.4、Tables 3–7，PDF pp.9–11。</code></p>
 
-![E020 - PDF p.9, 10, 11](../evidence_pages/echo/p009.png)
-
-![E020 - PDF p.9, 10, 11](../evidence_pages/echo/p010.png)
-
-![E020 - PDF p.9, 10, 11](../evidence_pages/echo/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -567,11 +519,7 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§8.5、Figure 8/对应端到端结果、Table 8，PDF pp.11–12；摘要，PDF p.1。</code></p>
 
-![E021 - PDF p.1, 11, 12](../evidence_pages/echo/p001.png)
-
-![E021 - PDF p.1, 11, 12](../evidence_pages/echo/p011.png)
-
-![E021 - PDF p.1, 11, 12](../evidence_pages/echo/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -582,7 +530,119 @@ Echo 的最大贡献不是又一个 DES，而是把大规模 LLM 性能预测的
 
 <p><strong>原定位：</strong> <code>证据：§9，PDF p.12。</code></p>
 
-![E022 - PDF p.12](../evidence_pages/echo/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a></p>
+
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E002、E021 引用</summary>
+
+![PDF p.1](../evidence_pages/echo/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002、E003 引用</summary>
+
+![PDF p.2](../evidence_pages/echo/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002、E003 引用</summary>
+
+![PDF p.3](../evidence_pages/echo/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E014 引用</summary>
+
+![PDF p.4](../evidence_pages/echo/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E001、E004、E005、E006、E007、E016 引用</summary>
+
+![PDF p.5](../evidence_pages/echo/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E001、E005、E006、E007、E008、E009、E010、E011、E016 引用</summary>
+
+![PDF p.6](../evidence_pages/echo/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E009、E011、E012、E015、E016 引用</summary>
+
+![PDF p.7](../evidence_pages/echo/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E012、E015、E016、E018、E019 引用</summary>
+
+![PDF p.8](../evidence_pages/echo/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E016、E019、E020 引用</summary>
+
+![PDF p.9](../evidence_pages/echo/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E016、E020 引用</summary>
+
+![PDF p.10](../evidence_pages/echo/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E016、E020、E021 引用</summary>
+
+![PDF p.11](../evidence_pages/echo/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E013、E016、E017、E021、E022 引用</summary>
+
+![PDF p.12](../evidence_pages/echo/p012.png)
 
 </details>
 

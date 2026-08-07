@@ -283,7 +283,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -292,15 +292,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1–2，Abstract、§1 第 7–12 段；PDF 4–6，§4.1–§4.5、图 2。</code></p>
 
-![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p001.png)
-
-![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p002.png)
-
-![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p004.png)
-
-![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p005.png)
-
-![E001 - PDF p.1, 2, 4, 5, 6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -311,11 +303,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1–3，§1 第 2–6 段、图 1；§2.3 第 1–3 段。</code></p>
 
-![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p001.png)
-
-![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p002.png)
-
-![E002 - PDF p.1, 2, 3](../evidence_pages/vidur/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -326,7 +314,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 4，§3 的 `Time Scale`、`Varying Iteration Times`、`Cascading Errors` 三段。</code></p>
 
-![E003 - PDF p.4](../evidence_pages/vidur/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -337,11 +325,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 4，图 2 与 §4.2；PDF 6–7，§5.2、§6。</code></p>
 
-![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p004.png)
-
-![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p006.png)
-
-![E004 - PDF p.4, 6, 7](../evidence_pages/vidur/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -352,7 +336,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5，§4.3 `Operator Triaging` 段与三项列表。</code></p>
 
-![E005 - PDF p.5](../evidence_pages/vidur/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -363,7 +347,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5，§4.3 `Profiling Token-level Operators` 第 1 段。</code></p>
 
-![E006 - PDF p.5](../evidence_pages/vidur/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -374,9 +358,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5–6，§4.3 `Profiling Sequence-level Operators` 两段，公式文字从 `Σ p_i²` 到 `total KV-Cache reads`。</code></p>
 
-![E007 - PDF p.5, 6](../evidence_pages/vidur/p005.png)
-
-![E007 - PDF p.5, 6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -387,7 +369,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6，§4.3 `Profiling Communication Operators` 段。</code></p>
 
-![E008 - PDF p.6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -398,9 +380,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5–6，§4.4 全部两段；PDF 5，§4.2 第 1 段（`produces operation-wise runtime lookup tables`）。</code></p>
 
-![E009 - PDF p.5, 6](../evidence_pages/vidur/p005.png)
-
-![E009 - PDF p.5, 6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -411,7 +391,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6，§4.5 第 1–3 段。</code></p>
 
-![E010 - PDF p.6](../evidence_pages/vidur/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -422,15 +402,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 5–7，§4.3–§5.2；PDF 8–9，§7.1–§7.2。</code></p>
 
-![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p005.png)
-
-![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p006.png)
-
-![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p007.png)
-
-![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p008.png)
-
-![E011 - PDF p.5, 6, 7, 8, 9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -441,9 +413,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 4–5，§4.1 `Automatic Profiling for Parallelism Strategies`、§4.2、图 2。</code></p>
 
-![E012 - PDF p.4, 5](../evidence_pages/vidur/p004.png)
-
-![E012 - PDF p.4, 5](../evidence_pages/vidur/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -454,9 +424,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8，§7.1 `Models and Environment`；PDF 2，§1 对 Vidur 的描述。</code></p>
 
-![E013 - PDF p.2, 8](../evidence_pages/vidur/p002.png)
-
-![E013 - PDF p.2, 8](../evidence_pages/vidur/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -467,11 +435,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 8，§7.1；PDF 4–5，§4.1–§4.3。</code></p>
 
-![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p004.png)
-
-![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p005.png)
-
-![E014 - PDF p.4, 5, 8](../evidence_pages/vidur/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -482,13 +446,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6，表 1；PDF 8–10，§7.1 `Workloads`、§7.3、图 1/5/6。</code></p>
 
-![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p006.png)
-
-![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p008.png)
-
-![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p009.png)
-
-![E015 - PDF p.6, 8, 9, 10](../evidence_pages/vidur/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -499,11 +457,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 6–7，§5.2；PDF 9，§7.2 `Evaluation Metric` 段。</code></p>
 
-![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p006.png)
-
-![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p007.png)
-
-![E016 - PDF p.6, 7, 9](../evidence_pages/vidur/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -514,15 +468,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 Abstract；PDF 8–9，图 3/4 与 §7.2；PDF 9–10，§7.3 与图 5/6；PDF 15，附录 A.1/A.2、表 2。</code></p>
 
-![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p001.png)
-
-![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p008.png)
-
-![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p009.png)
-
-![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p010.png)
-
-![E017 - PDF p.1, 8, 9, 10, 15](../evidence_pages/vidur/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -533,9 +479,7 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 9，§7.2 `Dynamic Workloads` 第 2–3 段；PDF 15，附录 A.1。</code></p>
 
-![E018 - PDF p.9, 15](../evidence_pages/vidur/p009.png)
-
-![E018 - PDF p.9, 15](../evidence_pages/vidur/p015.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p015">PDF p.15</a></p>
 
 </details>
 
@@ -546,9 +490,110 @@ Vidur 是四篇中最贴近“查表+拟合后组合出系统性能”的论文�
 
 <p><strong>原定位：</strong> <code>定位：PDF 1 Abstract、PDF 8 §7.1；GitHub README。</code></p>
 
-![E019 - PDF p.1, 8](../evidence_pages/vidur/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
-![E019 - PDF p.1, 8](../evidence_pages/vidur/p008.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001、E002、E017、E019 引用</summary>
+
+![PDF p.1](../evidence_pages/vidur/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002、E013 引用</summary>
+
+![PDF p.2](../evidence_pages/vidur/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E002 引用</summary>
+
+![PDF p.3](../evidence_pages/vidur/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E001、E003、E004、E012、E014 引用</summary>
+
+![PDF p.4](../evidence_pages/vidur/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E001、E005、E006、E007、E009、E011、E012、E014 引用</summary>
+
+![PDF p.5](../evidence_pages/vidur/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E001、E004、E007、E008、E009、E010、E011、E015、E016 引用</summary>
+
+![PDF p.6](../evidence_pages/vidur/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E004、E011、E016 引用</summary>
+
+![PDF p.7](../evidence_pages/vidur/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E011、E013、E014、E015、E017、E019 引用</summary>
+
+![PDF p.8](../evidence_pages/vidur/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E011、E015、E016、E017、E018 引用</summary>
+
+![PDF p.9](../evidence_pages/vidur/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E015、E017 引用</summary>
+
+![PDF p.10](../evidence_pages/vidur/p010.png)
+
+</details>
+
+<a id="source-page-p015"></a>
+
+<details>
+<summary><strong>PDF p.15</strong> - 被 E017、E018 引用</summary>
+
+![PDF p.15](../evidence_pages/vidur/p015.png)
 
 </details>
 

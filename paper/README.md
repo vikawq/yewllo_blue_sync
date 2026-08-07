@@ -7,7 +7,7 @@
 ## 原文证据截图
 
 - 20 份单篇笔记中的论文事实定位均带有 `原文截图 E###` 跳转，点击后可到文末对应证据卡片。
-- 证据卡片保留原笔记行号、PDF 物理页码以及原有章节/图/表/算法/段落定位，并嵌入所引用的全部页面；相同 PDF 页只保存一份图片供多处复用。
+- 证据卡片保留原笔记行号、PDF 物理页码以及原有章节/图/表/算法/段落定位，并提供页图跳转；文末页面图库按物理页去重展示，同一页在一篇笔记中只出现一次。
 - 当前共 428 个证据卡片、221 份去重后的页图/文本面板。生成与核验脚本见 [tools/build_evidence_screenshots.py](tools/build_evidence_screenshots.py) 和 [tools/audit_evidence_screenshots.py](tools/audit_evidence_screenshots.py)。
 - TPDS 综述和 ParallelSim 的来源受限情况会在各自笔记及证据卡片中显著标出：前者是带期刊页码与抽取行号的公开终版文本快照，后者只是 Springer 官方摘要网页快照，二者均不冒充论文 PDF 原页。
 

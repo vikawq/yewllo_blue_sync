@@ -127,7 +127,7 @@
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -136,9 +136,7 @@
 
 <p><strong>原定位：</strong> <code>- 页码：封面为 PDF p.1；正文从 PDF p.2/印刷 p.541 开始，故本文同时写作“PDF p.X / 印刷 p.Y”。段落序号按对应小节内自然段计。</code></p>
 
-![E001 - PDF p.1, 2](../evidence_pages/simai/p001.png)
-
-![E001 - PDF p.1, 2](../evidence_pages/simai/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a> · <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -149,17 +147,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：SimAI 把框架工作负载生成、GPU/模块计算成本、NCCL 集合通信逻辑、包/RDMA 网络和离散事件执行放到一条仿真链中，报告端到端平均偏差 1.9%。它是本路线中覆盖层次最完整、生产落地证据最强的一篇，但并不执行训练数值，也没有还原数据依赖状态；计算仍以实测查表/粗粒度外推为主，专家路由还假定均衡。（PDF p.2/印刷 p.541，Abstract；PDF p.5–9/印刷 p.544–548，§3）</code></p>
 
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p002.png)
-
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p005.png)
-
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p006.png)
-
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p007.png)
-
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p008.png)
-
-![E002 - PDF p.2, 5, 6, 7, 8, 9](../evidence_pages/simai/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -170,9 +158,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者认为单独的框架分析器、GPU 计算估计器或网络模拟器无法覆盖大模型训练中工作负载、计算和通信之间的相互作用，因而提出四个目标：workload、computation、communication、simulation speed。（PDF p.3–4/印刷 p.542–543，§1 第3–6段及 §2.3）</code></p>
 
-![E003 - PDF p.3, 4](../evidence_pages/simai/p003.png)
-
-![E003 - PDF p.3, 4](../evidence_pages/simai/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -183,7 +169,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：其“统一”边界是性能时序，而非训练功能正确性。SimCCL 不验证传输数据；MoE/EP 的 gating 结果被假定为在专家间均匀分布。（PDF p.8/印刷 p.547，§3.4 “Supporting expert parallelism”及其后段落）</code></p>
 
-![E004 - PDF p.8](../evidence_pages/simai/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -194,7 +180,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：图 1 将系统分为 SimAI-WG（workload generator）、Execution Engine、SimAI-CP（computation profiler/model）和 SimAI-CM（communication model）。WG 生成模型子模块以及 collective/P2P 与依赖；CP 提供模块或 kernel 计算时间；CM 把集合通信展开成 P2P 流；Execution Engine 组合时间线。（PDF p.5/印刷 p.544，§3.1 第1–4段，Fig. 1）</code></p>
 
-![E005 - PDF p.5](../evidence_pages/simai/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -205,9 +191,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：SimAI-WG 在单个 host 上运行 Megatron-LM/DeepSpeed，通过伪造 world size、rank 和拓扑等运行环境让框架走到目标并行路径，同时跳过真实 NCCL 数据通信；流水并行需要逐 rank 配置。输出保留算法子模块、collective/P2P 操作及其依赖。（PDF p.5–6/印刷 p.544–545，§3.2.1 第1–4段，Fig. 2）</code></p>
 
-![E006 - PDF p.5, 6](../evidence_pages/simai/p005.png)
-
-![E006 - PDF p.5, 6](../evidence_pages/simai/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -218,7 +202,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者用 1024 GPU 集群上的 Nsight 结果核对生成依赖。对 TP、PP、EP，论文认为通信模式和流量在给定配置下相对固定；对 DP 则随规模变化。小于 1 KB 的元数据通信与 barrier 被视为可忽略。（PDF p.6/印刷 p.545，§3.2.1 “Accuracy validation”及其后两段）</code></p>
 
-![E007 - PDF p.6](../evidence_pages/simai/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -229,9 +213,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：对于已有 GPU，SimAI-CP 在 GPU 上测量子模块执行时间，写入按 GPU/配置组织的 operation database；论文还给出 module-to-kernel converter，把子模块拆成更细 kernel 后分别测量。（PDF p.6–7/印刷 p.545–546，§3.3 “Supporting existing GPUs”，Table 4）</code></p>
 
-![E008 - PDF p.6, 7](../evidence_pages/simai/p006.png)
-
-![E008 - PDF p.6, 7](../evidence_pages/simai/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -242,7 +224,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：对未发布 GPU，作者把 kernel 分成 compute-bound 与 memory-bandwidth-bound，按已知与新 GPU 的 FLOPS 或带宽比缩放旧时间，并建议选择相近架构作基线。论文同时承认朴素跨 GPU 缩放偏差可达 25.1%。（PDF p.7/印刷 p.546，§3.3 “Supporting unreleased GPUs”，两条公式）</code></p>
 
-![E009 - PDF p.7](../evidence_pages/simai/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -253,9 +235,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：SimCCL 是修改版 NCCL，拦截初始化、拓扑发现、channel、算法选择和 collective API，提取 sender、receiver、message size、route 等，把 collective 转成 P2P flow 交给网络模拟。（PDF p.7–8/印刷 p.546–547，§3.4 前4段，Fig. 3）</code></p>
 
-![E010 - PDF p.7, 8](../evidence_pages/simai/p007.png)
-
-![E010 - PDF p.7, 8](../evidence_pages/simai/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -266,13 +246,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者称关键修改为 572 行、总修改超过 10K 行；适配新 NCCL/其他 CCL 需要重复这项工作。附录 Table 6 列出支持的 NCCL 环境变量，并明确有 4 个与 adaptive routing/SHARP 有关的变量未支持。（PDF p.8/印刷 p.547，§3.4 “Reproducing NCCL’s key procedures”；PDF p.17–19/印刷 p.556–558，Appendix A，Table 6）</code></p>
 
-![E011 - PDF p.8, 17, 18, 19](../evidence_pages/simai/p008.png)
-
-![E011 - PDF p.8, 17, 18, 19](../evidence_pages/simai/p017.png)
-
-![E011 - PDF p.8, 17, 18, 19](../evidence_pages/simai/p018.png)
-
-![E011 - PDF p.8, 17, 18, 19](../evidence_pages/simai/p019.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p017">PDF p.17</a> · <a href="#source-page-p018">PDF p.18</a> · <a href="#source-page-p019">PDF p.19</a></p>
 
 </details>
 
@@ -283,9 +257,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：网络层使用 NS-3；Execution Engine 是 DES，并以 UNISON 的并行离散事件技术、多线程和 lock-free global variables 加速。lock-free 方案相对单线程最高 23×，相对已有多线程约 15%。（PDF p.8–9/印刷 p.547–548，§3.5，Fig. 4）</code></p>
 
-![E012 - PDF p.8, 9](../evidence_pages/simai/p008.png)
-
-![E012 - PDF p.8, 9](../evidence_pages/simai/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -296,15 +268,7 @@
 
 <p><strong>原定位：</strong> <code>- **依赖/调度（原文事实）**：依赖来自框架路径并进入 DES；网络事件通过通信回调完成。论文没有给出一个独立、可配置的训练 runtime scheduler 模型。（PDF p.5–9/印刷 p.544–548，§3.1–3.5）</code></p>
 
-![E013 - PDF p.5, 6, 7, 8, 9](../evidence_pages/simai/p005.png)
-
-![E013 - PDF p.5, 6, 7, 8, 9](../evidence_pages/simai/p006.png)
-
-![E013 - PDF p.5, 6, 7, 8, 9](../evidence_pages/simai/p007.png)
-
-![E013 - PDF p.5, 6, 7, 8, 9](../evidence_pages/simai/p008.png)
-
-![E013 - PDF p.5, 6, 7, 8, 9](../evidence_pages/simai/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -315,7 +279,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：真实平台为最多 128 台服务器、每台 8 GPU，即 1024 GPU；包括 A100+4×ConnectX-6 和 H100+8×ConnectX-7，多 rail RoCEv2。（PDF p.9/印刷 p.548，§4.1 第1–2段）</code></p>
 
-![E014 - PDF p.9](../evidence_pages/simai/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -326,7 +290,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：通信微基准中，SimAI 在 A100/H100 平台的平均偏差分别为 3.9%/2.3%，ASTRA-sim 对照为 74.8%/51.7%；作者把小消息误差归因于未模拟 libibverbs/NIC pipeline 等。（PDF p.9/印刷 p.548，§4.2，Fig. 5–7）</code></p>
 
-![E015 - PDF p.9](../evidence_pages/simai/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -337,9 +301,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：已有 GPU 的 SimAI-CP 误差为 0.5%–3.1%；跨模型的 GPU 外推误差约 13%–15%。对照 ASTRA-sim 在 H100/A100/H20 上的相关误差为 49.8%/117.9%/224%。（PDF p.9–10/印刷 p.548–549，§4.3，Fig. 8）</code></p>
 
-![E016 - PDF p.9, 10](../evidence_pages/simai/p009.png)
-
-![E016 - PDF p.9, 10](../evidence_pages/simai/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -350,7 +312,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：端到端验证扩展至 1024 GPU，SimAI 的偏差均低于 4%，文中概括为最高 3.9%、相对 ASTRA-sim 精度提高 36.1×。（PDF p.10/印刷 p.549，§4.4，Fig. 9）</code></p>
 
-![E017 - PDF p.10](../evidence_pages/simai/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -361,9 +323,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：论文以 SimAI 比较主机网络带宽：H100 从 200 提升到 400 Gbps 得到 19% 性能提升，H20 从 100 到 200 Gbps 为 11%、200 到 400 Gbps 为 6%；作者称相关设计被生产采用。（PDF p.10–11/印刷 p.549–550，§5.1，Fig. 10）</code></p>
 
-![E018 - PDF p.10, 11](../evidence_pages/simai/p010.png)
-
-![E018 - PDF p.10, 11](../evidence_pages/simai/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -374,9 +334,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：并行策略案例中，GPT-3 13B、LLaMA 65B、GPT-3 175B 在 8-GPU host 的最优 TP 分别为 4、8、8。（PDF p.11–12/印刷 p.550–551，§5.2，Fig. 11）</code></p>
 
-![E019 - PDF p.11, 12](../evidence_pages/simai/p011.png)
-
-![E019 - PDF p.11, 12](../evidence_pages/simai/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -387,9 +345,155 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者还描述了基于 Kubernetes 的 simulation-as-a-service；工作负载与 GPU stack 解耦后，任务可部署在无 GPU 的服务节点。（PDF p.12–13/印刷 p.551–552，§6.2）</code></p>
 
-![E020 - PDF p.12, 13](../evidence_pages/simai/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
-![E020 - PDF p.12, 13](../evidence_pages/simai/p013.png)
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001 引用</summary>
+
+![PDF p.1](../evidence_pages/simai/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001、E002 引用</summary>
+
+![PDF p.2](../evidence_pages/simai/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E003 引用</summary>
+
+![PDF p.3](../evidence_pages/simai/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E003 引用</summary>
+
+![PDF p.4](../evidence_pages/simai/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E002、E005、E006、E013 引用</summary>
+
+![PDF p.5](../evidence_pages/simai/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E002、E006、E007、E008、E013 引用</summary>
+
+![PDF p.6](../evidence_pages/simai/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E002、E008、E009、E010、E013 引用</summary>
+
+![PDF p.7](../evidence_pages/simai/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E002、E004、E010、E011、E012、E013 引用</summary>
+
+![PDF p.8](../evidence_pages/simai/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E002、E012、E013、E014、E015、E016 引用</summary>
+
+![PDF p.9](../evidence_pages/simai/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E016、E017、E018 引用</summary>
+
+![PDF p.10](../evidence_pages/simai/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E018、E019 引用</summary>
+
+![PDF p.11](../evidence_pages/simai/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E019、E020 引用</summary>
+
+![PDF p.12](../evidence_pages/simai/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E020 引用</summary>
+
+![PDF p.13](../evidence_pages/simai/p013.png)
+
+</details>
+
+<a id="source-page-p017"></a>
+
+<details>
+<summary><strong>PDF p.17</strong> - 被 E011 引用</summary>
+
+![PDF p.17](../evidence_pages/simai/p017.png)
+
+</details>
+
+<a id="source-page-p018"></a>
+
+<details>
+<summary><strong>PDF p.18</strong> - 被 E011 引用</summary>
+
+![PDF p.18](../evidence_pages/simai/p018.png)
+
+</details>
+
+<a id="source-page-p019"></a>
+
+<details>
+<summary><strong>PDF p.19</strong> - 被 E011 引用</summary>
+
+![PDF p.19](../evidence_pages/simai/p019.png)
 
 </details>
 

@@ -127,7 +127,7 @@
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -136,7 +136,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Proteus 用层次化 Strategy Tree 表达算子切分/映射、流水和重计算，将其编译成 distributed execution graph，再用 Hierarchical Training Architecture Emulator（HTAE）模拟调度、算子、通信重叠、带宽共享和峰值内存；180 个结果平均误差 3.0%。（PDF p.1，Abstract；p.3–10，§IV–VIII）</code></p>
 
-![E001 - PDF p.1](../evidence_pages/proteus/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -147,7 +147,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：作者要预测同时包含 operator-level tensor partition、memory optimization、subgraph-level pipeline 和 recomputation 的复杂策略，认为只求和单算子成本会遗漏带宽共享、compute-communication overlap、调度和内存行为。（PDF p.2，§II；p.5–7，§VI）</code></p>
 
-![E002 - PDF p.2](../evidence_pages/proteus/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -158,7 +158,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Proteus 接收用户给定的模型与并行策略，并不负责自动策略搜索；论文实验中的策略来自常用配置和专家最优配置。（PDF p.3，§III；p.8，§VIII-B 第1–2段）</code></p>
 
-![E003 - PDF p.3](../evidence_pages/proteus/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a></p>
 
 </details>
 
@@ -169,9 +169,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Strategy Tree 的叶子是前向/反向 tensor 和 operator，内部节点是 subgraph。每个节点可带 computation/memory 配置；operator 可沿任意 tensor 维切分并映射 device，subgraph 还能带 schedule 配置，包括 `n_micro_batch`、`max_ongoing_micro_batch` 和 recomputation。（PDF p.3–4，§IV，Fig. 3）</code></p>
 
-![E004 - PDF p.3, 4](../evidence_pages/proteus/p003.png)
-
-![E004 - PDF p.3, 4](../evidence_pages/proteus/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -182,7 +180,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：这种层次表示可把不同策略限定在不同子图，统一 data/model/pipeline parallelism、ZeRO 类内存优化和 recomputation。（PDF p.4，§IV-B–D）</code></p>
 
-![E005 - PDF p.4](../evidence_pages/proteus/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -193,7 +191,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：编译器创建 DeviceGroup，按 tree 配置切分 tensor/operator，插入通信节点和控制依赖。对于已识别的策略转换，使用 collective pattern；无法模式化时回退到 P2P 通信。（PDF p.5，§V，Fig. 4）</code></p>
 
-![E006 - PDF p.5](../evidence_pages/proteus/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -204,9 +202,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：HTAE 在每个 device 上抽象 computation、feature communication、gradient communication 三类队列/stream，使 compute 与 communication 以及两类通信按规则并发。（PDF p.5–6，§VI-A–B，Fig. 5–6）</code></p>
 
-![E007 - PDF p.5, 6](../evidence_pages/proteus/p005.png)
-
-![E007 - PDF p.5, 6](../evidence_pages/proteus/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -217,7 +213,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：上层 scheduler 在 forward/backward subgraph 之间交错，先按当前状态（forward/backward）从 dependency-free subgraphs 选一个，并倾向 forward 以提高流水并控制峰值内存；下层 executor 逐算子排队执行。（PDF p.6，§VI-B “Scheduler”与“Executor”）</code></p>
 
-![E008 - PDF p.6](../evidence_pages/proteus/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -228,7 +224,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：执行器对 tensor 维护引用计数，分配新 tensor、引用归零后释放，并以此跟踪峰值内存和判定 OOM。（PDF p.6，§VI-B “Memory Consumption”）</code></p>
 
-![E009 - PDF p.6](../evidence_pages/proteus/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -239,7 +235,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Proteus 对共享物理链路的通信假设公平带宽分配，并检查 NIC/socket/PHB/PIX/NVL 等层次连接来计算冲突。（PDF p.7，§VI-C，Fig. 7）</code></p>
 
-![E010 - PDF p.7](../evidence_pages/proteus/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -250,7 +246,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：compute-communication overlap 用固定因子 `γ` 修正；该因子通过在目标机器/模型上比较有、无重叠的 backward 时间进行 profiling。（PDF p.7，§VI-C “Comp-comm overlap”）</code></p>
 
-![E011 - PDF p.7](../evidence_pages/proteus/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -261,9 +257,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：系统约 9K 行 Python。算子 profiler 在目标硬件上测量；通信以 alpha-beta 模型为基础，并加入 NCCL topology/channel 影响和 collective correction factor。（PDF p.7–8，§VII）</code></p>
 
-![E012 - PDF p.7, 8](../evidence_pages/proteus/p007.png)
-
-![E012 - PDF p.7, 8](../evidence_pages/proteus/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -274,7 +268,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：评估包含 ResNet50、InceptionV3、VGG19、GPT-2、GPT-1.5B、DLRM；平台分别为 1×8 TitanXp PCIe、4×8 V100 NVLink+100 Gbps、2×8 A100 NVLink+200 Gbps。软件为 PyTorch 1.8、CUDA 10.1、cuDNN 7.6.5、NCCL 2.7.8。（PDF p.8，§VIII-A，Table II–III）</code></p>
 
-![E013 - PDF p.8](../evidence_pages/proteus/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -285,9 +279,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：180 个预测结果平均误差 3.0%，仅 2 个 OOM 判断错误，最大误差 14.7%；FlexFlow-Sim 对照平均 12.4%、最大 137.9%，且约三分之一策略不支持。（PDF p.8–9，§VIII-B，Fig. 8，Table IV）</code></p>
 
-![E014 - PDF p.8, 9](../evidence_pages/proteus/p008.png)
-
-![E014 - PDF p.8, 9](../evidence_pages/proteus/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a> · <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -298,7 +290,7 @@
 
 <p><strong>原定位：</strong> <code>**口径限制（原文事实）**：每个模型主要验证两种策略：常见策略 S1 与专家给出的最优策略 S2，而不是从庞大策略空间均匀抽样。（PDF p.8，§VIII-B 第1–2段）</code></p>
 
-![E015 - PDF p.8](../evidence_pages/proteus/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -309,7 +301,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：GPT-2 若干策略的排序被完整保持，平均误差 3.2%。（PDF p.9，§VIII-C，Table V）</code></p>
 
-![E016 - PDF p.9](../evidence_pages/proteus/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -320,9 +312,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：消融中，不模拟 runtime behavior 的 Plain 误差 14.4%，完整 Proteus 为 2.4%，说明调度、共享与 overlap 修正是主要精度来源。（PDF p.9–10，§VIII-D，Fig. 9）</code></p>
 
-![E017 - PDF p.9, 10](../evidence_pages/proteus/p009.png)
-
-![E017 - PDF p.9, 10](../evidence_pages/proteus/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -333,7 +323,7 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：模拟到 32 GPU 时，VGG19 总模拟时间最高 1.698 秒，GPT-2 最高 6.265 秒。（PDF p.10，§VIII-E，Table VI）</code></p>
 
-![E018 - PDF p.10](../evidence_pages/proteus/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -344,15 +334,101 @@
 
 <p><strong>原定位：</strong> <code>**原文事实**：Proteus 可替换 Strategy Tree 中的切分、映射、pipeline/recompute 参数，预测吞吐、运行时间和 OOM，适合策略比较。（PDF p.3–7，§III–VI）</code></p>
 
-![E019 - PDF p.3, 4, 5, 6, 7](../evidence_pages/proteus/p003.png)
+<p><strong>页图：</strong> <a href="#source-page-p003">PDF p.3</a> · <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a></p>
 
-![E019 - PDF p.3, 4, 5, 6, 7](../evidence_pages/proteus/p004.png)
+</details>
 
-![E019 - PDF p.3, 4, 5, 6, 7](../evidence_pages/proteus/p005.png)
+## 原文页面图库（按页去重）
 
-![E019 - PDF p.3, 4, 5, 6, 7](../evidence_pages/proteus/p006.png)
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
 
-![E019 - PDF p.3, 4, 5, 6, 7](../evidence_pages/proteus/p007.png)
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E001 引用</summary>
+
+![PDF p.1](../evidence_pages/proteus/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E002 引用</summary>
+
+![PDF p.2](../evidence_pages/proteus/p002.png)
+
+</details>
+
+<a id="source-page-p003"></a>
+
+<details>
+<summary><strong>PDF p.3</strong> - 被 E003、E004、E019 引用</summary>
+
+![PDF p.3](../evidence_pages/proteus/p003.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E004、E005、E019 引用</summary>
+
+![PDF p.4](../evidence_pages/proteus/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E006、E007、E019 引用</summary>
+
+![PDF p.5](../evidence_pages/proteus/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E007、E008、E009、E019 引用</summary>
+
+![PDF p.6](../evidence_pages/proteus/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E010、E011、E012、E019 引用</summary>
+
+![PDF p.7](../evidence_pages/proteus/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E012、E013、E014、E015 引用</summary>
+
+![PDF p.8](../evidence_pages/proteus/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E014、E016、E017 引用</summary>
+
+![PDF p.9](../evidence_pages/proteus/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E017、E018 引用</summary>
+
+![PDF p.10](../evidence_pages/proteus/p010.png)
 
 </details>
 

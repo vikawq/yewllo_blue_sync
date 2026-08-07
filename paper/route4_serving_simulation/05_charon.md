@@ -178,7 +178,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 ## 原文证据截图附录
 
-正文中的 `原文截图 E###` 与本节一一对应。卡片保留原笔记行号和原有页码/章节定位；图片按 PDF 物理页生成。截图用于快速核读，正式引用仍以原论文为准。
+正文中的 `原文截图 E###` 与本节证据卡片一一对应。卡片保留原笔记行号和原有页码/章节定位，并跳转到后面的页图；每个物理页在本篇笔记中只展示一次。截图用于快速核读，正式引用仍以原论文为准。
 
 <a id="evidence-e001"></a>
 
@@ -187,7 +187,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Charon 试图用一个框架同时模拟大规模 LLM training 与 inference，并避免现有工具在模型表达、编译优化、算子/通信代价和细粒度 timeline 上的割裂。Table 1 声称覆盖原生 HuggingFace/PyTorch/vLLM 模型、operator-level graph、profiling/prediction/analytical 多后端、TP/PP/DP/EP/SP/ZeRO/DualPipe 与 3D trace（PDF 第 2 页，§1，Table 1）。</code></p>
 
-![E001 - PDF p.2](../evidence_pages/charon/p002.png)
+<p><strong>页图：</strong> <a href="#source-page-p002">PDF p.2</a></p>
 
 </details>
 
@@ -198,15 +198,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>总体流程是（PDF 第 4–8 页，§3，Figure 2–5）：</code></p>
 
-![E002 - PDF p.4, 5, 6, 7, 8](../evidence_pages/charon/p004.png)
-
-![E002 - PDF p.4, 5, 6, 7, 8](../evidence_pages/charon/p005.png)
-
-![E002 - PDF p.4, 5, 6, 7, 8](../evidence_pages/charon/p006.png)
-
-![E002 - PDF p.4, 5, 6, 7, 8](../evidence_pages/charon/p007.png)
-
-![E002 - PDF p.4, 5, 6, 7, 8](../evidence_pages/charon/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a> · <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -217,7 +209,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Charon 不要求用户手写 abstract model spec，而是直接 trace 原生实现。为降低图规模，它通常只 trace 一个 Transformer block，再按层数复制；对于非对称层或 PP，可保留不同 layer graph（PDF 第 4 页，§3.1 “Graph Tracing”）。</code></p>
 
-![E003 - PDF p.4](../evidence_pages/charon/p004.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a></p>
 
 </details>
 
@@ -228,9 +220,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>论文还说明可分别 trace prefill 与 decode graph，从而“enable disaggregated serving”（PDF 第 4–5 页，§3.1 末段）。</code></p>
 
-![E004 - PDF p.4, 5](../evidence_pages/charon/p004.png)
-
-![E004 - PDF p.4, 5](../evidence_pages/charon/p005.png)
+<p><strong>页图：</strong> <a href="#source-page-p004">PDF p.4</a> · <a href="#source-page-p005">PDF p.5</a></p>
 
 </details>
 
@@ -241,9 +231,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 编译器执行 graph fusion、rewrite、quantization，以及 TP/SP/EP/PP/DP/FSDP/ZeRO/DualPipe 等变换；根据并行语义插入 AllReduce、AllGather、ReduceScatter、Send/Recv，并生成每设备执行图（PDF 第 5–6 页，§3.2，Figure 3–4）。</code></p>
 
-![E005 - PDF p.5, 6](../evidence_pages/charon/p005.png)
-
-![E005 - PDF p.5, 6](../evidence_pages/charon/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p005">PDF p.5</a> · <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -254,9 +242,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 推理验证使用 vLLM，并比较 Qwen3-8B、Llama3-8B、Qwen3-30B-A3B 在 TP=1/2/4 下的 TTFT/TPOT（PDF 第 9–10 页，§4.2，Figure 7）。论文的图模型能区分 prefill 与 decode operator shape。</code></p>
 
-![E006 - PDF p.9, 10](../evidence_pages/charon/p009.png)
-
-![E006 - PDF p.9, 10](../evidence_pages/charon/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a> · <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -267,7 +253,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Memory analysis 的重点是 training activation、temporary tensor liveness、参数/梯度/优化器状态，并通过 operator graph 精确跟踪 allocate/use/free（PDF 第 7 页，§3.2 “Memory Analysis”）。</code></p>
 
-![E007 - PDF p.7](../evidence_pages/charon/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -278,11 +264,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 推理侧报告 TTFT、TPOT、TPS/user、TPS/GPU，并做 Pareto 搜索（PDF 第 11–13 页，§5.2，Figure 13）；某生产案例以 100ms E2E 为约束（PDF 第 13 页，§5.3）。论文没有系统给出 TBT/ITL 分布、SLO violation rate、goodput、排队时延或 per-request timeline。</code></p>
 
-![E008 - PDF p.11, 12, 13](../evidence_pages/charon/p011.png)
-
-![E008 - PDF p.11, 12, 13](../evidence_pages/charon/p012.png)
-
-![E008 - PDF p.11, 12, 13](../evidence_pages/charon/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -293,9 +275,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Figure 5 与 §3.3 将算子后端分为（PDF 第 7–8 页）：</code></p>
 
-![E009 - PDF p.7, 8](../evidence_pages/charon/p007.png)
-
-![E009 - PDF p.7, 8](../evidence_pages/charon/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -306,7 +286,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>支持 FP32/BF16/FP16/FP8/INT8，并显式考虑 precision 对 kernel latency、带宽、内存 footprint 的影响（PDF 第 7 页，§3.3 开头段）。</code></p>
 
-![E010 - PDF p.7](../evidence_pages/charon/p007.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a></p>
 
 </details>
 
@@ -317,9 +297,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 未命中 profile 的算子由 RF 根据 operator type 与 input shape 预测；analytical engine 用 FLOPs、memory accesses 与 hardware peak/bandwidth 计算 roofline 时间（PDF 第 7–8 页，§3.3(a)–(c)）。Fused operator 若可直接 profile/predict 则走对应 backend，否则回退到子算子（Figure 5 右侧）。</code></p>
 
-![E011 - PDF p.7, 8](../evidence_pages/charon/p007.png)
-
-![E011 - PDF p.7, 8](../evidence_pages/charon/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p007">PDF p.7</a> · <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -330,7 +308,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 通信解析模型按分层拓扑、每跳 latency、effective bandwidth、ring/tree collective 和 congestion 估时（PDF 第 8 页，§3.3(c) 延续段）。Overlap 模型分两层：compute-communication overlap 用 slowdown ratio；communication-communication overlap 用带宽竞争模型（PDF 第 8 页，§3.4）。</code></p>
 
-![E012 - PDF p.8](../evidence_pages/charon/p008.png)
+<p><strong>页图：</strong> <a href="#source-page-p008">PDF p.8</a></p>
 
 </details>
 
@@ -341,7 +319,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Scheduler 根据 per-device operator graph 的数据依赖和通信依赖，将节点放到设备时间线上；3D trace 用于展示计算、通信和 overlap（PDF 第 6 页，§3.2 “Scheduling and Timeline Generation”，Figure 4）。</code></p>
 
-![E013 - PDF p.6](../evidence_pages/charon/p006.png)
+<p><strong>页图：</strong> <a href="#source-page-p006">PDF p.6</a></p>
 
 </details>
 
@@ -352,7 +330,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 训练对比 ASTRA-sim、SimAI；推理对比 Vidur 和 vLLM。硬件包括 H800/A100（训练）与 H20/L20（推理）（PDF 第 9 页，§4.1）。</code></p>
 
-![E014 - PDF p.9](../evidence_pages/charon/p009.png)
+<p><strong>页图：</strong> <a href="#source-page-p009">PDF p.9</a></p>
 
 </details>
 
@@ -363,7 +341,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** Figure 7 报告 Qwen3-8B、Llama3-8B、Qwen3-30B-A3B，TP=1/2/4 的 normalized TTFT/TPOT；论文摘要称 inference error 小于 5.35%（PDF 第 1 页 Abstract；第 9–10 页 §4.2，Figure 7）。</code></p>
 
-![E015 - PDF p.1](../evidence_pages/charon/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -374,7 +352,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>Table 2(b) 给出部分 Hopper operator 的 profile/simulation 微秒数（PDF 第 10 页，§4.3，Table 2）：</code></p>
 
-![E016 - PDF p.10](../evidence_pages/charon/p010.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a></p>
 
 </details>
 
@@ -385,9 +363,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** RF 的 MAE：Linear 1.44%、RMSNorm 1.12%、FlashAttention-3 2.22%；对应解析模型为 6.60%、5.70%、31.84%（PDF 第 10–11 页，§4.4，Figure 10）。这支持“profile+prediction”用于未见 shape，但测试仍在论文定义的硬件与数据域内。</code></p>
 
-![E017 - PDF p.10, 11](../evidence_pages/charon/p010.png)
-
-![E017 - PDF p.10, 11](../evidence_pages/charon/p011.png)
+<p><strong>页图：</strong> <a href="#source-page-p010">PDF p.10</a> · <a href="#source-page-p011">PDF p.11</a></p>
 
 </details>
 
@@ -398,7 +374,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>**[论文事实]** 论文称 training 大规模误差低于 3.74%（PDF 第 1 页 Abstract；训练扩展见 §4）。推理侧：</code></p>
 
-![E018 - PDF p.1](../evidence_pages/charon/p001.png)
+<p><strong>页图：</strong> <a href="#source-page-p001">PDF p.1</a></p>
 
 </details>
 
@@ -409,9 +385,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>- 动态 sequence parallelism 只用于 prefill，在 8 张 Ada GPU 的 Llama3-70B 案例中 attention block latency 降低 15%（PDF 第 11–12 页，§5.1，Figure 12）；</code></p>
 
-![E019 - PDF p.11, 12](../evidence_pages/charon/p011.png)
-
-![E019 - PDF p.11, 12](../evidence_pages/charon/p012.png)
+<p><strong>页图：</strong> <a href="#source-page-p011">PDF p.11</a> · <a href="#source-page-p012">PDF p.12</a></p>
 
 </details>
 
@@ -422,9 +396,7 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>- 推理 Pareto 搜索约 2 分钟；放宽 per-user TPS 时，某些方案可把 TPS/GPU 提高到 7×（PDF 第 12–13 页，§5.2，Figure 13）；</code></p>
 
-![E020 - PDF p.12, 13](../evidence_pages/charon/p012.png)
-
-![E020 - PDF p.12, 13](../evidence_pages/charon/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p012">PDF p.12</a> · <a href="#source-page-p013">PDF p.13</a></p>
 
 </details>
 
@@ -435,7 +407,119 @@ Charon 把原生模型、编译图和多保真算子/通信模型统一得很好
 
 <p><strong>原定位：</strong> <code>- 作者称生产配置在 100ms E2E 约束下明显优于人工调优（PDF 第 13 页，§5.3）。</code></p>
 
-![E021 - PDF p.13](../evidence_pages/charon/p013.png)
+<p><strong>页图：</strong> <a href="#source-page-p013">PDF p.13</a></p>
+
+</details>
+
+## 原文页面图库（按页去重）
+
+同一页可能支撑多个证据点；下面按物理页集中展示，每个截图文件只嵌入一次。
+
+<a id="source-page-p001"></a>
+
+<details>
+<summary><strong>PDF p.1</strong> - 被 E015、E018 引用</summary>
+
+![PDF p.1](../evidence_pages/charon/p001.png)
+
+</details>
+
+<a id="source-page-p002"></a>
+
+<details>
+<summary><strong>PDF p.2</strong> - 被 E001 引用</summary>
+
+![PDF p.2](../evidence_pages/charon/p002.png)
+
+</details>
+
+<a id="source-page-p004"></a>
+
+<details>
+<summary><strong>PDF p.4</strong> - 被 E002、E003、E004 引用</summary>
+
+![PDF p.4](../evidence_pages/charon/p004.png)
+
+</details>
+
+<a id="source-page-p005"></a>
+
+<details>
+<summary><strong>PDF p.5</strong> - 被 E002、E004、E005 引用</summary>
+
+![PDF p.5](../evidence_pages/charon/p005.png)
+
+</details>
+
+<a id="source-page-p006"></a>
+
+<details>
+<summary><strong>PDF p.6</strong> - 被 E002、E005、E013 引用</summary>
+
+![PDF p.6](../evidence_pages/charon/p006.png)
+
+</details>
+
+<a id="source-page-p007"></a>
+
+<details>
+<summary><strong>PDF p.7</strong> - 被 E002、E007、E009、E010、E011 引用</summary>
+
+![PDF p.7](../evidence_pages/charon/p007.png)
+
+</details>
+
+<a id="source-page-p008"></a>
+
+<details>
+<summary><strong>PDF p.8</strong> - 被 E002、E009、E011、E012 引用</summary>
+
+![PDF p.8](../evidence_pages/charon/p008.png)
+
+</details>
+
+<a id="source-page-p009"></a>
+
+<details>
+<summary><strong>PDF p.9</strong> - 被 E006、E014 引用</summary>
+
+![PDF p.9](../evidence_pages/charon/p009.png)
+
+</details>
+
+<a id="source-page-p010"></a>
+
+<details>
+<summary><strong>PDF p.10</strong> - 被 E006、E016、E017 引用</summary>
+
+![PDF p.10](../evidence_pages/charon/p010.png)
+
+</details>
+
+<a id="source-page-p011"></a>
+
+<details>
+<summary><strong>PDF p.11</strong> - 被 E008、E017、E019 引用</summary>
+
+![PDF p.11](../evidence_pages/charon/p011.png)
+
+</details>
+
+<a id="source-page-p012"></a>
+
+<details>
+<summary><strong>PDF p.12</strong> - 被 E008、E019、E020 引用</summary>
+
+![PDF p.12](../evidence_pages/charon/p012.png)
+
+</details>
+
+<a id="source-page-p013"></a>
+
+<details>
+<summary><strong>PDF p.13</strong> - 被 E008、E020、E021 引用</summary>
+
+![PDF p.13](../evidence_pages/charon/p013.png)
 
 </details>
 
