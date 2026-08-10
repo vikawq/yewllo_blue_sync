@@ -1,0 +1,17 @@
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=0 \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    NUMEXPR_NUM_THREADS=1
+
+WORKDIR /app
+COPY requirements-graybox.txt /app/requirements-graybox.txt
+RUN pip install --no-cache-dir -r /app/requirements-graybox.txt
+COPY graybox_calibration.py /app/graybox_calibration.py
+
+ENTRYPOINT ["python", "/app/graybox_calibration.py"]

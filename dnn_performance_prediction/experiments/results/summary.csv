@@ -1,0 +1,4 @@
+experiment,variant,requests,ttft_mean_ms,ttft_p50_ms,ttft_p95_ms,e2e_mean_ms,e2e_p50_ms,e2e_p95_ms,scheduling_delay_mean_ms,scheduling_delay_p95_ms,trace_events,simulation_end_s,output_tokens_per_s,result
+vidur,tp1,16,38.414343,39.706939,53.816391,346.441935,345.374591,367.521276,4.836873,15.292451,319,5.333353,95.999654,success
+vidur,tp2,16,37.763884,40.153941,53.989264,355.126770,353.461929,375.647565,4.009388,15.436675,316,5.343659,95.814502,success
+nn-meter,cortexA76cpu_tflite21_v1_mobilenetv3small_0,,,,,,,,,,,,,12.558942703135_ms

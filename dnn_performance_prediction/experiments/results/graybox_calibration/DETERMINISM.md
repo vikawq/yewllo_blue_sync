@@ -1,0 +1,43 @@
+# 确定性核验
+
+核验日期：2026-08-10
+
+Docker 镜像：
+
+```text
+dnn-graybox-calibration:20260810
+sha256:05183e24d76f1834ab600d2bdc0681d9c219f610320b4a2380d7facd9a393351
+```
+
+NeuSight upstream 固定在 commit `6945927d9afcca2b9daf021f8395e53edc5b4eef`。输入与实现哈希：
+
+| 输入/实现 | SHA-256 |
+| --- | --- |
+| `dataset/train/linear.csv` | `1FD598FE99E06324ED0B17ACF93CA64D3E5AD66245226B7617A53D24825026BA` |
+| `dataset/test/linear.csv` | `EFE26A8C4CBB771FC2238B07C34D65A61B5064863A02D96EDA46711A5F474C38` |
+| `graybox_calibration.py` | `B13A6526A0B6E7A903C6C7A0ACE41B3A01749B7E3D34E52FF4729003D0CBAEB4` |
+| `Dockerfile.graybox` | `3BB7D669E7AE8E2270BD7E8C4EDE7C2B302750C02C022FA4C7F9B5488A3B748F` |
+| `requirements-graybox.txt` | `C92B1B80A65FB592DAD468C474B913743001A356D49811E186045E8739F97B8B` |
+
+工作区与镜像内的 `graybox_calibration.py` 哈希一致。镜像摘要锁定的是本次已构建镜像；`python:3.11-slim-bookworm` 基础镜像尚未按 digest 固定，因此未来从 Dockerfile 重建不承诺 bitwise 一致。
+
+确定性设置：
+
+```text
+PYTHONHASHSEED=0
+OMP_NUM_THREADS=1
+OPENBLAS_NUM_THREADS=1
+MKL_NUM_THREADS=1
+NUMEXPR_NUM_THREADS=1
+```
+
+相同容器命令连续执行两次。两次运行均为 10 个 seed，校准预算为 8、16、32、64、128；下列四个核心产物的 SHA-256 在两次运行中逐项一致：
+
+| 产物 | SHA-256 |
+| --- | --- |
+| `zero_shot.csv` | `07FEB6AB407B8DB664DEA36B87A788D1E48454A41D9631EBE58CE05ABEF971AF` |
+| `calibration_runs.csv` | `69C420EE219285DF7911BA3911C92365C13EDD8C0C2002DEFE3D90C01BBFA2BE` |
+| `calibration_summary.csv` | `D65489A150BD5C103FD70BF32BAED61D510418DD996750B70037B61983015136` |
+| `metadata.json` | `81370073CCCA6B4D7D12CDDED14FDDD719FA39D8F51DE9E065C05883C68F5354` |
+
+核验针对数值表和运行元数据；PNG 图由这些表重新生成，不作为数值确定性的判据。

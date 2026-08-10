@@ -1,0 +1,78 @@
+{
+  "config": {
+    "seeds": 2,
+    "budgets": [
+      8,
+      32
+    ],
+    "min_segment_samples": 3,
+    "shrinkage": 4.0,
+    "source_devices": [
+      "Tesla P100-PCIE-16GB",
+      "Tesla P4",
+      "Tesla T4",
+      "Tesla V100-PCIE-32GB",
+      "NVIDIA A100-PCIE-40GB"
+    ],
+    "target_devices": [
+      "NVIDIA A100 80GB PCIe",
+      "NVIDIA H100 80GB HBM3",
+      "NVIDIA L4"
+    ]
+  },
+  "runtime": {
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "sklearn": "1.9.0"
+  },
+  "data": {
+    "data_root": "D:\\workspaces\\trace\\.research\\upstream\\NeuSight\\scripts\\asplos\\data\\dataset",
+    "train_rows": 32224,
+    "test_rows": 8254,
+    "target_rows": {
+      "NVIDIA A100 80GB PCIe": 1040,
+      "NVIDIA H100 80GB HBM3": 1040,
+      "NVIDIA L4": 1040
+    },
+    "target_shape_overlap_with_train": 0
+  },
+  "features": [
+    "log_B",
+    "log_M",
+    "log_N",
+    "log_K",
+    "log_grid_x",
+    "log_grid_y",
+    "log_grid_z",
+    "log_block_x",
+    "log_tile_1",
+    "log_tile_2",
+    "log_blocks",
+    "log_waves",
+    "log_flops",
+    "log_bytes",
+    "log_ai",
+    "log_ridge",
+    "log_ai_over_ridge",
+    "log_compute_floor_ms",
+    "log_memory_floor_ms",
+    "log_roofline_ms",
+    "log_peak_gflops",
+    "log_mem_bw",
+    "log_num_sm",
+    "log_l2_cache",
+    "log_device_mem",
+    "regime_compute",
+    "path_tensor",
+    "path_cutlass_simt",
+    "path_sliced",
+    "path_library_sgemm"
+  ],
+  "roofline_bound_diagnostics": {
+    "train_latency_below_roofline": 0,
+    "test_latency_below_roofline": 0
+  },
+  "assumption": "Kernel name/grid/tile are treated as compiler/profiler-visible inputs; algorithm selection is not predicted."
+}
