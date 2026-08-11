@@ -99,7 +99,7 @@ flowchart LR
     E --> H["离散事件 simulator"]
     G --> H
     H --> I["TTFT/TBT/E2E/QPS/MFU/KV"]
-    I --> J["Vidur-Search<br/>SLO 约束下 QPS/$"]
+I --> J["Vidur-Search<br/>SLO 约束下 QPS/美元"]
 ```
 
 ### 两阶段工作流
@@ -158,7 +158,7 @@ decode 近似 memory-bound，Vidur 用该 batch 的总 context/KV bytes 作为�
 score(c) = λ*(c) / GPU_cost(c)
 ```
 
-再筛满足 TTFT/TBT SLO 的配置，选最大 QPS/$。
+再筛满足 TTFT/TBT SLO 的配置，选最大 QPS/美元。
 
 ## Worked example：两个请求为什么不能只看 batch size=2
 
@@ -192,7 +192,7 @@ attention 成本更接近单条 528 token，而不是单条 640 token；因为�
 - 动态 workload：在 85% capacity 时几乎所有场景误差 `<5%`；图中 7B Arxiv/BWB 的 median normalized E2E 误差约 -8.50%/-6.99%，这也解释 PDF 采用更保守 `<9%`；
 - 附录显示 95% capacity 时，LLaMA2-7B 个别 normalized latency 误差可到约 -12.65%，并明确说明靠近容量拐点误差会被队列放大；
 - 配置迁移：同一 LLaMA2-70B 将一条 trace 的最优配置用于另一 trace，成本最高可差 2×；
-- LLaMA2-70B 的特定 search 案例：约 1 小时、96-core CPU（Azure 价约 $9.93/h），对比真实穷举约 42K GPU hours、约 $218K。
+- LLaMA2-70B 的特定 search 案例：约 1 小时、96-core CPU（Azure 价约 9.93 美元/小时），对比真实穷举约 42K GPU hours、约 21.8 万美元。
 
 ### `<9%` 与 `<5%` 的版本口径
 
@@ -239,7 +239,7 @@ attention 成本更接近单条 528 token，而不是单条 640 token；因为�
 | L1 执行图/状态 | 推导分片 shape；把 request 分为 prefill/decode；生成每轮 batch、KV 和 TP/PP 操作 | 不是完整编译任意 vLLM/SGLang 代码，需手工保持语义一致 |
 | L2 算子成本 | 目标机少量 profile；token/sequence/comm 分类；RF 插值成 lookup | 没有物理约束，远 OOD 或新 GPU 需 microbenchmark/新模型 |
 | L3 系统事件模拟 | global routing、replica batching/KV、stage schedule、排队与请求生命周期 | scheduler/运行时漂移和容量非线性是主要风险 |
-| 输出 | TTFT、TBT、E2E、throughput、capacity、MFU/MBU/KV、QPS/$ 与 Pareto | 不是模型质量、训练收敛或任意未支持优化的保证 |
+| 输出 | TTFT、TBT、E2E、throughput、capacity、MFU/MBU/KV、QPS/美元与 Pareto | 不是模型质量、训练收敛或任意未支持优化的保证 |
 
 ## 与本项目本地实验的关系
 
@@ -280,7 +280,7 @@ attention 成本更接近单条 528 token，而不是单条 640 token；因为�
 - 声明式规格、operator triaging、单 GPU 自动 sharding profile：§4.1–4.3，pp. 4–5，[作者 PDF](https://www.microsoft.com/en-us/research/wp-content/uploads/2024/05/vidur_mlsys24.pdf)。
 - prefill 平方和、decode KV 代理、通信 profile、RF：§4.3–4.4，p. 5，[论文 PDF](https://arxiv.org/pdf/2405.05465)。
 - 三层 scheduler 与论文版同步 PP 边界：§4.5，pp. 5–6，[官方代码](https://github.com/microsoft/vidur)。
-- Vidur-Search 容量二分、QPS/$：§6，pp. 6–7，[MLSys 论文页](https://proceedings.mlsys.org/paper_files/paper/2024/hash/b74a8de47d2b3c928360e0a011f48351-Abstract-Conference.html)。
+- Vidur-Search 容量二分、QPS/美元：§6，pp. 6–7，[MLSys 论文页](https://proceedings.mlsys.org/paper_files/paper/2024/hash/b74a8de47d2b3c928360e0a011f48351-Abstract-Conference.html)。
 - 四模型/三 workload、静态与 85% capacity 动态 fidelity：§7.1–7.2，pp. 7–9，[作者 PDF](https://www.microsoft.com/en-us/research/wp-content/uploads/2024/05/vidur_mlsys24.pdf)。
 - 配置搜索、SLO 与成本案例：§7.3、附录表 2，pp. 9–10、14–15，[arXiv PDF](https://arxiv.org/pdf/2405.05465)。
 - `<5%` proceedings 摘要版本：[MLSys 2024 页面](https://proceedings.mlsys.org/paper_files/paper/2024/hash/b74a8de47d2b3c928360e0a011f48351-Abstract-Conference.html)；与 PDF `<9%` 应并列说明。

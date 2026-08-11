@@ -86,15 +86,15 @@ flowchart LR
 
 灰盒把已知机制写进结构，把 ML 限定到机制没解释的部分。例如：
 
-\[
+$$
 T_{pred}=T_{mechanism}(shape,hardware,route)\times C_{learned}(features)
-\]
+$$
 
 或者：
 
-\[
+$$
 T_{pred}=T_{launch}+\Phi(T_{compute}/\eta_c,T_{memory}/\eta_m)+T_{tail}
-\]
+$$
 
 其中 `η` 或残差由数据学习，但输出受物理下界/支持域约束。
 
@@ -175,4 +175,3 @@ T_{pred}=T_{launch}+\Phi(T_{compute}/\eta_c,T_{memory}/\eta_m)+T_{tail}
 - 解析模型给边界和结构，数据模型补实现残差，实测负责离散新路径和校准；
 - 没有模型代码/runtime/目标硬件时，只能做方法和公开 artifact 级结论，不能声称业务端到端结论；
 - 最终可靠系统应允许回答“我不知道，因此需要测量”，而不是对所有 OOD 点强制给出高置信预测。
-

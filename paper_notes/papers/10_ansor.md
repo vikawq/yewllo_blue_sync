@@ -171,20 +171,20 @@ GPU 使用 `SSSRRSRS`，前三层 spatial tile 分别映射到 BlockIdx、virtua
 Tensor program 由多个交错 loop nests 和 innermost non-loop assignment statements 组成。Ansor：
 
 1. 对每个最内层 statement，在完整 program 上下文中提取算术和内存访问特征；
-2. 模型 \(f(s)\) 给每个 statement 一个 score；
+2. 模型 $f(s)$ 给每个 statement 一个 score；
 3. 对 statement scores 求和得到 program score。
 
 论文正文把详细特征列表放到 extended version；后续 TLP 论文概括为来自计算、访存、算术强度等五方面的 164 个特征。
 
 ### 标签与损失
 
-对同一个 DAG 的所有候选，把 throughput 归一到 `[0,1]`。设 program \(P\) 的真实归一 throughput 为 \(y\)，最内层 statements 集为 \(S(P)\)，预测为 \(\sum_{s\in S(P)}f(s)\)。损失为：
+对同一个 DAG 的所有候选，把 throughput 归一到 `[0,1]`。设 program $P$ 的真实归一 throughput 为 $y$，最内层 statements 集为 $S(P)$，预测为 $\sum_{s\in S(P)}f(s)$。损失为：
 
-\[
+$$
 L(P)=y\left(\sum_{s\in S(P)}f(s)-y\right)^2.
-\]
+$$
 
-由于 weight 直接取 \(y\)，快程序权重更高。这是“为 top candidates 倾斜的回归”，而不是 RankLoss。
+由于 weight 直接取 $y$，快程序权重更高。这是“为 top candidates 倾斜的回归”，而不是 RankLoss。
 
 底层模型是 **gradient boosted decision tree（GBDT/XGBoost 类）**。优化一个 DNN 时通常少于 3 万个已测 programs，树模型重训很快，所以每轮直接从头训练，不做增量更新。
 
@@ -201,19 +201,19 @@ L(P)=y\left(\sum_{s\in S(P)}f(s)-y\right)^2.
 
 一个模型会有很多不同 shape 的 subgraphs。ResNet-50 在论文中有 29 个 unique subgraphs。若每个 task 都给相同的 1000 trials，会浪费预算：有些不是瓶颈，有些已难再优化。
 
-设 \(t_i\) 是给 task \(i\) 的测量批次数，\(g_i(t)\) 是当前找到的最小 subgraph latency，端到端目标为：
+设 $t_i$ 是给 task $i$ 的测量批次数，$g_i(t)$ 是当前找到的最小 subgraph latency，端到端目标为：
 
-\[
+$$
 \min_t f(g_1(t),\ldots,g_n(t)).
-\]
+$$
 
 单模型 latency 可近似为：
 
-\[
+$$
 f=\sum_i w_i g_i(t),
-\]
+$$
 
-其中 \(w_i\) 是该 subgraph 在模型中出现次数。Ansor 以历史改善率和相似 task 的性能作 optimistic estimate，近似 \(\partial f/\partial t_i\)，每轮把资源给绝对梯度最大的 task，并用 \(\epsilon\)-greedy 保留探索。
+其中 $w_i$ 是该 subgraph 在模型中出现次数。Ansor 以历史改善率和相似 task 的性能作 optimistic estimate，近似 $\partial f/\partial t_i$，每轮把资源给绝对梯度最大的 task，并用 $\epsilon$-greedy 保留探索。
 
 直觉：先调最慢、看起来最有潜力的 subgraph；如果多轮不再下降，它的预计边际收益变小，预算转向其他 task。
 
@@ -223,9 +223,9 @@ f=\sum_i w_i g_i(t),
 
 输入 subgraph：
 
-\[
+$$
 C_{ij}=\sum_k A_{ik}B_{kj},\qquad D_{ij}=\max(C_{ij},0).
-\]
+$$
 
 ### Sketch 级选择
 
@@ -287,7 +287,7 @@ unroll = k1
 用 ResNet-50/Intel CPU tuning 中的 25,000 programs，20,000 train / 5,000 test：
 
 - RMSE：0.079（归一 throughput 空间）；
-- \(R^2\)：0.958；
+- $R^2$：0.958；
 - pairwise comparison accuracy：0.851；
 - top-30 recall@30：0.624。
 
@@ -401,4 +401,3 @@ L3：只做 tuning-budget scheduler，不是运行时事件模拟器
 - task scheduler 目标与梯度近似：论文 §6。
 - 三平台/多层评估、搜索时间和 cost-model metrics：论文 §7、Table 3、Figure 6–11。
 - dynamic shape、sparse、special instructions 限制：论文 §9。
-

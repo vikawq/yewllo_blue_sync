@@ -21,9 +21,9 @@ MTL-TLP 再把“不同硬件”当多任务：共享层学习共同的 schedule
 
 一个 matmul 的数学定义是：
 
-\[
+$$
 C_{ij}=\sum_k A_{ik}B_{kj}.
-\]
+$$
 
 但程序可按很多方式执行：
 
@@ -97,11 +97,11 @@ naive loop program
 
 这里的 label 是：
 
-\[
+$$
 y(P\mid G,H)=\frac{T_{min}(G,H)}{T(P,G,H)}\in(0,1],
-\]
+$$
 
-其中 \(G\) 是 subgraph/task，\(H\) 是硬件，\(P\) 是候选 program。最快候选为 1，其余小于 1。
+其中 $G$ 是 subgraph/task，$H$ 是硬件，$P$ 是候选 program。最快候选为 1，其余小于 1。
 
 这不是原始毫秒标签。因此 TLP 虽把任务称为 regression，最佳配置实际使用 LambdaRank，输出不应直接当 SLA 所需的绝对时延。
 
@@ -118,20 +118,20 @@ y(P\mid G,H)=\frac{T_{min}(G,H)}{T(P,G,H)}\in(0,1],
 
 论文定义：
 
-\[
+$$
 S ::= p^*,\qquad
 p ::= \tau\,(id\mid num)^*,
-\]
+$$
 
-- \(\tau\)：primitive type，如 split/reorder/fuse；
-- \(num\)：切分因子、loop extent 等数字参数；
-- \(id\)：loop/stage 名称等字符参数。
+- $\tau$：primitive type，如 split/reorder/fuse；
+- $num$：切分因子、loop extent 等数字参数；
+- $id$：loop/stage 名称等字符参数。
 
 编码函数：
 
-\[
+$$
 F(p)=F_1(\tau)\,\Vert\,F_2(id)\,\Vert\,F_3(num),
-\]
+$$
 
 其中 type 变 one-hot，name 变 token，数字保留数值，最后按原始顺序拼接，再 crop、pad、normalize。
 
@@ -173,17 +173,17 @@ LambdaRank 的核心不是准确回归每个 score，而是对“交换两个候
 
 ### 5. MTL-TLP：共享 backbone，多硬件 head
 
-对 \(n\) 个硬件任务，输入相同，但标签是：
+对 $n$ 个硬件任务，输入相同，但标签是：
 
-\[
+$$
 (x,[y_1,y_2,\ldots,y_n]).
-\]
+$$
 
 若某条 program 只在硬件 2 测过，硬件 1 标签为 `None`，计算 loss 时跳过缺失项：
 
-\[
+$$
 L=\sum_{i:y_i\ne None}L_i(\hat y_i,y_i).
-\]
+$$
 
 - 共享 backbone：学习 split/reorder/fuse 等相对通用的 schedule 语义。
 - 专用 head：学习特定硬件的 cache、SIMD、core、memory 等偏好。
@@ -194,9 +194,9 @@ L=\sum_{i:y_i\ne None}L_i(\hat y_i,y_i).
 
 设有 fused dense + ReLU：
 
-\[
+$$
 Y=\max(XW+b,0).
-\]
+$$
 
 两个候选：
 

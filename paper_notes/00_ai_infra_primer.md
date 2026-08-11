@@ -33,11 +33,11 @@ flowchart LR
 
 以 Transformer 的一个线性层为例：
 
-\[
+$$
 Y = XW,
 \quad X\in\mathbb{R}^{(B S)\times H},
 \quad W\in\mathbb{R}^{H\times H_{out}}
-\]
+$$
 
 这里：
 
@@ -150,15 +150,15 @@ register → shared memory / L1 → L2 → HBM/device memory → 跨卡互联/�
 
 理想可达性能上界：
 
-\[
+$$
 P \le \min(P_{peak}, AI\cdot BW_{peak})
-\]
+$$
 
 等价的乐观时间下界：
 
-\[
+$$
 T \ge T_{roof}=\max\left(\frac{F}{P_{peak}},\frac{Q}{BW_{peak}}\right)
-\]
+$$
 
 这个下界回答：“即使完美利用硬件，至少要多久？”它不是实际预测。launch overhead、低 occupancy、尾波、cache miss、同步、指令混合和不理想 tactic 都会让真实时间更长。
 
@@ -179,9 +179,9 @@ T \ge T_{roof}=\max\left(\frac{F}{P_{peak}},\frac{Q}{BW_{peak}}\right)
 
 若实测为 80ms，灰盒模型可以学 slowdown 或利用率，而不是从零学习 80ms。例如：
 
-\[
+$$
 T_{pred}=T_{roof}\cdot \exp(z),\quad z\ge 0
-\]
+$$
 
 这里 ML 只学非负残差 `z`，从结构上避免预测到物理下界以下。NeuSight 的思想与此同类，但实现细化到了 kernel 类型和 tile/wave。
 
@@ -433,9 +433,9 @@ EP 数增加的影响：
 
 在把四个并行维度视为彼此独立、正交切分的**教学模型**中，可以写成：
 
-\[
+$$
 world\_size = DP\times TP\times PP\times EP
-\]
+$$
 
 并把 global rank 映射成坐标 `(dp, tp, pp, ep)`。这只是便于理解的因子化；实际 MoE runtime 中 EP 可能是对某个 DP/model-parallel 维度的再分组，而不是额外独立相乘。系统还可能有 context parallel、sequence parallel、FSDP、独立 coordinator 或非一进程一卡。因此生产配置必须以 runtime 实际创建的 process groups 为准。
 
@@ -637,10 +637,10 @@ L3 需要推进：
 
 设真实值 `y_i`、预测值 `ŷ_i`：
 
-\[
+$$
 APE_i=\left|\frac{\hat y_i-y_i}{y_i}\right|,
 \quad MAPE=\frac1n\sum_i APE_i
-\]
+$$
 
 注意：
 

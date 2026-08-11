@@ -31,13 +31,13 @@
 
 ## 两条公式
 
-\[
+$$
 AI=FLOPs/Bytes
-\]
+$$
 
-\[
+$$
 T_{roof}=\max(FLOPs/PeakFLOPs, Bytes/PeakBW)
-\]
+$$
 
 真实时间通常大于 `T_roof`。灰盒模型学习的是利用率、slowdown 或有界残差，而不是重新猜 FLOPs。
 

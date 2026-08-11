@@ -59,19 +59,19 @@ Habitat 的建模单位表面上是 operation，但 wave scaling 需要进一步
 
 算术强度定义为：
 
-\[
+$$
 x=\frac{\text{FLOPs}}{\text{从显存读写的字节数}}
-\]
+$$
 
 GPU 的理论可达吞吐受两条上限约束：
 
-\[
+$$
 P_{roof}=\min(P, D\cdot x)
-\]
+$$
 
-其中 \(P\) 是峰值计算吞吐，\(D\) 是显存带宽。两条上限交点 \(R=P/D\) 称 ridge point：\(x<R\) 更偏 memory-bound，\(x\ge R\) 更偏 compute-bound。
+其中 $P$ 是峰值计算吞吐，$D$ 是显存带宽。两条上限交点 $R=P/D$ 称 ridge point：$x<R$ 更偏 memory-bound，$x\ge R$ 更偏 compute-bound。
 
-Habitat 没把 roofline 直接当时间答案，而是用它估计 wave scaling 中的“内存受限程度” \(\gamma\)。
+Habitat 没把 roofline 直接当时间答案，而是用它估计 wave scaling 中的“内存受限程度” $\gamma$。
 
 ### 2.4 为什么同一个 operation 会换 kernel
 
@@ -95,8 +95,8 @@ Habitat 因而区分：
 ### 3.2 输出
 
 - 目标 GPU 上一次训练迭代的预测时间；
-- \(throughput=batch\_size/iteration\_time\)；
-- \(cost\mbox{-}normalized\ throughput=throughput/hourly\ rent\)。
+- $throughput=batch\_size/iteration\_time$；
+- $cost\mbox{-}normalized\ throughput=throughput/hourly\ rent$。
 
 ### 3.3 关键假设
 
@@ -131,56 +131,56 @@ Habitat 用 monkey patch 包装 PyTorch operation。用户用 `track()` 标记�
 
 论文记：
 
-- \(T_i\)：kernel 在 GPU \(i\) 上的时间；
-- \(B\)：kernel 的 thread block 总数；
-- \(W_i\)：GPU \(i\) 一轮 wave 可同时执行的 block 数；
-- \(D_i\)：GPU \(i\) 的实测显存带宽；
-- \(C_i\)：GPU \(i\) 的时钟频率；
-- \(o,d\)：source/origin 和 destination；
-- \(\gamma\in[0,1]\)：memory-boundedness，越大越偏内存受限。
+- $T_i$：kernel 在 GPU $i$ 上的时间；
+- $B$：kernel 的 thread block 总数；
+- $W_i$：GPU $i$ 一轮 wave 可同时执行的 block 数；
+- $D_i$：GPU $i$ 的实测显存带宽；
+- $C_i$：GPU $i$ 的时钟频率；
+- $o,d$：source/origin 和 destination；
+- $\gamma\in[0,1]$：memory-boundedness，越大越偏内存受限。
 
 完整 wave scaling 为：
 
-\[
+$$
 T_d=
 \left\lceil\frac{B}{W_d}\right\rceil
 \left(\frac{D_o}{D_d}\frac{W_d}{W_o}\right)^\gamma
 \left(\frac{C_o}{C_d}\right)^{1-\gamma}
 \left\lceil\frac{B}{W_o}\right\rceil^{-1}T_o
-\]
+$$
 
 第一项与倒数第二项体现目标卡与源卡需要多少轮 wave；中间两项分别按内存和计算倾向缩放“每轮”的速度。
 
 当 block 很多、取整影响小，论文采用简化式：
 
-\[
+$$
 T_d\approx
 \left(\frac{D_o}{D_d}\right)^\gamma
 \left(\frac{W_o}{W_d}\right)^{1-\gamma}
 \left(\frac{C_o}{C_d}\right)^{1-\gamma}T_o
-\]
+$$
 
 注意：这不是一般意义上的精确 GPU 模拟。论文也明确承认时钟影响还与 ISA 等因素相关，但为了简单、可理解，没有继续建模。
 
-### 4.3 用 roofline 选择 \(\gamma\)
+### 4.3 用 roofline 选择 $\gamma$
 
-目标卡 ridge point 为 \(R=P/D\)，源端 profile 得到 kernel 算术强度 \(x\)。Habitat 使用经验分段函数：
+目标卡 ridge point 为 $R=P/D$，源端 profile 得到 kernel 算术强度 $x$。Habitat 使用经验分段函数：
 
-\[
+$$
 \gamma=
 \begin{cases}
 1-\frac{0.5x}{R}, & x<R\\
 \frac{0.5R}{x}, & x\ge R
 \end{cases}
-\]
+$$
 
 因此：
 
-- 极低算术强度时 \(\gamma\to1\)，主要按带宽缩放；
-- 在 ridge point 处 \(\gamma=0.5\)；
-- 极高算术强度时 \(\gamma\to0\)，更多按并行度/时钟缩放。
+- 极低算术强度时 $\gamma\to1$，主要按带宽缩放；
+- 在 ridge point 处 $\gamma=0.5$；
+- 极高算术强度时 $\gamma\to0$，更多按并行度/时钟缩放。
 
-由于 CUPTI 计数器采集慢，Habitat 缓存 `(kernel 名, block 数, block size)` 的计数；只为重要 operation 采集，论文示例阈值为时间处于 99.5 percentile 以上。若没有计数，则令 \(\gamma=1\)，假设多数简单 kernel-alike 操作偏 memory-bound。
+由于 CUPTI 计数器采集慢，Habitat 缓存 `(kernel 名, block 数, block size)` 的计数；只为重要 operation 采集，论文示例阈值为时间处于 99.5 percentile 以上。若没有计数，则令 $\gamma=1$，假设多数简单 kernel-alike 操作偏 memory-bound。
 
 ### 4.4 对 kernel-varying 操作用 MLP
 
@@ -199,9 +199,9 @@ T_d\approx
 
 每个 operation 得到目标卡时间后直接相加：
 
-\[
+$$
 \hat T_{iter}=\sum_{op\in iteration}\hat T_{op}
-\]
+$$
 
 然后由 batch size 计算训练吞吐和价格归一化吞吐。这个汇总没有构造跨 GPU 通信图，也没有做系统级事件模拟。
 
@@ -209,20 +209,20 @@ T_d\approx
 
 下面是教学例子，不是论文原始数据。
 
-假设一个逐元素 kernel 在源卡耗时 \(T_o=4\) ms，总共 240 个 block：
+假设一个逐元素 kernel 在源卡耗时 $T_o=4$ ms，总共 240 个 block：
 
-- 源卡每 wave 能执行 \(W_o=20\) 个 block，共 12 wave；
-- 目标卡每 wave 能执行 \(W_d=40\) 个 block，共 6 wave；
+- 源卡每 wave 能执行 $W_o=20$ 个 block，共 12 wave；
+- 目标卡每 wave 能执行 $W_d=40$ 个 block，共 6 wave；
 - 源/目标实测带宽为 500/1000 GB/s；
 - 源/目标时钟为 1.2/1.5 GHz；
-- roofline 判断它偏 memory-bound，令 \(\gamma=0.8\)。
+- roofline 判断它偏 memory-bound，令 $\gamma=0.8$。
 
 代入完整公式：
 
-\[
+$$
 T_d=6\times(0.5\times2)^{0.8}\times(0.8)^{0.2}\times\frac{1}{12}\times4
 \approx1.91\text{ ms}
-\]
+$$
 
 目标卡 wave 容量翻倍、带宽翻倍且时钟略高，因此约快 2.1 倍。
 
@@ -275,7 +275,7 @@ NeuSight（ASPLOS 2025）用更新的数据集重新训练 Habitat 风格基线�
 | Daydream | 同一硬件 profile + 图变换 | 评估优化前后 | Habitat 主要换 GPU；论文还演示与 Daydream 组合预测异卡 AMP |
 | NeuSight | tile 元数据、GPU 规格、训练数据 | roofline 约束下学习 utilization | NeuSight 进一步把 MLP 从“直接学时间”改为“学有界利用率”，强调新 GPU/新 shape 外推 |
 
-Habitat 的历史位置很重要：它已经不是“全硬编码”，也不是“所有东西都交给神经网络”，而是一个早期机制分流的混合方案。不过它的 MLP 分支仍直接输出 latency，物理约束只用于 wave 分支的 \(\gamma\)，所以强 OOD 时仍脆弱。
+Habitat 的历史位置很重要：它已经不是“全硬编码”，也不是“所有东西都交给神经网络”，而是一个早期机制分流的混合方案。不过它的 MLP 分支仍直接输出 latency，物理约束只用于 wave 分支的 $\gamma$，所以强 OOD 时仍脆弱。
 
 ## 8. 优势
 
@@ -341,7 +341,7 @@ MLP 输入虽含 GPU 规格，但它仍可能在新架构、新 dtype、训练�
 ## 12. 自测问题
 
 1. 为什么 Habitat 不能简单按目标/源 GPU 峰值 FLOPS 比缩放所有 operation？
-2. \(B=41,W=40\) 与 \(B=40,W=40\) 为什么可能出现时间台阶？
+2. $B=41,W=40$ 与 $B=40,W=40$ 为什么可能出现时间台阶？
 3. kernel-alike 和 kernel-varying 的划分错误分别会造成什么后果？
 4. 为什么论文的 operation 级 wave scaling 平均误差 29.8%，端到端却仍能达到 11.8%？
 5. 把 batch 32 改成 batch 128 时，哪些输入量需要重新获取？
@@ -370,8 +370,7 @@ MLP 输入虽含 GPU 规格，但它仍可能在新架构、新 dtype、训练�
 - 论文摘要、6 GPU/5 模型与 11.8%：[USENIX PDF，第 1–2、7–9 页](https://www.usenix.org/system/files/atc21-yu.pdf)
 - 三个关键观察、相同 batch 与两路预测：[论文 §3.1–3.2](https://www.usenix.org/system/files/atc21-yu.pdf)
 - wave scaling 与公式：[论文 §3.3](https://www.usenix.org/system/files/atc21-yu.pdf)
-- roofline 与 \(\gamma\) 分段函数：[论文 §4.2](https://www.usenix.org/system/files/atc21-yu.pdf)
+- roofline 与 $\gamma$ 分段函数：[论文 §4.2](https://www.usenix.org/system/files/atc21-yu.pdf)
 - MLP 特征、数据与训练：[论文 §3.4、§4.3](https://www.usenix.org/system/files/atc21-yu.pdf)
 - 分布式、混合精度和更大 batch 的边界：[论文 §6.1](https://www.usenix.org/system/files/atc21-yu.pdf)
 - 后续 OOD 复测：[NeuSight ASPLOS 2025 PDF，§6.2](https://arxiv.org/pdf/2407.13853)
-

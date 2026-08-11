@@ -76,9 +76,9 @@ nn-Meter 的折中是 kernel-level：比模型细、容易复用；又比原始 
 
 这里 accuracy 不是分类正确率，而是：
 
-\[
+$$
 Accuracy_{\pm10\%}=\frac{\#\{|\hat T-T|/T\le 10\%\}}{\#samples}
-\]
+$$
 
 它回答“多少模型的预测落在真值 ±10% 内”。它不能替代 P95 误差、最坏低估或 SLA 风险分析。
 
@@ -142,12 +142,12 @@ flowchart LR
 
 对于单入边、单出边的 `Op1→Op2`，论文使用：
 
-\[
+$$
 T_{Op1}+T_{Op2}-T_{(Op1,Op2)}
 >\alpha\cdot\min(T_{Op1},T_{Op2})
-\]
+$$
 
-满足则认为发生融合。实验取 \(\alpha=0.5\)。
+满足则认为发生融合。实验取 $\alpha=0.5$。
 
 直觉是：连接图比两个单算子总和省下的时间，必须超过较短算子的一定比例，才不是测量噪声。
 
@@ -179,15 +179,15 @@ nn-Meter 将探测结果保存为 JSON，例如某 backend 是否支持 `conv_bn
 
 Conv 的核心配置可写为：
 
-\[
+$$
 (HW,K,S,C_{in},C_{out})
-\]
+$$
 
-论文从 24 个 CNN 观察到 \(HW,K,S\) 候选较有限，但 channel 范围很大；完整 `Conv++BN++ReLU` 空间约 7 亿配置。逐点上设备测量不可行。
+论文从 24 个 CNN 观察到 $HW,K,S$ 候选较有限，但 channel 范围很大；完整 `Conv++BN++ReLU` 空间约 7 亿配置。逐点上设备测量不可行。
 
 ### 6.2 从模型先验开始
 
-nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior probability distribution \(P\)。初始采样量论文设为：
+nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior probability distribution $P$。初始采样量论文设为：
 
 - Conv：10,000；
 - DWConv：5,000；
@@ -197,13 +197,13 @@ nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior p
 
 ### 6.3 围绕高误差点追加样本
 
-初始样本训练回归器后，算法在测试集上找误差大的配置 \(X^*\)。对每个高误差点，固定 \(HW,K,S\)，在 channel 邻域细采样：
+初始样本训练回归器后，算法在测试集上找误差大的配置 $X^*$。对每个高误差点，固定 $HW,K,S$，在 channel 邻域细采样：
 
-\[
+$$
 C'\sim[0.4C,1.2C]
-\]
+$$
 
-论文每点取 \(M=10\) 个邻域样本，并把新数据加入训练/测试集，迭代到误差阈值满足。它专门追逐由 channel 对齐、并行切分造成的 staircase pattern。
+论文每点取 $M=10$ 个邻域样本，并把新数据加入训练/测试集，迭代到误差阈值满足。它专门追逐由 channel 对齐、并行切分造成的 staircase pattern。
 
 ### 6.4 回归器和特征
 
@@ -211,11 +211,11 @@ C'\sim[0.4C,1.2C]
 
 最终模型时间是：
 
-\[
+$$
 \hat T(m)=\sum_{o\in kernels(m)}f_o(x_o)
-\]
+$$
 
-其中 \(f_o\) 是 kernel 类型 \(o\) 的设备专属回归器，\(x_o\) 是该 kernel 的 shape/派生特征。
+其中 $f_o$ 是 kernel 类型 $o$ 的设备专属回归器，$x_o$ 是该 kernel 的 shape/派生特征。
 
 ## 7. 两个 worked examples
 
@@ -231,15 +231,15 @@ C'\sim[0.4C,1.2C]
 
 以 GPU 为例：
 
-\[
+$$
 5.08+3.50-6.00=2.58>0.5\times3.50=1.75
-\]
+$$
 
 所以记录 `pool_relu=true`。CPU 则为：
 
-\[
+$$
 23.60+0.81-24.48=-0.07\not>0.405
-\]
+$$
 
 所以记录 `pool_relu=false`。同一高层图在不同 backend 上会被切成不同 kernel，这正是“每设备建模”不可省略的原因。
 
@@ -331,9 +331,9 @@ Linear → BiasAdd → GELU
 
 论文明确假设 kernel 串行，并认为这在当时 edge 平台成立。服务端 CUDA 多流、推理并发、GPU MPS、异构 CPU+NPU pipeline、通信/计算 overlap 都会使：
 
-\[
+$$
 T_{model}\ne\sum T_{kernel}
-\]
+$$
 
 此时需要 L3 事件模拟、资源争用和关键路径，而不只是求和。
 
@@ -413,4 +413,3 @@ nn-Meter 对你们灰盒架构的最大贡献是两个原则：**离散路径先
 - 26,000 模型、99.0/99.1/83.4 与 ablation：[论文 §7.1–7.3](https://air.tsinghua.edu.cn/pdf/nn-Meter-Towards-Accurate-Latency-Prediction-of-Deep-Learning-Model-Inference-on-Diverse-Edge-Devices.pdf)
 - Adreno 630 重建和设备开销：[论文 §7.4–7.5](https://air.tsinghua.edu.cn/pdf/nn-Meter-Towards-Accurate-Latency-Prediction-of-Deep-Learning-Model-Inference-on-Diverse-Edge-Devices.pdf)
 - CNN/并发/动态资源等限制：[论文 §8](https://air.tsinghua.edu.cn/pdf/nn-Meter-Towards-Accurate-Latency-Prediction-of-Deep-Learning-Model-Inference-on-Diverse-Edge-Devices.pdf)
-

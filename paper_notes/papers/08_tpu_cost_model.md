@@ -84,9 +84,9 @@ tile 太小，循环和搬运次数多，单次传输也难跑满带宽；tile �
 
 XLA 原解析模型估算数据搬运时间和计算时间，再近似取两者最大值，类似局部 Roofline：
 
-\[
+$$
 T_{analytic}\approx \max(T_{memory},T_{compute}).
-\]
+$$
 
 但它还要用启发式近似双向传输、指令调度、寄存器使用、stall 等。learned model 则从大量真实测量标签中学习这些难写全的关系。
 
@@ -104,9 +104,9 @@ T_{analytic}\approx \max(T_{memory},T_{compute}).
 
 关键系统假设：TPU 当时一次执行一个 kernel；kernel 间没有执行重叠，且假设没有显著跨 kernel cache 影响。因此：
 
-\[
+$$
 \hat T_{program}=\sum_{k\in K}\hat T_k.
-\]
+$$
 
 这正是它不能直接迁移成现代多 stream GPU、分布式训练或在线推理系统模型的原因：那些场景需要 L3 事件模拟处理并发、通信、排队和重叠。
 
@@ -124,14 +124,14 @@ T_{analytic}\approx \max(T_{memory},T_{compute}).
 
 ### 2. GNN 生成节点表示
 
-作者主要使用 GraphSAGE。对节点 \(i\) 的第 \(k\) 层表示，可直观写成：
+作者主要使用 GraphSAGE。对节点 $i$ 的第 $k$ 层表示，可直观写成：
 
-\[
+$$
 h_i^{(k)}=\operatorname{norm}\left(
 W^{(k)}\left[h_i^{(k-1)}\,\Vert\,
 \operatorname{AGG}_{j\in\mathcal N(i)}g^{(k)}(h_j^{(k-1)})
 \right]\right).
-\]
+$$
 
 含义不是“神奇地理解代码”，而是让节点同时看到邻居。例如一个 op 的 node feature 只直接写了输出 shape，它可以从 producer 邻居接收输入 shape 信息。
 
@@ -150,12 +150,12 @@ W^{(k)}\left[h_i^{(k-1)}\,\Vert\,
 
 #### Tile：pairwise rank loss
 
-tile 任务只需回答“候选 A 是否优于 B”。论文对同一批样本的预测差 \(\hat y_i-\hat y_j\) 和真实次序做 pairwise loss，可用 hinge 或 logistic 形式：
+tile 任务只需回答“候选 A 是否优于 B”。论文对同一批样本的预测差 $\hat y_i-\hat y_j$ 和真实次序做 pairwise loss，可用 hinge 或 logistic 形式：
 
-\[
+$$
 L_{rank}=\frac{1}{n(n-1)/2}\sum_{i,j}
 \mathbf 1[y_i>y_j]\,\phi(\hat y_i-\hat y_j).
-\]
+$$
 
 因此输出是用于排序的 score，不要求具有“微秒”单位。消融中，将 rank loss 换成 MSE，Tile-Size APE 均值从约 6.8% 恶化到 17.7%。
 
@@ -163,9 +163,9 @@ L_{rank}=\frac{1}{n(n-1)/2}\sum_{i,j}
 
 fusion 需要将 kernel 预测相加，所以必须学习绝对时间。由于标签从纳秒到秒且右偏，作者对 runtime 做 log transform，再最小化 squared error：
 
-\[
+$$
 L_{fusion}=\left(\log \hat T_k-\log T_k\right)^2.
-\]
+$$
 
 这也说明“该论文只做排序”是不准确的：**tile 分支做排序，fusion 分支做绝对回归。**
 
@@ -211,7 +211,7 @@ X --matmul(W)--> M --add(bias)--> A --relu--> Y
 | Fusion，随机 split，kernel ≥5µs，MAPE | 4.5% | 31.1% | learned 填补了解析模型薄弱的 fusion 绝对成本 |
 | Fusion，kernel <5µs，MAPE | 5.0% | 22.7% | 趋势相同，但小 kernel 对总时间贡献较少 |
 
-对应的随机 split Kendall \(\tau\)：tile learned 0.80、解析 0.74；fusion learned 0.92、解析 0.80。TPU v3 上 tile mean APE 3.8%，fusion（≥5µs）MAPE 4.9%。
+对应的随机 split Kendall $\tau$：tile learned 0.80、解析 0.74；fusion learned 0.92、解析 0.80。TPU v3 上 tile mean APE 3.8%，fusion（≥5µs）MAPE 4.9%。
 
 ### 工具链集成结果
 
@@ -223,7 +223,7 @@ X --matmul(W)--> M --add(bias)--> A --relu--> Y
 
 1. **没有证明 TPU v2 → v3 零样本迁移。** 原文说在 v2、v3 上评估并获得相似结果，但没有给出“只用 v2 标签训练，直接预测 v3”的跨代 zero-shot protocol。
 2. 3.7% 是 tile 选择后的程序级 regret-like APE，不是逐 kernel 绝对时延 MAPE。
-3. “96.3%/95.5% accuracy”是作者摘要对两任务结果的概括；工程比较应回到具体的 Tile-Size APE、MAPE、Kendall \(\tau\) 和 autotuning 结果。
+3. “96.3%/95.5% accuracy”是作者摘要对两任务结果的概括；工程比较应回到具体的 Tile-Size APE、MAPE、Kendall $\tau$ 和 autotuning 结果。
 4. manual split 的反转说明：训练语料覆盖度仍是 learned cost model 的硬约束。
 
 ## 与相关工作的关系
@@ -299,7 +299,7 @@ L3：非常简化
 - **scratchpad**：由软件显式管理的快速片上存储。
 - **systolic array**：以规则数据流执行矩阵乘累加的硬件阵列。
 - **GraphSAGE**：通过邻域聚合学习节点表示的 GNN。
-- **Kendall’s \(\tau\)**：衡量两组排序一致性的统计量。
+- **Kendall’s $\tau$**：衡量两组排序一致性的统计量。
 - **APE/MAPE**：绝对百分比误差/其均值；要确认统计单位和聚合方式。
 - **autotuner**：自动生成、评分并测量编译候选的搜索系统。
 
@@ -312,4 +312,3 @@ L3：非常简化
 - GNN/损失消融：论文 Table 3、Table 4 与 §6。
 - compiler/autotuner 集成：论文 §7。
 - OOD 限制的原文措辞：论文 §9 Conclusion。
-
