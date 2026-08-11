@@ -164,14 +164,18 @@ $$
 
 ### 4.3 用 roofline 选择 γ
 
-目标卡 ridge point 为 `R = P / D`，源端 profile 得到 kernel 算术强度 `x`。Habitat 使用经验分段函数：
+目标卡 ridge point 为 `R = P / D`，源端 profile 得到 kernel 算术强度 `x`。Habitat 使用经验分段函数。为兼容当前 Markdown 数学渲染器，这里将论文的 cases 写法拆成两个等价公式。
+
+当 `x < R` 时：
 
 $$
-\gamma=
-\begin{cases}
-1-\frac{0.5x}{R}, & x<R\\
-\frac{0.5R}{x}, & x\ge R
-\end{cases}
+\gamma = 1 - \frac{x}{2R}
+$$
+
+当 `x ≥ R` 时：
+
+$$
+\gamma = \frac{R}{2x}
 $$
 
 因此：
