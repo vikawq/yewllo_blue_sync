@@ -11,7 +11,7 @@ NeuSight 要解决比 Habitat 更难的外推：**目标模型没见过、目标
 
 它的核心判断是：直接让 MLP 学 `(巨大 GEMM shape, GPU 规格)→latency`，在新 shape/新 GPU 上很容易胡乱外推。GPU 执行其实有更稳定的骨架：库把输出切成 tile，tile 分发给 SM，分多轮 wave 执行；吞吐又不可能超过计算峰值或内存带宽的 roofline。
 
-因此 NeuSight 解析计算 tile 数和 wave 数，用 roofline 给吞吐设上限，MLP 不直接预测时间，而只预测利用率曲线的两个系数 $\alpha,\beta$。最后：
+因此 NeuSight 解析计算 tile 数和 wave 数，用 roofline 给吞吐设上限，MLP 不直接预测时间，而只预测利用率曲线的两个系数 α、β。最后：
 
 $$
 \text{latency}=
@@ -54,13 +54,25 @@ NeuSight 的设计哲学可以用一句话概括：**不要让模型重新发现
 
 ### 2.1 GPU 的 SM、tile 和 wave
 
-以 GEMM $C=A\times B$ 为例，输出 $C$ 可能是一个很大的 $M\times N$ 矩阵。cuBLAS/CUTLASS 不会让一个线程顺序算完，而是把 $C$ 切成许多 $t_M\times t_N$ tile。每个 thread block/CTA 负责一个或一组 tile，并在一个 SM 上执行。
+以 GEMM 为例，其数学关系是：
+
+$$
+C=A\times B
+$$
+
+输出 `C` 可能是一个很大的 `M × N` 矩阵。cuBLAS/CUTLASS 不会让一个线程顺序算完，而是把 `C` 切成许多 `t_M × t_N` tile。每个 thread block/CTA 负责一个或一组 tile，并在一个 SM 上执行。
 
 - **tile**：输出矩阵的一小块工作集，例如 128×128；
 - **SM**：可以并行执行 tile 的 GPU 计算簇；
 - **wave**：所有 SM 一轮共同执行的一批 tile。
 
-如果有 1,024 个 tile、120 个 SM，至少需要 $\lceil1024/120\rceil=9$ 个 wave。若 shape 稍增导致 1,081 个 tile，仍是 10 wave；时间会在 wave 边界呈台阶，而非严格随 FLOPs 平滑线性增加。
+如果有 1,024 个 tile、120 个 SM，至少需要：
+
+$$
+\lceil1024/120\rceil=9
+$$
+
+也就是 9 个 wave。若 shape 稍增导致 1,081 个 tile，则需要 10 个 wave；时间会在 wave 边界呈台阶，而非严格随 FLOPs 平滑线性增加。
 
 ### 2.2 延迟隐藏为什么依赖 wave/并行线程
 
@@ -70,13 +82,13 @@ NeuSight 的设计哲学可以用一句话概括：**不要让模型重新发现
 
 ### 2.3 Roofline 是上限，不是实际速度
 
-对 kernel $k$：
+对 kernel `k`：
 
 $$
 K=\frac{FLOPs_k}{Mem_k}
 $$
 
-其中 $K$ 是算术强度。GPU 峰值计算吞吐为 $FLOPs_p$，峰值显存带宽为 $MemBW_p$，则：
+其中 `K` 是算术强度。GPU 峰值计算吞吐为 `FLOPs_p`，峰值显存带宽为 `MemBW_p`，则：
 
 $$
 RooflineBW=\min(K\cdot MemBW_p,FLOPs_p)
@@ -117,7 +129,7 @@ tile 并非只由 GEMM shape 解析决定。cuDNN、cuBLAS、CUTLASS、PyTorch �
 1. kernel 可分成足够相似的 tile，tile 数和 wave 数能描述主要规模效应；
 2. 每个 SM 一次执行一个 tile，kernel 时间近似随 wave 数线性累积，tile 内并发重叠被利用率函数吸收；
 3. 实际吞吐不超过 roofline；
-4. utilization 对 wave 数可用 $\alpha-\beta/n_{waves}$ 描述；
+4. utilization 对 wave 数可用 `α - β / n_waves` 描述；
 5. tile size 能从 profiler 元数据或训练数据库近邻可靠取得；
 6. 单设备 graph 中 kernel 近似串行；
 7. 未覆盖 operator 可按 memory-bound 处理；
@@ -148,13 +160,13 @@ flowchart LR
 
 ### 5.1 tile 数与 wave 数
 
-设输出 tensor 有 $N$ 个维度，第 $i$ 维大小为 $x_i$，tile 第 $i$ 维为 $t_i$：
+设输出 tensor 有 `N` 个维度，第 `i` 维大小为 `x_i`，tile 第 `i` 维为 `t_i`：
 
 $$
 num_{tiles}=\prod_{i=1}^{N}\left\lceil\frac{x_i}{t_i}\right\rceil
 $$
 
-目标 GPU 有 $num_{SM}$ 个 SM：
+目标 GPU 有 `num_SM` 个 SM：
 
 $$
 num_{waves}=\left\lceil\frac{num_{tiles}}{num_{SM}}\right\rceil
@@ -178,7 +190,7 @@ $$
 AchievedBW=RooflineBW\times utilization
 $$
 
-其中 $RooflineBW$ 来自算力/带宽两条硬上限，$utilization$ 是设备和 kernel 实际达到上限的比例。
+其中 `RooflineBW` 来自算力/带宽两条硬上限，`utilization` 是设备和 kernel 实际达到上限的比例。
 
 ### 5.3 ML 只预测利用率曲线
 
@@ -192,11 +204,11 @@ $$
 (\alpha,\beta)=\sigma(MLP(features))
 $$
 
-论文用 Sigmoid 把 $\alpha,\beta$ 各自限制到 0–1。随着 wave 增多，$-\beta/n_{waves}$ 的损失项变小，utilization 逼近上限 $\alpha$。这用很简洁的函数表达“并行工作不足时 stall 难隐藏，工作变多后趋于饱和”。但 $\alpha-\beta/n_{waves}$ **并不数学保证非负**，所以它只编码了 roofline 上界意图，并非把 utilization 严格钳制在 $[0,1]$。
+论文用 Sigmoid 把 α、β 各自限制到 0–1。随着 wave 增多，`-β / n_waves` 的损失项变小，utilization 逼近上限 α。这用很简洁的函数表达“并行工作不足时 stall 难隐藏，工作变多后趋于饱和”。但 `α - β / n_waves` **并不数学保证非负**，所以它只编码了 roofline 上界意图，并非把 utilization 严格钳制在 `[0, 1]`。
 
 这不是严格的 GPU 性能定理，而是**带物理上限偏置的经验函数形状**；它比直接 latency MLP 更有外推偏置，但仍需实测数据拟合。
 
-**复现口径提醒：**论文公式按上面的 $\alpha-\beta/num_{waves}$ 表述，但同一节文字又称 MLP 最后一层输出“一维”，与公式需要两个系数不一致。核对公开仓库 commit [`6945927`](https://github.com/scai-tech/NeuSight/blob/6945927d9afcca2b9daf021f8395e53edc5b4eef/neusight/Model/mlp_wave.py) 后，代码让 MLP 输出 3 个量，实际计算 `gamma - alpha / num_wave`，`beta` 没进入该表达式；而且实际输入是 4 组压力比，论文第 5 个算术强度特征在代码中被注释。因此复测必须同时锁定公式版本、代码 commit、配置和 checkpoint，不能只按论文符号猜实现。
+**复现口径提醒：**论文公式按上面的 `α - β / num_waves` 表述，但同一节文字又称 MLP 最后一层输出“一维”，与公式需要两个系数不一致。核对公开仓库 commit [`6945927`](https://github.com/scai-tech/NeuSight/blob/6945927d9afcca2b9daf021f8395e53edc5b4eef/neusight/Model/mlp_wave.py) 后，代码让 MLP 输出 3 个量，实际计算 `gamma - alpha / num_wave`，`beta` 没进入该表达式；而且实际输入是 4 组压力比，论文第 5 个算术强度特征在代码中被注释。因此复测必须同时锁定公式版本、代码 commit、配置和 checkpoint，不能只按论文符号猜实现。
 
 ### 5.4 MLP 输入特征
 
@@ -204,11 +216,11 @@ $$
 
 论文表述中，原始硬件资源先除以 SM 数变成 per-SM 量，再构造 5 组归一化压力特征（公开实现差异见上面的复现提醒）：
 
-1. $FLOPs_{tile}/PeakFLOPS_{SM}$：单 tile 计算工作相对一个 SM 算力；
-2. $Memory_{tile}/MemoryBW_{SM}$：单 tile 搬运需求相对带宽；
-3. $waves\times Memory_{tile}/L2Cache_{SM}$：工作集相对 L2；
-4. $waves\times Memory_{tile}/MemorySize_{SM}$：工作集相对全局显存；
-5. $(FLOPs_{tile}/Memory_{tile})/(PeakFLOPS/MemoryBW)$：算术强度相对 ridge point。
+1. `FLOPs_tile / PeakFLOPS_SM`：单 tile 计算工作相对一个 SM 算力；
+2. `Memory_tile / MemoryBW_SM`：单 tile 搬运需求相对带宽；
+3. `waves × Memory_tile / L2Cache_SM`：工作集相对 L2；
+4. `waves × Memory_tile / MemorySize_SM`：工作集相对全局显存；
+5. `(FLOPs_tile / Memory_tile) / (PeakFLOPS / MemoryBW)`：算术强度相对 ridge point。
 
 这些是 dimensionless 或接近资源压力的比值，比直接把“80 GB、132 SM、4096 hidden”扔给网络更容易跨设备比较。
 
@@ -234,13 +246,13 @@ $$
 num_{waves}=\lceil1024/120\rceil=9
 $$
 
-若 $K=4096$，每 tile 约有：
+若 `K=4096`，每 tile 约有：
 
 $$
 FLOPs_{tile}=2\times128\times128\times4096\approx0.134\ GFLOP
 $$
 
-假设每 SM 对该 kernel 的 roofline 上限为 0.5 TFLOP/s，MLP 输出 $\alpha=0.85,\beta=0.40$：
+假设每 SM 对该 kernel 的 roofline 上限为 0.5 TFLOP/s，MLP 输出 α=0.85、β=0.40：
 
 $$
 utilization=0.85-0.40/9\approx0.806
@@ -262,7 +274,7 @@ $$
 
 矩阵边长只多 1，tile 数却多 65，wave 从 9 跳到 10；最后一波还可能很空。NeuSight 的取整和 wave 公式会显式产生这一台阶。直接用 FLOPs 线性拟合则只会看到约 0.05% 的规模增长，很可能严重低估。
 
-对 Transformer，这个例子对应：batch、sequence length、head 数、TP 切分改变 $M/N/K$，从而改变 tile 数、wave 数和利用率。也解释了为什么每次 seqLen 不同确实会影响延迟，而且影响不总是平滑的。
+对 Transformer，这个例子对应：batch、sequence length、head 数、TP 切分改变 `M/N/K`，从而改变 tile 数、wave 数和利用率。也解释了为什么每次 seqLen 不同确实会影响延迟，而且影响不总是平滑的。
 
 ## 7. 从 kernel 到模型和分布式执行
 
@@ -367,7 +379,7 @@ NeuSight 依赖 profiler、kernel 名、thread block 数和 tile 数据库；预
 
 ### 11.2 简化的一 tile/SM 与线性 wave 模型
 
-真实 GPU 可能一个 SM 同时驻留多个 CTA，occupancy 受寄存器/shared memory 约束；边界 tile、persistent kernel、流水 load/compute、L2 cache 命中也不一定能被一个 $\alpha-\beta/waves$ 完全吸收。
+真实 GPU 可能一个 SM 同时驻留多个 CTA，occupancy 受寄存器/shared memory 约束；边界 tile、persistent kernel、流水 load/compute、L2 cache 命中也不一定能被一个 `α - β / waves` 完全吸收。
 
 ### 11.3 operator family 覆盖有限
 
@@ -417,7 +429,11 @@ NeuSight 最适合成为你们架构的 **L2 机制约束学习模型**，而不
 ## 13. 对当前灰盒落地的启示
 
 1. 解析特征应优先包含 `num_tiles`、`num_waves`、tail-wave occupancy、arithmetic intensity、工作集/L2 比，而不只用 B/S/H 原始 shape。
-2. 预测目标改成 $u=T_{roof}/T_{measured}$ 或相对解析基线的 bounded residual，比直接拟合 latency 更适合跨卡。
+2. 预测目标可改为下式，或采用相对解析基线的 bounded residual；这比直接拟合 latency 更适合跨卡：
+
+   $$
+   u=T_{roof}/T_{measured}
+   $$
 3. tile/tactic 是离散路径：先分类、再分段拟合；近邻距离或分类置信度过低时触发 microbenchmark。
 4. 对每个 kernel family 分别训练与校准；未知 family 的 memory-bound fallback 只能给保守初值，并附大误差区间。
 5. L1 必须从真实模型/config 推导每 rank shape；L2 再预测局部 operator；L3 才负责 overlap、collective 和调度。

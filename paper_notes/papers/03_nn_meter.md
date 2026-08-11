@@ -147,7 +147,7 @@ T_{Op1}+T_{Op2}-T_{(Op1,Op2)}
 >\alpha\cdot\min(T_{Op1},T_{Op2})
 $$
 
-满足则认为发生融合。实验取 $\alpha=0.5$。
+满足则认为发生融合。实验取 α=0.5。
 
 直觉是：连接图比两个单算子总和省下的时间，必须超过较短算子的一定比例，才不是测量噪声。
 
@@ -183,11 +183,11 @@ $$
 (HW,K,S,C_{in},C_{out})
 $$
 
-论文从 24 个 CNN 观察到 $HW,K,S$ 候选较有限，但 channel 范围很大；完整 `Conv++BN++ReLU` 空间约 7 亿配置。逐点上设备测量不可行。
+论文从 24 个 CNN 观察到 `HW, K, S` 候选较有限，但 channel 范围很大；完整 `Conv++BN++ReLU` 空间约 7 亿配置。逐点上设备测量不可行。
 
 ### 6.2 从模型先验开始
 
-nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior probability distribution $P$。初始采样量论文设为：
+nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior probability distribution `P`。初始采样量论文设为：
 
 - Conv：10,000；
 - DWConv：5,000；
@@ -197,13 +197,13 @@ nn-Meter 先统计 24 个现有 CNN 中各维度出现的分布，形成 prior p
 
 ### 6.3 围绕高误差点追加样本
 
-初始样本训练回归器后，算法在测试集上找误差大的配置 $X^*$。对每个高误差点，固定 $HW,K,S$，在 channel 邻域细采样：
+初始样本训练回归器后，算法在测试集上找误差大的配置 `X*`。对每个高误差点，固定 `HW, K, S`，在 channel 邻域细采样：
 
 $$
 C'\sim[0.4C,1.2C]
 $$
 
-论文每点取 $M=10$ 个邻域样本，并把新数据加入训练/测试集，迭代到误差阈值满足。它专门追逐由 channel 对齐、并行切分造成的 staircase pattern。
+论文每点取 `M=10` 个邻域样本，并把新数据加入训练/测试集，迭代到误差阈值满足。它专门追逐由 channel 对齐、并行切分造成的 staircase pattern。
 
 ### 6.4 回归器和特征
 
@@ -215,7 +215,7 @@ $$
 \hat T(m)=\sum_{o\in kernels(m)}f_o(x_o)
 $$
 
-其中 $f_o$ 是 kernel 类型 $o$ 的设备专属回归器，$x_o$ 是该 kernel 的 shape/派生特征。
+其中 `f_o` 是 kernel 类型 `o` 的设备专属回归器，`x_o` 是该 kernel 的 shape/派生特征。
 
 ## 7. 两个 worked examples
 

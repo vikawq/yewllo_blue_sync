@@ -124,7 +124,7 @@ $$
 
 ### 2. GNN 生成节点表示
 
-作者主要使用 GraphSAGE。对节点 $i$ 的第 $k$ 层表示，可直观写成：
+作者主要使用 GraphSAGE。对节点 `i` 的第 `k` 层表示，可直观写成：
 
 $$
 h_i^{(k)}=\operatorname{norm}\left(
@@ -150,7 +150,7 @@ $$
 
 #### Tile：pairwise rank loss
 
-tile 任务只需回答“候选 A 是否优于 B”。论文对同一批样本的预测差 $\hat y_i-\hat y_j$ 和真实次序做 pairwise loss，可用 hinge 或 logistic 形式：
+tile 任务只需回答“候选 A 是否优于 B”。论文对同一批样本的预测差 `\hat y_i-\hat y_j` 和真实次序做 pairwise loss，可用 hinge 或 logistic 形式：
 
 $$
 L_{rank}=\frac{1}{n(n-1)/2}\sum_{i,j}
@@ -211,7 +211,7 @@ X --matmul(W)--> M --add(bias)--> A --relu--> Y
 | Fusion，随机 split，kernel ≥5µs，MAPE | 4.5% | 31.1% | learned 填补了解析模型薄弱的 fusion 绝对成本 |
 | Fusion，kernel <5µs，MAPE | 5.0% | 22.7% | 趋势相同，但小 kernel 对总时间贡献较少 |
 
-对应的随机 split Kendall $\tau$：tile learned 0.80、解析 0.74；fusion learned 0.92、解析 0.80。TPU v3 上 tile mean APE 3.8%，fusion（≥5µs）MAPE 4.9%。
+对应的随机 split Kendall τ：tile learned 0.80、解析 0.74；fusion learned 0.92、解析 0.80。TPU v3 上 tile mean APE 3.8%，fusion（≥5µs）MAPE 4.9%。
 
 ### 工具链集成结果
 
@@ -223,7 +223,7 @@ X --matmul(W)--> M --add(bias)--> A --relu--> Y
 
 1. **没有证明 TPU v2 → v3 零样本迁移。** 原文说在 v2、v3 上评估并获得相似结果，但没有给出“只用 v2 标签训练，直接预测 v3”的跨代 zero-shot protocol。
 2. 3.7% 是 tile 选择后的程序级 regret-like APE，不是逐 kernel 绝对时延 MAPE。
-3. “96.3%/95.5% accuracy”是作者摘要对两任务结果的概括；工程比较应回到具体的 Tile-Size APE、MAPE、Kendall $\tau$ 和 autotuning 结果。
+3. “96.3%/95.5% accuracy”是作者摘要对两任务结果的概括；工程比较应回到具体的 Tile-Size APE、MAPE、Kendall τ 和 autotuning 结果。
 4. manual split 的反转说明：训练语料覆盖度仍是 learned cost model 的硬约束。
 
 ## 与相关工作的关系
@@ -299,7 +299,7 @@ L3：非常简化
 - **scratchpad**：由软件显式管理的快速片上存储。
 - **systolic array**：以规则数据流执行矩阵乘累加的硬件阵列。
 - **GraphSAGE**：通过邻域聚合学习节点表示的 GNN。
-- **Kendall’s $\tau$**：衡量两组排序一致性的统计量。
+- **Kendall’s τ**：衡量两组排序一致性的统计量。
 - **APE/MAPE**：绝对百分比误差/其均值；要确认统计单位和聚合方式。
 - **autotuner**：自动生成、评分并测量编译候选的搜索系统。
 

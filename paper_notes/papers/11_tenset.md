@@ -152,7 +152,7 @@ $$
 L_{MSE}=\frac{1}{N}\sum_i(\hat y_i-y_i)^2,
 $$
 
-其中 $y$ 常是 task 内 normalized throughput/latency。
+其中 `y` 常是 task 内 normalized throughput/latency。
 
 排序型：论文使用源自 LambdaRank/LambdaLoss 的 probabilistic ranking cost，对交换候选名次影响较大的 pair 赋更大梯度。最终目标是让好候选进入 top-k，而不是让每个 score 都等于某个绝对时间。
 
@@ -164,7 +164,7 @@ $$
 TopK(G)=\frac{T^*(G)}{\min_{P\in \widehat C_k(G)}T(P,G)}\in(0,1],
 $$
 
-其中 $T^*$ 是数据集中最快 runtime，$\widehat C_k$ 是模型预测的前 k 个候选。完整模型评估再按 subgraph 在 network 中出现次数加权聚合。
+其中 `T^*` 是数据集中最快 runtime，`\widehat C_k` 是模型预测的前 k 个候选。完整模型评估再按 subgraph 在 network 中出现次数加权聚合。
 
 - 1 表示预测 top-k 中包含真实最佳候选；
 - 0.9 可直观理解为选出的最好候选性能约为数据集中最优的 90%（具体聚合是按 latency/权重形成的比值）；
