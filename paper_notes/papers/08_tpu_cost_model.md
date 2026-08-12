@@ -124,13 +124,14 @@ $$
 
 ### 2. GNN 生成节点表示
 
-作者主要使用 GraphSAGE。对节点 `i` 的第 `k` 层表示，可直观写成：
+作者主要使用 GraphSAGE。为避免当前 Markdown 渲染器解析跨行公式失败，可以把节点 `i` 的第 `k` 层计算等价地拆成“聚合邻居消息”和“更新节点表示”两步：
 
 $$
-h_i^{(k)}=\operatorname{norm}\left(
-W^{(k)}\left[h_i^{(k-1)}\,\Vert\,
-\operatorname{AGG}_{j\in\mathcal N(i)}g^{(k)}(h_j^{(k-1)})
-\right]\right).
+m_i^{(k)} = \operatorname{AGG}_{j\in\mathcal N(i)} g^{(k)}\!\left(h_j^{(k-1)}\right)
+$$
+
+$$
+h_i^{(k)} = \operatorname{norm}\!\left(W^{(k)}\!\left[h_i^{(k-1)} \Vert m_i^{(k)}\right]\right)
 $$
 
 含义不是“神奇地理解代码”，而是让节点同时看到邻居。例如一个 op 的 node feature 只直接写了输出 shape，它可以从 producer 邻居接收输入 shape 信息。
@@ -153,8 +154,7 @@ $$
 tile 任务只需回答“候选 A 是否优于 B”。论文对同一批样本的预测差 `\hat y_i-\hat y_j` 和真实次序做 pairwise loss，可用 hinge 或 logistic 形式：
 
 $$
-L_{rank}=\frac{1}{n(n-1)/2}\sum_{i,j}
-\mathbf 1[y_i>y_j]\,\phi(\hat y_i-\hat y_j).
+L_{rank} = \frac{1}{n(n-1)/2}\sum_{i,j}\mathbf 1[y_i>y_j]\,\phi(\hat y_i-\hat y_j)
 $$
 
 因此输出是用于排序的 score，不要求具有“微秒”单位。消融中，将 rank loss 换成 MSE，Tile-Size APE 均值从约 6.8% 恶化到 17.7%。

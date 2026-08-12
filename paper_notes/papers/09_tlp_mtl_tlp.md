@@ -116,11 +116,14 @@ $$
 
 ### 1. 把 primitive 拆成三类元素
 
-论文定义：
+论文定义如下。为兼容当前 Markdown 渲染器，将原来的跨行文法拆成两个独立公式块：
 
 $$
-S ::= p^*,\qquad
-p ::= \tau\,(id\mid num)^*,
+S ::= p^*
+$$
+
+$$
+p ::= \tau\,(id\mid num)^*
 $$
 
 - τ：primitive type，如 split/reorder/fuse；
