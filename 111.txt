@@ -1,52 +1,94 @@
-1. KV cache 在仿真侧，runner 完全无状态
-**仿真侧持有主副本**：vLLM 用 `torch.zeros(..., device=self.device)` 分配 KV cache（[model_runner_v1.py:3959-3970](vLLM-ascend_for_lingqu/vllm_ascend/worker/model_runner_v1.py:3959)），device=npu → `aclrtMalloc` → `halMemAlloc` → vAscend mem 仿真。每个仿真 rank 的 KV cache 就活在它自己的仿真 device 地址空间里。
+三个问题都有明确答案，其中第 2 个的答案可能会改变你们的排查方向。
 
-**runner 侧不可能持有**，三条硬证据：
+## 1. KV cache：**ND 分配、非量化，但写入走的是 PA_NZ 语义** —— 这里有一个真实的隐患
 
-- Device storage 的所有者是 `ExecutionContext`，请求内 `aclrtMalloc`，D2H 之后 `aclrtFree`（[npu_backend.md:261](vAscend/docs/design/modules/real_calculation/npu_backend.md:261)、[integration_contracts.md:655](vAscend/docs/design/modules/real_calculation/integration_contracts.md:655)）。跨请求缓存不在设计里，非目标清单也排除了任何持久状态。
-- wire 上不带地址：`storage_id` 是 request-local 的，`aclGetRawTensorAddr` 拿到的地址明确"不跨网传输"（[integration_contracts.md:513](vAscend/docs/design/modules/real_calculation/integration_contracts.md:513)）。runner 无法把上一次的 buffer 认回来。
-- 实测行为印证：`aclnnScatterPaKvCache` 注册的 `outputIndexes = {1,4}`（keyCacheRef / valueCacheRef），即**整块 cache tensor 每次调用 H2D 进 runner、D2H 回仿真侧**。你们自己的交接文档下一阶段计划第 8 条写的就是"减少 gRPC 往返、**完整 cache 回传**和 host/device copy"（[stage_summary:1692](vLLM-ascend_for_lingqu/vllm_ascend_qwen35_vascend_real_calculation_stage_summary.md:1692)）。
+**分配和形状**：raw buffer 按 int8 字节分配，再 view 成目标 dtype（[model_runner_v1.py:4034-4048](vLLM-ascend_for_lingqu/vllm_ascend/worker/model_runner_v1.py:4034)），逻辑形状是 `(2, num_blocks, block_size, num_kv_heads, head_size)`（[attention_v1.py:101-108](vLLM-ascend_for_lingqu/vllm_ascend/attention/attention_v1.py:101)）——标准 ND paged 布局。**全仓没有一处对 KV cache 做 `npu_format_cast`**（grep 到的 `npu_format_cast` 全是权重和 MLA 的 wd_qkv/wu_q 之类）。
 
-**推论**：KV cache 流量 = 每个 attention/scatter 算子调用 × 该层 cache 全量 × 2（进+出）。而单 request/response 和单个 `Tensor.storage` 上限都是 **64MiB**（[rpc_transport.md:611,863-866](vAscend/docs/design/modules/real_calculation/rpc_transport.md:863)）。你现在 `--kv-cache-memory-bytes 536870912`（512MB）之所以能跑，是因为 cache 按层切分后每层在 64MiB 以内；一旦放大 `max-model-len` 或层数，会先撞 64MiB 而不是撞算力。这也是 TTFT 13 分钟的主要成因之一。
-2. 不是 fake tensor，但也不是"处处真实"。
-没有 fake/meta tensor 机制。仿真侧每个 tensor 都是真实分配，dtype/shape/stride/地址都是真的，字节存储也真实存在。问题在内容：
+**量化：当前没开**。int8 KV（GQA-C8）路径确实存在——`_quantize_kv_to_int8` + `_prepare_c8_scales` + `_nz_5d_view`（5D NZ，内轴 32），但它挂在 C8 分支上，需要 `--kv-cache-dtype int8` 或 fa-quant 量化配置。你的启动脚本两者都没有，`--dtype auto` → KV = 模型 dtype，不量化。
 
-| 类别 | 内容 | 证据 |
-|---|---|---|
-| `real_calculation` 白名单算子 | **真实数值，模型原生精度**（bf16/fp16），在真 NPU 上算完回写 | [integration_contracts.md:81,578-587](vAscend/docs/design/modules/real_calculation/integration_contracts.md:578) |
-| 其余算子 | **零计算**：kernel/AICPU task 直接 `return SIM_OK`，不碰输出 buffer，内容 = 之前残留（0 或垃圾） | [sim_services.cpp:412-424](vAscend/src/stream/sim_services.cpp:412) |
-| `bad_origin` | success stub / 返回 0 | [mock_opapi.md:611](vAscend/docs/design/modules/real_calculation/mock_opapi.md:611) |
+**`VLLM_ASCEND_ENABLE_NZ=0` 管不到 KV cache**：这个开关的注释写得很清楚，是 "Whether to enable **weight** cast format to FRACTAL_NZ"（[envs.py:88-92](vLLM-ascend_for_lingqu/vllm_ascend/envs.py:88)），只影响 `w13_weight/w2_weight` 等权重。
 
-CPU 后端文档第一句话就是这个背景："解决集群仿真环境下算子输出为全0或随机值导致模型运行异常的问题"（op_offload_design.md:13）。
+**真正的问题在这里**：你们跑的是 A5/A6 适配器（A6 mock → `get_device_adaptor()` 返回 `A5DeviceAdaptor`），它的 KV 写入是——
 
-3. 千卡并行配置：
+```python
+# vllm_ascend/device/device_op.py:791-802
+class A5DeviceAdaptor(BaseDeviceAdaptor):
+    @classmethod
+    def reshape_and_cache(cls, key, value, key_cache, value_cache, slot_mapping):
+        torch_npu.npu_scatter_pa_kv_cache(
+            ...
+            # A6 MOCK
+            # cache_mode="Norm",
+        )
+```
 
-**工作区里不存在任何千卡配置。** 能查到的全部是单卡：`ASCEND_RT_VISIBLE_DEVICES=0`、`USED_VNODE_CARD_NUM=1`、`RANK_TABLE_FILE=/opt/config/single/ranktable.json`（目录名就是 single，文件不在库里）、vllm 命令行没有任何 `-tp/-dp/--enable-expert-parallel` → TP=1/PP=1/DP=1/EP off。交接文档也自述当前 `tensor_parallel_size=1`（[stage_summary:92](vLLM-ascend_for_lingqu/vllm_ascend_qwen35_vascend_real_calculation_stage_summary.md:92)）。`examples/run_dp_server.sh` 是上游通用示例（DP2/TP4/EP），跟千卡无关。
+`cache_mode="Norm"` 被**注释掉了**，标记就是 `# A6 MOCK`。于是 op-plugin 用默认 cacheMode → 发出去是 `PA_NZ` → runner 的真 CANN 报"PA_NZ cache 最后一维不合法" → 你们的对策是在 vAscend RPC 里把 `PA_NZ` 改写成 `Norm`（交接文档 4 阶段表 + 8.3 节）。
 
-并行度在这套栈里由三处外部输入决定，**都不在版本库中**：
+**这个改写只动了一个字符串属性，没有动数据布局，也没有动 tensor 描述符。** 客户端按 PA_NZ 的理解组织/看待这块 buffer，runner 按 Norm 执行 kernel，同一段字节被两种布局解释——**KV 内容会被搬错位**。而 `outputIndexes = {1,4}` 会把整块 cache 写回仿真侧，错误会固化在 cache 里，下一个 token 继续读错。这是"首 token 可见文本为空 / 数值不可信"的一个高置信度嫌疑点，优先级应该排在数值一致性验证的最前面。
 
-1. **ranktable 的 `rank_count`** → 决定通信域规模，上限 65536（[rank_table_info.cc:16](vAscend/src/hccl_mock/src/config/rank_table_info.cc:16)、`GetRankSize` 在 [op_base.cc:2159](vAscend/src/hccl_mock/src/adapter/hccl/op_base/src/op_base.cc:2159)）。
-2. **vLLM 命令行** 的 TP/PP/DP/EP。
-3. **`VNODE_CARD_NUM` / `USED_VNODE_CARD_NUM` / `VNODE_CARD_TYPE`** → 进程用 `idCard=(IP<<32)|PID` 向 dayu server 注册"本服务器卡数 / 本 PD 实例卡数 / PD 角色"（[IDCardGenerator.cpp:82-92,109](vAscend/src/hccl_mock/src/backend/vccl/dayu_sim/IDCardGenerator.cpp:82)、[DayuVCCLHelper.cpp:529-536](vAscend/src/hccl_mock/src/backend/vccl/dayu_sim/DayuVCCLHelper.cpp:529)）。你现在 `VNODE_CARD_NUM=8` = 一个 8 卡节点，千卡 ≈ 125 个这样的 vNode。
+另外注意：`_nz_5d_view` 是 `.view()` 不是 format_cast（[attention_v1.py:1441-1444](vLLM-ascend_for_lingqu/vllm_ascend/attention/attention_v1.py:1441)），它把 ND 分配的扁平 buffer 重新解释成 `(blocks, heads, D/32, block_size, 32)`——**元素顺序和 ND 不一致**，等于假定这块 buffer 物理上就是 NZ。所以 C8 路径一旦开启，同样的布局歧义会再来一遍。设计文档那边的约束是 `single_acl_format` + "无法证明 padding/blocked format 布局时拒绝生成该算子"（[integration_contracts.md:518,620](vAscend/docs/design/modules/real_calculation/integration_contracts.md:518)），你们的生产实现是绕过了这条闸门。
 
-要拿到真实答案，请提供 `/opt/config/single/ranktable.json` 或千卡场景的那份 ranktable + 对应启动命令 + dayu server（`141.61.77.46:32355`）的组网配置。
+**该做的**：确认 op-plugin 对 `npu_scatter_pa_kv_cache` 默认 cacheMode 的取值，然后**两侧统一**——要么客户端显式传 `Norm` 并保证 buffer 是 ND（把那行注释放开），要么保持 PA_NZ 并让 runner 侧真的按 NZ 建 tensor。绝不能靠 RPC 改字符串。
 
-**能确定的约束**（对选型有用）：能力上 TP/EP/DP 都可表达（AllReduce/AllGather/ReduceScatter/AlltoAll(V) 齐全），PP 也有 `HcclSend/Recv/BatchSendRecv`；但由于第 2 节的通信截断，**并行度只影响性能建模、内存分布和调度行为，不产生正确的跨卡数值**。所以千卡配置怎么选，是按你想复现的性能/内存/EPLB 行为来定，不受数值正确性约束。
+---
 
-4. 真算预算按"独立控制流实例"算，不按 rank 数
+## 2. 大矩阵乘：既不分片也不卸载 —— **相关算子根本不在白名单里**
 
-协议层**完全没有 rank 概念**：wire 上既不带 rank，也不带 pid/tid（[rpc_transport.md:891](vAscend/docs/design/modules/real_calculation/rpc_transport.md:891)）。计费/调度的两个维度是：
+先纠正一个前提：>60MB 的权重在你们这条链路上**没有走真算**，所以不存在"怎么处理"的问题。
 
-- **`client_instance_id`：每进程一个**，进程初始化时随机生成一次，握手和所有 Execute 复用（[mock_opapi.md:320](vAscend/docs/design/modules/real_calculation/mock_opapi.md:320)）。
-- **`queue_id`：每条 raw front stream 一个**，单调分配，每进程上限 `REAL_CALC_MAX_FRONT_STREAMS=1024`，超了永久关闭 REAL（同上）。
+**MoE 部分（35B-A3B 的绝大部分参数）完全没接**：vllm_ascend 的 MoE FFN 用的是 `torch_npu.npu_grouped_matmul`（[moe_mlp.py:184,229,245,373,392](vLLM-ascend_for_lingqu/vllm_ascend/ops/fused_moe/moe_mlp.py:184)）+ `npu_moe_init_routing_v2` / `npu_moe_finalize_routing`。对应的 `aclnnGroupedMatmul*`、`aclnnMoeInitRouting*`、`aclnnMoeFinalizeRouting*` **一个都不在你的 `real_calculation` 列表里**。它们走 original 分支 = stream 模块直接 `return SIM_OK`、不碰输出（[sim_services.cpp:412-424](vAscend/src/stream/sim_services.cpp:412)）。专家权重从头到尾没离开过仿真侧，因为没人要它。
 
-前端背压也是**进程级**的：`FrontendBudgetManager` 以 all-or-none 事务预留 call slot + `request_snapshot_unique_bytes + writable_unique_bytes` 的 pinned 峰值 + request/response 编码峰值（[integration_contracts.md:622](vAscend/docs/design/modules/real_calculation/integration_contracts.md:622)、[mock_opapi.md:314](vAscend/docs/design/modules/real_calculation/mock_opapi.md:314)）。单位是"调用"和"字节"，不是 rank。
+同理 GDN 层：`fused_recurrent_gated_delta_rule_pytorch` 那套 PyTorch fallback 在 npu device 上分解成一堆 aclnn 算子（bmm→`aclnnBatchMatMul`、cumsum、exp…），白名单里也没有。
 
-后端配额是**卡**：
+**换句话说**：Qwen3.5-35B-A3B 的两大主干（MoE FFN + GDN 线性注意力）当前都是零计算。白名单覆盖的是 embedding、rmsnorm、dense matmul/addmm、rope、swiglu、FIA、scatter、argmax 这条"骨架"。**即使 KV 布局问题修好，输出也不可能对**。
 
-- 每 device 恰好一个 worker，独占 context/stream，**同 device 串行、一次一个请求**；并发上限 = 可用卡数，首版不开放 `workers-per-device`（[npu_backend.md:28-29](vAscend/docs/design/modules/real_calculation/npu_backend.md:28)、[:310](vAscend/docs/design/modules/real_calculation/npu_backend.md:310)、[:549](vAscend/docs/design/modules/real_calculation/npu_backend.md:549)）。
-- 选卡：给了 `device_hint` 用它，否则 `hash(client_instance_id, queue_id) % ready_device_count`（[npu_backend.md:304-306](vAscend/docs/design/modules/real_calculation/npu_backend.md:304)）——**哈希的输入正是"进程+流"，不是 rank**。
+**至于真的被白名单覆盖的大 GEMM**（`aclnnMatmul` / `aclnnAddmm` / `aclnnEmbedding`），设计上的答案是：**整块 storage 一次性搬运，没有分片、没有 streaming、没有压缩**——unary 同步 RPC，"第一版不启用压缩"（[rpc_transport.md:703](vAscend/docs/design/modules/real_calculation/rpc_transport.md:703)）。限额：
 
-**算一下你现在的数**：runner `VASCEND_GRPC_DEVICES=0,1` → 2 卡 → **全仿真集群同时最多 2 个算子在真算**。前端 `ASCEND_LAUNCH_BLOCKING=1` + inline_sync profile，每进程同一时刻 1 个在途调用。1000 rank 全开真算 = 1000 个 client 排队挤 2 张卡，单卡单流已经 13 分钟首 token，这条路不可行。
+| 项 | 默认 |
+|---|---|
+| request / response | 64 MiB |
+| **单个 `Tensor.storage`** | **64 MiB** |
+| `REAL_CALC_MAX_MESSAGE_BYTES` | 67108864，可调到 2GiB-1 |
 
-**所以预算口径应该是**：`需要的 runner 卡数 ≈ 你希望同时拿到真实数值的独立控制流实例数`。而由于 SPMD 下各 rank 走同一套控制流、且跨卡通信本来就不真实，**没有理由按 1000 去乘**——按"每种角色一个代表实例"来算（例如 P 实例 1 个 + D 实例 1 个，或每个不同 TP/EP 分片形态各 1 个），其余 rank 让它们走零计算纯做性能/调度仿真。
+（[rpc_transport.md:611,863-872](vAscend/docs/design/modules/real_calculation/rpc_transport.md:863)）超限就是 `MESSAGE_TOO_LARGE`，而且**明确不降级、不重试**（"错误返回非零，不自动降级或重试" [mock_opapi.md:34](vAscend/docs/design/modules/real_calculation/mock_opapi.md:34)、":464"）——硬错误直接抛给 op-plugin，不会静默回落到零计算。
+
+**这里有个矛盾值得你注意**：TP=1 下 `lm_head` / embedding 表是 `vocab × hidden × 2B`，Qwen3 词表 151936、hidden 2048 就是 **622MB**，超 64MiB 上限约 10 倍；而 `aclnnEmbedding` 和 `aclnnMatmul` 都在你的白名单里。按 V2 设计这一步应该直接失败，但你们 prefill 跑通了。只有三种可能：
+
+- 你们部署的 `libcust_opapi.so` 不是 V2 设计（它对应的是 `op_offload_design.md` 里那个简单协议 `rpc op_request(OpDef) returns (OpResult)`），不做这些校验；
+- 消息上限被调大了；
+- **每个 tensor 只发了前 N 字节**——这就回到 `real_data_size: 8192` 的嫌疑。
+
+**一条命令就能定性**：把 runner 的 REQUEST 日志按算子看请求字节数。
+
+```bash
+grep -E 'Got request|REQUEST' runner.log | head -50
+```
+
+如果 `aclnnMatmul` / `aclnnEmbedding` 的请求只有几 KB 而不是几百 MB，说明数据在源头就被截断了，真算全程在算噪声——这比 KV 布局问题更致命，而且能一次性解释所有"数值不可信"现象。
+
+**顺带两个配置漂移**（对照交接文档 10.2 那个"三份 SO"教训）：你贴的 `simulator_config.json` 里是 `aclnnFusedInferAttentionScoreV4`，但交接文档说接的是 **V5**；且 `bad_origin` 是空串，而文档说 Scatter/V5/Unique 都需要放进 `bad_origin` 来阻止本地 CANN 先执行。这两处如果是当前真正生效的配置，本地 original 会先跑一遍，正是当初 SIGSEGV / tiling-key 那一类问题的来源。
+
+**如果确实想让大 GEMM 真算**，按收益排序：① 在 runner 侧做**权重驻留**（按内容 hash 缓存 device buffer，跨请求复用）——现在每次调用都重传同一份权重，这才是 13 分钟 TTFT 的大头，但它和现有"ExecutionContext 请求内分配释放"的无状态设计冲突，需要改协议；② 两侧同步调大 `REAL_CALC_MAX_MESSAGE_BYTES`；③ 用 TP 分片让单 rank 权重降到限额内（但跨卡通信是假的，见上一轮结论）。
+
+---
+
+## 3. 各仿真 rank：**进程完全隔离，buffer 不可跨进程寻址**；是否同主机则不受约束
+
+**不可跨进程寻址，这一点没有回旋余地：**
+
+- 整个仿真状态是**进程内**的：`halDeviceOpen` 时在本进程构造 MemManager、SqCq/Res/Sync 管理器、Resource Register 区（[architecture.md:356-372](vAscend/docs/design/architecture.md:356)）。每个 vLLM worker 进程有自己的一整套"设备"。
+- RealMem 后端：`aligned_alloc` + `mmap(MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE)`（[real_mem_backend.cpp:194-195](vAscend/src/mem/backend/real_mem_backend.cpp:194)）——私有匿名映射，进程外不可见。VirtualMem 后端更彻底：数据在进程内的 `std::map<uint64_t,uint8_t> dataMap` 里，别的进程连地址空间都是各算各的。
+- `src/` 里**没有任何** `shm_open` / `MAP_SHARED` / `shmget` / IPC handle。
+- HAL 对外符号面根本没有 IPC 能力：`halMemAlloc/Free/Memcpy/HostRegister/AddressReserve/Create/Release/Retain/Map/Unmap/SetAccess/GetAddressRange/GetInfo`（[hal_mem.cpp](vAscend/src/frontend/hal_mem.cpp)）——有完整 VMM，但**没有 export/import shareable handle**。跨进程共享 device 内存在这套 HAL 上连表达都表达不出来。
+
+**是否同主机：不要求，设计上就是跨主机的。** dayu 身份是 `idCard = (本机IP << 32) | PID`（[IDCardGenerator.cpp:109-113](vAscend/src/hccl_mock/src/backend/vccl/dayu_sim/IDCardGenerator.cpp:109)），注册时上报 `deviceCount`（VNODE_CARD_NUM=本服务器卡数）、`usedCardNum`（本 PD 实例卡数）、`cardType`（区分 P/D 角色），全部汇聚到远端 dayu server（你配置里的 `141.61.77.46:32355`）。所以千卡可以任意铺在多台机器上，同不同主机对仿真语义没有影响。
+
+**推论（对你们排查有用）**：
+
+1. 同主机的两个 rank 之间**也**只能走 dayu socket，同样受 ≤512B / AllReduce <100B 的截断限制。"反正同机，让它们直接读对方 buffer"这条路不存在。
+2. 真算无法跨 rank 去重：同一份权重，同主机上 8 个 rank 就要各自 D2H、各自编码、各自发 8 遍给 runner。runner 的去重只在**单个请求内**按 `storage_id` 生效（[npu_backend.md:326](vAscend/docs/design/modules/real_calculation/npu_backend.md:326)）。
+3. 你配置里的 `"using_shared_checkpoint": "false"` 看名字正是唯一可能打破这个隔离的机制（同主机多 rank 共享权重/checkpoint 存储）——**但这套源码里没有它的实现**，而且当前是关的。如果千卡仿真要在有限主机上铺开，这个开关的真实语义值得你们去内网源码确认，它直接决定单机能塞下多少个 rank。
+
+---
+
+三个问题里，第 2 条的结论最需要你们决策：**MoE 和 GDN 不在白名单，当前这条链路在架构上就不可能产出正确输出**。在补白名单（`aclnnGroupedMatmul*` + routing 系列，且它们的权重远超单 tensor 限额）之前，继续调 KV 布局和数值一致性的收益有限。建议先跑那条 runner 请求字节数的 grep——它几分钟就能告诉你是"传了真数据但布局错了"还是"压根没传真数据"，这两种情况后续的路完全不同。
