@@ -1,0 +1,52 @@
+1. KV cache 在仿真侧，runner 完全无状态
+**仿真侧持有主副本**：vLLM 用 `torch.zeros(..., device=self.device)` 分配 KV cache（[model_runner_v1.py:3959-3970](vLLM-ascend_for_lingqu/vllm_ascend/worker/model_runner_v1.py:3959)），device=npu → `aclrtMalloc` → `halMemAlloc` → vAscend mem 仿真。每个仿真 rank 的 KV cache 就活在它自己的仿真 device 地址空间里。
+
+**runner 侧不可能持有**，三条硬证据：
+
+- Device storage 的所有者是 `ExecutionContext`，请求内 `aclrtMalloc`，D2H 之后 `aclrtFree`（[npu_backend.md:261](vAscend/docs/design/modules/real_calculation/npu_backend.md:261)、[integration_contracts.md:655](vAscend/docs/design/modules/real_calculation/integration_contracts.md:655)）。跨请求缓存不在设计里，非目标清单也排除了任何持久状态。
+- wire 上不带地址：`storage_id` 是 request-local 的，`aclGetRawTensorAddr` 拿到的地址明确"不跨网传输"（[integration_contracts.md:513](vAscend/docs/design/modules/real_calculation/integration_contracts.md:513)）。runner 无法把上一次的 buffer 认回来。
+- 实测行为印证：`aclnnScatterPaKvCache` 注册的 `outputIndexes = {1,4}`（keyCacheRef / valueCacheRef），即**整块 cache tensor 每次调用 H2D 进 runner、D2H 回仿真侧**。你们自己的交接文档下一阶段计划第 8 条写的就是"减少 gRPC 往返、**完整 cache 回传**和 host/device copy"（[stage_summary:1692](vLLM-ascend_for_lingqu/vllm_ascend_qwen35_vascend_real_calculation_stage_summary.md:1692)）。
+
+**推论**：KV cache 流量 = 每个 attention/scatter 算子调用 × 该层 cache 全量 × 2（进+出）。而单 request/response 和单个 `Tensor.storage` 上限都是 **64MiB**（[rpc_transport.md:611,863-866](vAscend/docs/design/modules/real_calculation/rpc_transport.md:863)）。你现在 `--kv-cache-memory-bytes 536870912`（512MB）之所以能跑，是因为 cache 按层切分后每层在 64MiB 以内；一旦放大 `max-model-len` 或层数，会先撞 64MiB 而不是撞算力。这也是 TTFT 13 分钟的主要成因之一。
+2. 不是 fake tensor，但也不是"处处真实"。
+没有 fake/meta tensor 机制。仿真侧每个 tensor 都是真实分配，dtype/shape/stride/地址都是真的，字节存储也真实存在。问题在内容：
+
+| 类别 | 内容 | 证据 |
+|---|---|---|
+| `real_calculation` 白名单算子 | **真实数值，模型原生精度**（bf16/fp16），在真 NPU 上算完回写 | [integration_contracts.md:81,578-587](vAscend/docs/design/modules/real_calculation/integration_contracts.md:578) |
+| 其余算子 | **零计算**：kernel/AICPU task 直接 `return SIM_OK`，不碰输出 buffer，内容 = 之前残留（0 或垃圾） | [sim_services.cpp:412-424](vAscend/src/stream/sim_services.cpp:412) |
+| `bad_origin` | success stub / 返回 0 | [mock_opapi.md:611](vAscend/docs/design/modules/real_calculation/mock_opapi.md:611) |
+
+CPU 后端文档第一句话就是这个背景："解决集群仿真环境下算子输出为全0或随机值导致模型运行异常的问题"（op_offload_design.md:13）。
+
+3. 千卡并行配置：
+
+**工作区里不存在任何千卡配置。** 能查到的全部是单卡：`ASCEND_RT_VISIBLE_DEVICES=0`、`USED_VNODE_CARD_NUM=1`、`RANK_TABLE_FILE=/opt/config/single/ranktable.json`（目录名就是 single，文件不在库里）、vllm 命令行没有任何 `-tp/-dp/--enable-expert-parallel` → TP=1/PP=1/DP=1/EP off。交接文档也自述当前 `tensor_parallel_size=1`（[stage_summary:92](vLLM-ascend_for_lingqu/vllm_ascend_qwen35_vascend_real_calculation_stage_summary.md:92)）。`examples/run_dp_server.sh` 是上游通用示例（DP2/TP4/EP），跟千卡无关。
+
+并行度在这套栈里由三处外部输入决定，**都不在版本库中**：
+
+1. **ranktable 的 `rank_count`** → 决定通信域规模，上限 65536（[rank_table_info.cc:16](vAscend/src/hccl_mock/src/config/rank_table_info.cc:16)、`GetRankSize` 在 [op_base.cc:2159](vAscend/src/hccl_mock/src/adapter/hccl/op_base/src/op_base.cc:2159)）。
+2. **vLLM 命令行** 的 TP/PP/DP/EP。
+3. **`VNODE_CARD_NUM` / `USED_VNODE_CARD_NUM` / `VNODE_CARD_TYPE`** → 进程用 `idCard=(IP<<32)|PID` 向 dayu server 注册"本服务器卡数 / 本 PD 实例卡数 / PD 角色"（[IDCardGenerator.cpp:82-92,109](vAscend/src/hccl_mock/src/backend/vccl/dayu_sim/IDCardGenerator.cpp:82)、[DayuVCCLHelper.cpp:529-536](vAscend/src/hccl_mock/src/backend/vccl/dayu_sim/DayuVCCLHelper.cpp:529)）。你现在 `VNODE_CARD_NUM=8` = 一个 8 卡节点，千卡 ≈ 125 个这样的 vNode。
+
+要拿到真实答案，请提供 `/opt/config/single/ranktable.json` 或千卡场景的那份 ranktable + 对应启动命令 + dayu server（`141.61.77.46:32355`）的组网配置。
+
+**能确定的约束**（对选型有用）：能力上 TP/EP/DP 都可表达（AllReduce/AllGather/ReduceScatter/AlltoAll(V) 齐全），PP 也有 `HcclSend/Recv/BatchSendRecv`；但由于第 2 节的通信截断，**并行度只影响性能建模、内存分布和调度行为，不产生正确的跨卡数值**。所以千卡配置怎么选，是按你想复现的性能/内存/EPLB 行为来定，不受数值正确性约束。
+
+4. 真算预算按"独立控制流实例"算，不按 rank 数
+
+协议层**完全没有 rank 概念**：wire 上既不带 rank，也不带 pid/tid（[rpc_transport.md:891](vAscend/docs/design/modules/real_calculation/rpc_transport.md:891)）。计费/调度的两个维度是：
+
+- **`client_instance_id`：每进程一个**，进程初始化时随机生成一次，握手和所有 Execute 复用（[mock_opapi.md:320](vAscend/docs/design/modules/real_calculation/mock_opapi.md:320)）。
+- **`queue_id`：每条 raw front stream 一个**，单调分配，每进程上限 `REAL_CALC_MAX_FRONT_STREAMS=1024`，超了永久关闭 REAL（同上）。
+
+前端背压也是**进程级**的：`FrontendBudgetManager` 以 all-or-none 事务预留 call slot + `request_snapshot_unique_bytes + writable_unique_bytes` 的 pinned 峰值 + request/response 编码峰值（[integration_contracts.md:622](vAscend/docs/design/modules/real_calculation/integration_contracts.md:622)、[mock_opapi.md:314](vAscend/docs/design/modules/real_calculation/mock_opapi.md:314)）。单位是"调用"和"字节"，不是 rank。
+
+后端配额是**卡**：
+
+- 每 device 恰好一个 worker，独占 context/stream，**同 device 串行、一次一个请求**；并发上限 = 可用卡数，首版不开放 `workers-per-device`（[npu_backend.md:28-29](vAscend/docs/design/modules/real_calculation/npu_backend.md:28)、[:310](vAscend/docs/design/modules/real_calculation/npu_backend.md:310)、[:549](vAscend/docs/design/modules/real_calculation/npu_backend.md:549)）。
+- 选卡：给了 `device_hint` 用它，否则 `hash(client_instance_id, queue_id) % ready_device_count`（[npu_backend.md:304-306](vAscend/docs/design/modules/real_calculation/npu_backend.md:304)）——**哈希的输入正是"进程+流"，不是 rank**。
+
+**算一下你现在的数**：runner `VASCEND_GRPC_DEVICES=0,1` → 2 卡 → **全仿真集群同时最多 2 个算子在真算**。前端 `ASCEND_LAUNCH_BLOCKING=1` + inline_sync profile，每进程同一时刻 1 个在途调用。1000 rank 全开真算 = 1000 个 client 排队挤 2 张卡，单卡单流已经 13 分钟首 token，这条路不可行。
+
+**所以预算口径应该是**：`需要的 runner 卡数 ≈ 你希望同时拿到真实数值的独立控制流实例数`。而由于 SPMD 下各 rank 走同一套控制流、且跨卡通信本来就不真实，**没有理由按 1000 去乘**——按"每种角色一个代表实例"来算（例如 P 实例 1 个 + D 实例 1 个，或每个不同 TP/EP 分片形态各 1 个），其余 rank 让它们走零计算纯做性能/调度仿真。
