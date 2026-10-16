@@ -13,11 +13,41 @@
 异常分类: SIM(abort) / TIMEOUT(挂死) / ACC(数值错) / ENV(没跑起来, 无效)
     前三类都算「出错」, ENV 不计入结论。
 """
+import importlib.metadata as _md
 import importlib.util
 import os
 import re
 import sys
 import traceback
+
+
+def _patch_torch_npu_metadata():
+    """零足迹地绕开 triton ascend driver 的元数据查询。
+
+    triton/backends/ascend/driver.py:76 在 NPUUtils 初始化时调
+    importlib.metadata.version("torch_npu") 给编译缓存做 key。本机的 torch_npu
+    是给仿真环境手搓的 stub(__version__ = "2.6.0.fake"), 不是 pip 装的, 所以没有
+    dist-info, 这句必然抛 PackageNotFoundError。
+
+    这里只在本进程内补一个回退: 查不到就用模块自己的 __version__。
+    site-packages 不动, 退出即失效。
+    """
+    orig = _md.version
+
+    def version(name):
+        try:
+            return orig(name)
+        except _md.PackageNotFoundError:
+            if name == "torch_npu":
+                import torch_npu
+
+                return getattr(torch_npu, "__version__", "0.0.0")
+            raise
+
+    _md.version = version
+
+
+_patch_torch_npu_metadata()
 
 import torch
 
