@@ -13,10 +13,13 @@
 异常分类: SIM(abort) / TIMEOUT(挂死) / ACC(数值错) / ENV(没跑起来, 无效)
     前三类都算「出错」, ENV 不计入结论。
 """
+import importlib.metadata
 import importlib.util
 import os
 import re
 import sys
+
+os.environ.setdefault("TRITON_ALLOW_NON_CONSTEXPR_GLOBALS", "1")
 
 import torch
 
@@ -51,10 +54,25 @@ def classify(exc):
 
 
 def preflight():
+    """只检查 ASCEND_HOME_PATH 不够 —— 它在同一个 shell 里会残留, 而工具链其余部分没加载。"""
+    problems = []
     if not os.environ.get("ASCEND_HOME_PATH"):
-        print("!" * 70)
-        print("!! ASCEND_HOME_PATH 未设置 —— 仿真器不会启动。先 source /root/env.sh")
-        print("!" * 70)
+        problems.append("ASCEND_HOME_PATH 未设置")
+    try:
+        importlib.metadata.version("torch_npu")
+    except Exception as e:  # noqa: BLE001
+        problems.append(f"torch_npu 元数据不可用 ({type(e).__name__}: {e})")
+
+    print(f"[env] python      = {sys.executable}")
+    print(f"[env] torch       = {torch.__version__}")
+    print(f"[env] ASCEND_HOME = {os.environ.get('ASCEND_HOME_PATH') or '(未设置)'}")
+    if problems:
+        print("!" * 72)
+        for p in problems:
+            print(f"!! {p}")
+        print("!! 工具链没加载齐, 仿真器不会启动, 本轮不会产出有效数据。")
+        print("!! 请在同一条命令里 source:  source /root/env.sh && python3 _t_cases.py")
+        print("!" * 72)
         return False
     return True
 
