@@ -175,12 +175,21 @@ def layernorm_infer_impl(hidden_states, weight, bias, eps, aicore_num):
 
     BLOCK_SIZE_M = layer_norm_fwd_heuristics(n_cols)
 
-    # 仅用于定位 UB 容量问题: 不改默认行为, 想验证"fp32 下 BLOCK_SIZE_M 过大导致
-    # UB 溢出"时设 MOJO_LAYERNORM_BM=12 之类再跑一遍。
+    # 仅用于定位 UB 容量问题: 不改默认行为。
+    #   MOJO_LAYERNORM_BM=12  固定行块, 验证"fp32 下 BLOCK_SIZE_M 过大导致 UB 溢出"
+    #   MOJO_LAYERNORM_BN=64  固定列块, 在 BM 不变的前提下只改 tile 字节数,
+    #                         用来把"字节数"和"BLOCK_SIZE_M 这个值本身"区分开
     bm_override = os.environ.get("MOJO_LAYERNORM_BM")
     if bm_override:
         BLOCK_SIZE_M = int(bm_override)
         print(f"  [probe] BLOCK_SIZE_M overridden by MOJO_LAYERNORM_BM -> {BLOCK_SIZE_M} (非生产配置)")
+    bn_override = os.environ.get("MOJO_LAYERNORM_BN")
+    if bn_override:
+        BLOCK_SIZE_N = int(bn_override)
+        print(f"  [probe] BLOCK_SIZE_N overridden by MOJO_LAYERNORM_BN -> {BLOCK_SIZE_N} (非生产配置)")
+    if bm_override or bn_override:
+        tile = BLOCK_SIZE_M * BLOCK_SIZE_N * x_2d.element_size()
+        print(f"  [probe] 单份 X tile = {tile} B = {tile / 1024:.1f} KB  (UB = 256 KB)")
 
     grid = (aicore_num,)
 
