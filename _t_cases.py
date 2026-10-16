@@ -13,18 +13,20 @@
 异常分类: SIM(abort) / TIMEOUT(挂死) / ACC(数值错) / ENV(没跑起来, 无效)
     前三类都算「出错」, ENV 不计入结论。
 """
-import importlib.metadata
 import importlib.util
 import os
 import re
 import sys
-
-os.environ.setdefault("TRITON_ALLOW_NON_CONSTEXPR_GLOBALS", "1")
+import traceback
 
 import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 THRESHOLD = 6656  # 6.5 KB
+
+# 不用 torch.empty().element_size() —— 在 run_one 之前碰 torch 建张量似乎会干扰
+# standalone_runtime 的初始化(表现为 run_one 里抛 torch_npu 元数据缺失)。
+ITEMSIZE = {torch.float32: 4, torch.float16: 2, torch.bfloat16: 2}
 
 # (shape, BM, BN, dtype)
 CASES = [
@@ -54,24 +56,13 @@ def classify(exc):
 
 
 def preflight():
-    """只检查 ASCEND_HOME_PATH 不够 —— 它在同一个 shell 里会残留, 而工具链其余部分没加载。"""
-    problems = []
-    if not os.environ.get("ASCEND_HOME_PATH"):
-        problems.append("ASCEND_HOME_PATH 未设置")
-    try:
-        importlib.metadata.version("torch_npu")
-    except Exception as e:  # noqa: BLE001
-        problems.append(f"torch_npu 元数据不可用 ({type(e).__name__}: {e})")
-
     print(f"[env] python      = {sys.executable}")
     print(f"[env] torch       = {torch.__version__}")
     print(f"[env] ASCEND_HOME = {os.environ.get('ASCEND_HOME_PATH') or '(未设置)'}")
-    if problems:
+    if not os.environ.get("ASCEND_HOME_PATH"):
         print("!" * 72)
-        for p in problems:
-            print(f"!! {p}")
-        print("!! 工具链没加载齐, 仿真器不会启动, 本轮不会产出有效数据。")
-        print("!! 请在同一条命令里 source:  source /root/env.sh && python3 _t_cases.py")
+        print("!! ASCEND_HOME_PATH 未设置 —— 请在同一条命令里 source:")
+        print("!!   source /root/env.sh && python3 _t_cases.py")
         print("!" * 72)
         return False
     return True
@@ -89,8 +80,7 @@ def main():
     m = load("ln18", "18-layernorm.py")
     rows = []
     for shape, bm, bn, dt in cases:
-        es = torch.empty(0, dtype=dt).element_size()
-        tile = bm * bn * es
+        tile = bm * bn * ITEMSIZE[dt]
         want = "正确" if tile <= THRESHOLD else "出错"
         tag = f"{shape} BM={bm} BN={bn} {str(dt).replace('torch.', '')}"
         print(f"\n{'#' * 72}\n#### {tag}   tile={tile} B = {tile / 1024:.1f} KB   预期 {want}\n{'#' * 72}")
@@ -110,6 +100,10 @@ def main():
             detail = (f"addr={al.group(1)} need={al.group(2)}B " if al else "") + \
                      (f"PC={pcs[-1]}" if pcs else msg.splitlines()[0][:70])
             print(f"  RESULT {kind}: {detail}")
+            if kind == "ENV":
+                # ENV 说明根本没跑起来, 原因必须看全栈, 否则只能瞎猜
+                print("  ---- 完整 traceback ----")
+                print("  " + traceback.format_exc().replace("\n", "\n  "))
         rows.append((tag, tile, want, got, kind, detail))
 
     print(f"\n{'=' * 96}\nSUMMARY   阈值假设: 出错 <=> tile > {THRESHOLD} B ({THRESHOLD / 1024:.1f} KB)")
