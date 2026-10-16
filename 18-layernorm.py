@@ -246,6 +246,25 @@ def run_one(shape, dtype, eps, aicore_num, timeout):
     w = torch.randn(size=(shape[-1],), dtype=torch.float32)
     b = torch.randn(size=(shape[-1],), dtype=torch.float32)
 
+    # 判决性实验开关: 把 X 全部填成同一个常数, kernel.o 不变(数据不影响 codegen)。
+    # 若"崩溃用的地址"真是从 X 数据里读出来的, 那么:
+    #   MOJO_LAYERNORM_X_FILL=1.0 -> bit pattern 0x3F800000, 32B 对齐但出 UB 范围
+    #                               -> 只打 ub_addr_overflow(非致命), 不该 abort,
+    #                                  而且 start_addr 会literally显示 0x3f800000
+    #   MOJO_LAYERNORM_X_FILL=0.0 -> bit pattern 0x00000000, 在 UB 内且对齐
+    #                               -> 两道检查都过, 一条错误都不该有
+    x_fill = os.environ.get("MOJO_LAYERNORM_X_FILL")
+    if x_fill is not None and x_fill != "":
+        import struct
+
+        fv = float(x_fill)
+        bits = struct.unpack("<I", struct.pack("<f", fv))[0]
+        x = torch.full(shape, fv, dtype=dtype)
+        print(f"  [probe] X 全部填成 {fv!r} -> fp32 bit pattern 0x{bits:08X}  "
+              f"(在UB内={bits < 0x40000}, 32B对齐={bits % 32 == 0})")
+        print(f"  [probe] 预期: {'一条错误都没有' if bits < 0x40000 and bits % 32 == 0 else ('只打 ub_addr_overflow(start_addr=0x%08x), 不 abort' % bits) if bits % 32 == 0 else '仍 abort'}")
+        print("  [probe] 数值必然不对(ACC), 只看有没有 SimulationError")
+
     atol, rtol = tolerances(dtype)
 
     t_start = time.perf_counter()
