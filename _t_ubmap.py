@@ -17,6 +17,13 @@ npuir 这一层把每个缓冲的 UB 基址写成了字面常量:
     python3 _t_ubmap.py cmp <A> <B>
         并排对比两份的分配表与总占用
 
+    python3 _t_ubmap.py find <dump> 0x18
+        某个地址落在哪个缓冲里 —— 用来把日志里的故障地址对回分配表
+
+    python3 _t_ubmap.py ops <dump>
+        统计所有提到 address_space 的行用了哪些 op
+        用来确认 pointer_cast 是否覆盖了全部分配(可能还有 alloca 等)
+
 要点: UB 共 0x40000 (256 KB)。向量指令要求 32 字节对齐。
 """
 import glob
@@ -206,12 +213,66 @@ def cmd_cmp(args):
     return 0
 
 
+def cmd_find(args):
+    if len(args) < 2:
+        sys.exit("用法: find <dump> <地址, 如 0x18 或 8228>")
+    f = resolve(args[0])
+    rows = [r for r in buffers(f) if r["size"]]
+    a = int(args[1], 16) if args[1].lower().startswith("0x") else int(args[1])
+    print(f"  {f}\n  查找 {hex(a)} = {a}\n")
+    inside = [r for r in rows if r["base"] <= a < r["base"] + r["size"]]
+    if inside:
+        for r in inside:
+            off = a - r["base"]
+            print(f"  落在 [{hex(r['base'])}, {hex(r['base'] + r['size'])})  {r['shape']}"
+                  f"  ({r['space']})  缓冲内偏移 {off} = {hex(off)}")
+    else:
+        print("  不在任何缓冲内。")
+    befores = [r for r in rows if r["base"] + r["size"] <= a]
+    afters = [r for r in rows if r["base"] > a]
+    if befores:
+        r = max(befores, key=lambda r: r["base"] + r["size"])
+        print(f"  前一个缓冲结束于 {hex(r['base'] + r['size'])}  {r['shape']}"
+              f"   间隔 {a - (r['base'] + r['size'])} B")
+    if afters:
+        r = min(afters, key=lambda r: r["base"])
+        print(f"  后一个缓冲开始于 {hex(r['base'])}  {r['shape']}"
+              f"   间隔 {r['base'] - a} B")
+    print(f"\n  是否 32B 对齐: {'是' if a % 32 == 0 else '否 (mod 32 = %d)' % (a % 32)}")
+    print(f"  是否在 UB 内:  {'是' if a < UB_SIZE else '否'}")
+    return 0
+
+
+RE_OP = re.compile(r"=\s*([a-z_][\w.]*)\s*[({<]|^\s*([a-z_][\w.]*)\s")
+
+
+def cmd_ops(args):
+    if not args:
+        sys.exit("用法: ops <dump>")
+    f = resolve(args[0])
+    import collections
+    c = collections.Counter()
+    for ln in open(f, encoding="utf-8", errors="replace"):
+        if "address_space" not in ln:
+            continue
+        m = RE_OP.search(ln)
+        c[(m.group(1) or m.group(2)) if m else "?"] += 1
+    print(f"  {f}\n  提到 address_space 的行按 op 统计:\n")
+    for k, n in c.most_common():
+        star = "  <- 已被 map 解析" if k == "hivm.hir.pointer_cast" else ""
+        print(f"  {n:>5}  {k}{star}")
+    print("\n  若 pointer_cast 之外还有分配类 op(alloca / alloc / tiledAlloc 等),")
+    print("  说明 map 统计的占用是下界, 需要把它们也算进来。")
+    return 0
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
     sub, args = sys.argv[1], sys.argv[2:]
-    fn = {"scan": cmd_scan, "map": cmd_map, "cmp": cmd_cmp}.get(sub)
+    fn = {"scan": cmd_scan, "map": cmd_map, "cmp": cmd_cmp,
+          "find": cmd_find, "ops": cmd_ops}.get(sub)
     if fn is None:
         print(__doc__)
         return 2
