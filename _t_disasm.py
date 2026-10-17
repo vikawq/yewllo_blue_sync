@@ -54,7 +54,8 @@ def resolve(path):
     return path
 
 
-def run(cmd, timeout=120):
+def run(cmd, timeout=20):
+    """超时压到 20 秒 —— 认不出架构的反汇编器会空转, 6 个候选各等 2 分钟就像卡死了。"""
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return p.returncode, p.stdout, p.stderr
