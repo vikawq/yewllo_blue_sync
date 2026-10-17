@@ -89,9 +89,32 @@ def kernel_names(mlir_path):
 
 
 def tile_hint(rows):
-    """挑最大的那个缓冲当 tile 指纹 —— 它通常就是 BM x BN 的 X tile。"""
+    """最大的那个缓冲。注意: 它不一定是从 GM 载入的 X tile ——
+    半精度输入时, 最大的往往是 fp32 的升位工作副本。用 composition() 一起看。"""
     sized = [r for r in rows if r["size"]]
     return max(sized, key=lambda r: r["size"])["shape"] if sized else "?"
+
+
+def composition(rows):
+    """按 dtype 统计缓冲构成, 并猜 GM 侧输入 tile。
+
+    判据: 二维(含 BM x BN)的大缓冲里, 出现次数最多的那个 dtype 就是输入 dtype;
+    fp32 的那份通常只有一个, 是升位后的工作副本。
+    """
+    import collections
+    dt = collections.Counter()
+    twod = collections.Counter()
+    for r in rows:
+        d = r["shape"].split("x")[-1]
+        dt[d] += 1
+        if r["shape"].count("x") >= 2 and r["size"]:
+            twod[(r["shape"], r["size"])] += 1
+    mix = " ".join(f"{k}x{v}" for k, v in sorted(dt.items()))
+    guess = None
+    if twod:
+        # 出现次数最多的二维缓冲 = 输入 tile；并列时取字节数小的(未升位的那个)
+        guess = max(twod.items(), key=lambda kv: (kv[1], -kv[0][1]))[0]
+    return mix, guess
 
 
 def resolve(p):
@@ -143,18 +166,22 @@ def cmd_scan(args):
         if not any(frag in n.lower() for n in names):
             continue
         rows = buffers(f)
-        hits.append((d, sorted(names)[:1], tile_hint(rows), footprint(rows), len(rows), check(rows)))
+        mix, guess = composition(rows)
+        hits.append((d, mix, guess, footprint(rows), len(rows), check(rows)))
     if not hits:
         print(f"  {DUMP_ROOT} 下没有包含 '{frag}' 的 dump。")
         print("  需要重新编译一次并开 dump: TRITON_KERNEL_DUMP=1 <你的 run 命令>")
         print("  (只要能走到编译就行, 仿真器跑不跑完无所谓)")
         return 1
-    print(f"  {'dump':46}{'tile(最大缓冲)':>18}{'UB 占用':>12}{'缓冲数':>7}  问题")
-    print("  " + "-" * 100)
-    for d, nm, tile, fp, n, bad in sorted(hits, key=lambda h: h[3]):
+    print(f"  {'dump':44}{'输入 tile(推测)':>20}{'dtype 构成':>16}{'UB 占用':>11}{'缓冲':>5}  问题")
+    print("  " + "-" * 108)
+    for d, mix, guess, fp, n, bad in sorted(hits, key=lambda h: h[3]):
         flag = f"{len(bad)} 处" if bad else "-"
-        print(f"  {os.path.basename(d):46}{tile:>18}{fp / 1024:11.1f}K{n:>7}  {flag}")
+        g = f"{guess[0]} {guess[1] / 1024:.1f}K" if guess else "?"
+        print(f"  {os.path.basename(d):44}{g:>20}{mix:>16}{fp / 1024:10.1f}K{n:>5}  {flag}")
     print(f"\n  共 {len(hits)} 份。UB = {UB_SIZE / 1024:.0f} KB。")
+    print("  注意: 「输入 tile」是按「出现次数最多的二维缓冲」推测的。半精度输入时")
+    print("        最大的缓冲往往是 fp32 升位副本, 不是从 GM 载入的 X tile。")
     print("  下一步: map <目录> 看完整分配表; cmp <A> <B> 对比跨阈值的两份。")
     return 0
 
@@ -176,6 +203,14 @@ def cmd_map(args):
               f"{(r['size'] if r['size'] else '?'):>10}  {r['shape']:<20}{r['space']:<10}"
               f"{'32B' if r['base'] % 32 == 0 else '**否**'}")
     fp = footprint(rows)
+    mix, guess = composition(rows)
+    print(f"\n  dtype 构成: {mix}")
+    if guess:
+        print(f"  输入 tile(推测): {guess[0]} = {guess[1]} B = {guess[1] / 1024:.1f} KB")
+        big = max((r for r in rows if r["size"]), key=lambda r: r["size"])
+        if big["shape"] != guess[0]:
+            print(f"  !! 最大缓冲是 {big['shape']} = {big['size'] / 1024:.1f} KB,"
+                  f" 与输入 tile 不同 —— 多半是 fp32 升位副本, 别把它当 tile")
     print(f"\n  UB 占用上界 = {fp} B = {fp / 1024:.1f} KB  (UB = {UB_SIZE / 1024:.0f} KB,"
           f" 用掉 {100 * fp / UB_SIZE:.1f}%)")
     bad = check(rows)
@@ -252,15 +287,24 @@ def cmd_ops(args):
     f = resolve(args[0])
     import collections
     c = collections.Counter()
+    unknown = []
     for ln in open(f, encoding="utf-8", errors="replace"):
         if "address_space" not in ln:
             continue
         m = RE_OP.search(ln)
-        c[(m.group(1) or m.group(2)) if m else "?"] += 1
+        k = (m.group(1) or m.group(2)) if m else "?"
+        c[k] += 1
+        if k == "?" and len(unknown) < 8:
+            unknown.append(ln.strip()[:150])
     print(f"  {f}\n  提到 address_space 的行按 op 统计:\n")
     for k, n in c.most_common():
         star = "  <- 已被 map 解析" if k == "hivm.hir.pointer_cast" else ""
         print(f"  {n:>5}  {k}{star}")
+    if unknown:
+        print(f"\n  未能归类的 {c['?']} 行里, 前 {len(unknown)} 条样本"
+              f"(看它们是不是分配类 op, 若是则 map 的占用统计偏小):")
+        for ln in unknown:
+            print(f"    {ln}")
     print("\n  若 pointer_cast 之外还有分配类 op(alloca / alloc / tiledAlloc 等),")
     print("  说明 map 统计的占用是下界, 需要把它们也算进来。")
     return 0

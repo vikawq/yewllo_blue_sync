@@ -1,0 +1,648 @@
+<title>950 LayerNorm fp32 仿真崩溃定位</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* 布局：单列仪器读数式报告，正文 68ch，图表与表格满宽并可横向滚动 */
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --raised: #eef1f4;
+    --fg: #15181c;
+    --muted: #5b636d;
+    --line: #dde2e7;
+    --accent: #0f6a86;
+    --pass: #19735a;
+    --warn: #8f6411;
+    --fail: #ab4027;
+    --font-body: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1114;
+      --surface: #15191e;
+      --raised: #1c2228;
+      --fg: #e4e8ec;
+      --muted: #98a2ac;
+      --line: #262c33;
+      --accent: #58b8d6;
+      --pass: #4dc29b;
+      --warn: #d9a84a;
+      --fail: #ea7f61;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1114;
+    --surface: #15191e;
+    --raised: #1c2228;
+    --fg: #e4e8ec;
+    --muted: #98a2ac;
+    --line: #262c33;
+    --accent: #58b8d6;
+    --pass: #4dc29b;
+    --warn: #d9a84a;
+    --fail: #ea7f61;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.68;
+    margin: 0;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 48px 72px;
+  }
+  .prose { max-width: 68ch; }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+    line-height: 1.22;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 10px;
+  }
+  h2 {
+    font-size: 1.14rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h3 { font-size: 0.97rem; font-weight: 600; margin: 24px 0 8px; }
+  h3:first-child { margin-top: 0; }
+  p { margin: 0 0 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  .rule { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
+
+  section { margin-top: 44px; }
+  .sechead {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sechead .n {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    flex: none;
+  }
+
+  code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+  code {
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+    padding: 0.1em 0.34em;
+    border-radius: 3px;
+    overflow-wrap: anywhere;
+  }
+
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--fail);
+    border-radius: 2px 6px 6px 2px;
+    padding: 18px 20px;
+    margin-top: 26px;
+  }
+  .verdict p { max-width: 68ch; }
+  .formula {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin: 0 0 16px;
+    overflow-x: auto;
+  }
+
+  .tbl { overflow-x: auto; margin: 0 0 16px; min-width: 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: 0.88rem; }
+  th, td {
+    text-align: left;
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  td.num, th.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 1px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .tag.ok { color: var(--pass); background: color-mix(in srgb, var(--pass) 13%, transparent); }
+  .tag.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .tag.no { color: var(--fail); background: color-mix(in srgb, var(--fail) 14%, transparent); }
+  .tag.todo { color: var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
+
+  figure { margin: 0 0 18px; }
+  .chart { overflow-x: auto; }
+  .chart svg { display: block; min-width: 700px; width: 100%; height: auto; }
+  figcaption { font-size: 0.83rem; color: var(--muted); max-width: 68ch; margin-top: 10px; }
+
+  ol.chain { counter-reset: c; list-style: none; padding: 0; margin: 0; }
+  ol.chain > li { counter-increment: c; position: relative; padding-left: 34px; margin-bottom: 24px; }
+  ol.chain > li::before {
+    content: counter(c);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+  }
+  ol.chain > li > h3 { margin: 0 0 6px; }
+
+  ul.facts, ul.todo { list-style: none; padding: 0; margin: 0 0 18px; }
+  ul.facts li, ul.todo li { position: relative; padding-left: 24px; margin-bottom: 9px; max-width: 68ch; }
+  ul.todo li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 11px;
+    height: 11px;
+    border: 1px solid var(--muted);
+    border-radius: 2px;
+  }
+  ul.facts li::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .layers { display: grid; gap: 14px; margin-bottom: 18px; }
+  .layer {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .layer .k {
+    font-family: var(--font-mono);
+    font-size: 0.73rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .layer h3 { margin: 0 0 8px; }
+  .layer p { font-size: 0.92rem; }
+
+  .note { font-size: 0.87rem; color: var(--muted); max-width: 68ch; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="prose">
+    <h1>950 LayerNorm fp32 仿真崩溃定位</h1>
+    <div class="meta">
+      <span>2026-10-16</span>
+      <span>根因报告</span>
+      <span>_layernorm_fwd_kernel</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <p><strong>根因有两层。</strong>直接原因在编译工具链：当单份 X tile 超过约 6.5 KB 时，triton-ascend 为 <code>_layernorm_fwd_kernel</code> 生成的代码里，某条向量 load 的 UB 地址操作数是<strong>从内存读出来的张量数据</strong>，而不是算出来的地址。生产之所以踩到它，是因为 <code>TOKEN_BLOCK_SIZE_TABLE</code> 只按 <code>n_cols</code> 选 <code>BLOCK_SIZE_M</code>，既不看 <code>itemsize</code> 也不看 <code>BLOCK_SIZE_N</code>，而出事的恰好是三者的乘积。</p>
+    <p><strong>这比「崩溃」更严重：多数情况下它不崩，只是静默算错。</strong>abort 来自仿真器的对齐断言，真实硬件没有这道检查。同一份 kernel 换个输入数据，就能在 abort 与「跑完但结果错」之间切换。</p>
+    <p><strong>影响面覆盖几乎所有生产配置</strong>：fp32 全部超线（1.8 至 4.9 倍），fp16 从 <code>n_cols=256</code> 起超线。只有 fp16 的 <code>n_cols=128</code> 在安全区内——最初「fp16 全部通过」的观察是被测 shape 恰好都在线内造成的假象。</p>
+    <p>边界已用 18 个有效数据点夹准，并有一组只改 <code>n_rows</code> 的决定性对照。尚未做的是反汇编，所以「为什么阈值在 6.5 KB」仍是现象层面的描述。</p>
+  </div>
+
+  <section>
+    <div class="sechead"><span class="n">01</span><h2>根因</h2></div>
+    <div class="layers">
+      <div class="layer">
+        <span class="k">第一层 · 直接原因 · 编译工具链</span>
+        <h3>triton-ascend 为超过阈值的 tile 生成了错误的 UB 地址</h3>
+        <p>kernel 源码与生产代码逐字一致，只有 <code>constexpr</code> 取值不同。tile ≤ 6.5 KB 时结果完全正确（X 全零时 <code>max_abs_error = 0</code>，bit-exact）；超过就必错。错的是那条向量 load 的地址操作数——它来自内存，内容是 X 的数据。</p>
+      </div>
+      <div class="layer">
+        <span class="k">第二层 · 为何生产会踩到 · mojo_opset 启发式</span>
+        <h3><code>TOKEN_BLOCK_SIZE_TABLE</code> 对 dtype 和列宽都不敏感</h3>
+        <p><code>layer_norm_fwd_heuristics</code> 只用 <code>n_cols</code> 查表得出 <code>BLOCK_SIZE_M</code>。而决定生死的是 <code>BLOCK_SIZE_M × BLOCK_SIZE_N × itemsize</code>——表里既没有 <code>itemsize</code> 也没有 <code>BLOCK_SIZE_N</code>，于是每个 fp32 配置都落在阈值的数倍之外。</p>
+      </div>
+    </div>
+
+    <figure>
+      <div class="chart">
+        <svg viewBox="0 0 760 352" role="img" aria-label="机理链：启发式选出过大的 tile，编译器为该 tile 生成错误的 UB 地址操作数，该地址实际读到 X 的数据，最终按落点分为 abort、静默算错、仿真挂死三种形态">
+          <rect x="150" y="8" width="460" height="62" rx="5" fill="var(--raised)" stroke="var(--line)"></rect>
+          <text x="166" y="28" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">①　启发式</text>
+          <text x="166" y="46" font-size="11.5" fill="var(--fg)">TOKEN_BLOCK_SIZE_TABLE 只按 n_cols 选 BLOCK_SIZE_M，</text>
+          <text x="166" y="62" font-size="11.5" fill="var(--fg)">不看 itemsize，也不看 BLOCK_SIZE_N → tile 超线 1.8～4.9 倍</text>
+
+          <line x1="380" y1="70" x2="380" y2="86" stroke="var(--muted)" stroke-width="1.5"></line>
+          <path d="M 375 81 L 380 88 L 385 81" fill="none" stroke="var(--muted)" stroke-width="1.5"></path>
+
+          <rect x="150" y="90" width="460" height="62" rx="5" fill="var(--raised)" stroke="var(--line)"></rect>
+          <text x="166" y="110" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">②　codegen</text>
+          <text x="166" y="128" font-size="11.5" fill="var(--fg)">tile &gt; 6.5 KB 时，生成的 kernel 里某条向量 load 的</text>
+          <text x="166" y="144" font-size="11.5" fill="var(--fg)">UB 地址操作数来自内存，而不是算出来的</text>
+
+          <line x1="380" y1="152" x2="380" y2="168" stroke="var(--muted)" stroke-width="1.5"></line>
+          <path d="M 375 163 L 380 170 L 385 163" fill="none" stroke="var(--muted)" stroke-width="1.5"></path>
+
+          <rect x="150" y="172" width="460" height="58" rx="5" fill="var(--raised)" stroke="var(--fail)"></rect>
+          <text x="166" y="192" font-family="var(--font-mono)" font-size="10" fill="var(--fail)">③　实际发生</text>
+          <text x="166" y="210" font-size="11.5" fill="var(--fg)">该地址读到的是 X 的数据</text>
+          <text x="166" y="226" font-size="10.5" fill="var(--muted)">字节比对证实：唯一命中 X[195,69]，偶然概率 0.036%</text>
+
+          <line x1="380" y1="230" x2="380" y2="248" stroke="var(--muted)" stroke-width="1.5"></line>
+          <line x1="138" y1="248" x2="622" y2="248" stroke="var(--muted)" stroke-width="1.5"></line>
+          <g stroke="var(--muted)" stroke-width="1.5">
+            <line x1="138" y1="248" x2="138" y2="264"></line>
+            <line x1="380" y1="248" x2="380" y2="264"></line>
+            <line x1="622" y1="248" x2="622" y2="264"></line>
+          </g>
+          <g fill="none" stroke="var(--muted)" stroke-width="1.5">
+            <path d="M 133 259 L 138 266 L 143 259"></path>
+            <path d="M 375 259 L 380 266 L 385 259"></path>
+            <path d="M 617 259 L 622 266 L 627 259"></path>
+          </g>
+
+          <rect x="20" y="270" width="236" height="66" rx="5" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="34" y="292" font-size="11.5" font-weight="500" fill="var(--fail)">地址不对齐 → abort</text>
+          <text x="34" y="310" font-size="10.5" fill="var(--muted)">命中仿真器的对齐断言</text>
+          <text x="34" y="326" font-size="10.5" fill="var(--muted)">真实硬件没有这道检查</text>
+
+          <rect x="262" y="270" width="236" height="66" rx="5" fill="var(--surface)" stroke="var(--warn)"></rect>
+          <text x="276" y="292" font-size="11.5" font-weight="500" fill="var(--warn)">碰巧对齐 → 静默算错</text>
+          <text x="276" y="310" font-size="10.5" fill="var(--muted)">只是读错位置，照常跑完</text>
+          <text x="276" y="326" font-size="10.5" fill="var(--muted)">线上的主要风险</text>
+
+          <rect x="504" y="270" width="236" height="66" rx="5" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="518" y="292" font-size="11.5" font-weight="500" fill="var(--fg)">tile 很大 → 仿真挂死</text>
+          <text x="518" y="310" font-size="10.5" fill="var(--muted)">18 KB、32 KB 两格超时</text>
+          <text x="518" y="326" font-size="10.5" fill="var(--muted)">线上表现未知</text>
+        </svg>
+      </div>
+      <figcaption>一个原因，三张面孔。故障以哪种形态暴露，取决于那个垃圾地址恰好落在哪里——所以 abort 其实是最幸运的结果，而线上拿不到它。</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">02</span><h2>触发条件与边界</h2></div>
+    <div class="formula">出错 ⟺ BLOCK_SIZE_M × BLOCK_SIZE_N × itemsize &gt; 6656 B（6.5 KB）</div>
+    <div class="prose">
+      <p>上限取自实测的最大通过样本（<code>BM=13, BN=128, fp32</code>），最小失败样本是 7.0 KB，真阈值落在两者之间。与 dtype 本身、<code>BLOCK_SIZE_M</code> 的具体数值、是否 2 的幂、是否对齐到 32 都无关——只看三者的乘积。</p>
+    </div>
+    <figure>
+      <div class="chart">
+        <svg viewBox="0 0 760 244" role="img" aria-label="按单份 X tile 字节数排列的结果：6.5 KB 及以下全部正确，7.0 KB 及以上全部出错；8 KB 处同一配置在 n_rows 等于 8 时通过、等于 64 时 abort">
+          <g font-family="var(--font-mono)" font-size="10.5" fill="var(--muted)">
+            <circle cx="366" cy="20" r="4.5" fill="var(--pass)"></circle>
+            <text x="377" y="24">正确</text>
+            <circle cx="432" cy="20" r="4.5" fill="none" stroke="var(--pass)" stroke-width="2"></circle>
+            <text x="443" y="24">行数不足，故障未显形</text>
+            <g stroke="var(--fail)" stroke-width="2" stroke-linecap="round">
+              <line x1="606" y1="16" x2="614" y2="24"></line>
+              <line x1="614" y1="16" x2="606" y2="24"></line>
+            </g>
+            <text x="622" y="24">出错</text>
+          </g>
+
+          <g font-family="var(--font-mono)" font-size="11" text-anchor="end" fill="var(--muted)">
+            <text x="60" y="62" fill="var(--pass)" font-weight="500">正确</text>
+            <text x="60" y="112">未显形</text>
+            <text x="60" y="162" fill="var(--fail)" font-weight="500">出错</text>
+          </g>
+
+          <line x1="199" y1="38" x2="199" y2="192" stroke="var(--fail)" stroke-width="1.5" stroke-dasharray="4 3"></line>
+          <text x="199" y="33" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="500" fill="var(--fail)">6.5 ｜ 7.0 KB</text>
+
+          <g fill="var(--pass)">
+            <circle cx="108" cy="58" r="4.5"></circle>
+            <circle cx="127" cy="58" r="4.5"></circle>
+            <circle cx="146" cy="58" r="4.5"></circle>
+            <circle cx="185" cy="46" r="4.5"></circle>
+            <circle cx="185" cy="58" r="4.5"></circle>
+            <circle cx="185" cy="70" r="4.5"></circle>
+            <circle cx="194" cy="58" r="4.5"></circle>
+          </g>
+          <text x="185" y="88" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--pass)">6.0K ×3 路径</text>
+
+          <g fill="none" stroke="var(--pass)" stroke-width="2">
+            <circle cx="146" cy="112" r="4.5"></circle>
+            <circle cx="223" cy="104" r="4.5"></circle>
+            <circle cx="223" cy="120" r="4.5"></circle>
+          </g>
+
+          <line x1="223" y1="128" x2="223" y2="146" stroke="var(--fail)" stroke-width="1.5" stroke-dasharray="3 2"></line>
+          <path d="M 219 142 L 223 148 L 227 142" fill="none" stroke="var(--fail)" stroke-width="1.5"></path>
+          <text x="233" y="140" font-family="var(--font-mono)" font-size="10" font-weight="500" fill="var(--fail)">同一配置，n_rows 8 → 64</text>
+
+          <g stroke="var(--fail)" stroke-width="2" stroke-linecap="round">
+            <line x1="200" y1="154" x2="208" y2="162"></line><line x1="208" y1="154" x2="200" y2="162"></line>
+            <line x1="209" y1="154" x2="217" y2="162"></line><line x1="217" y1="154" x2="209" y2="162"></line>
+            <line x1="219" y1="154" x2="227" y2="162"></line><line x1="227" y1="154" x2="219" y2="162"></line>
+            <line x1="229" y1="154" x2="237" y2="162"></line><line x1="237" y1="154" x2="229" y2="162"></line>
+            <line x1="238" y1="154" x2="246" y2="162"></line><line x1="246" y1="154" x2="238" y2="162"></line>
+            <line x1="295" y1="154" x2="303" y2="162"></line><line x1="303" y1="154" x2="295" y2="162"></line>
+            <line x1="372" y1="154" x2="380" y2="162"></line><line x1="380" y1="154" x2="372" y2="162"></line>
+            <line x1="410" y1="154" x2="418" y2="162"></line><line x1="418" y1="154" x2="410" y2="162"></line>
+            <line x1="678" y1="154" x2="686" y2="162"></line><line x1="686" y1="154" x2="678" y2="162"></line>
+          </g>
+          <text x="414" y="180" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="500" fill="var(--fail)">18K · n_cols=256 生产</text>
+          <text x="682" y="180" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--muted)">32K · 挂死</text>
+
+          <line x1="70" y1="192" x2="720" y2="192" stroke="var(--line)" stroke-width="1"></line>
+          <g stroke="var(--line)" stroke-width="1">
+            <line x1="70" y1="192" x2="70" y2="198"></line>
+            <line x1="146" y1="192" x2="146" y2="198"></line>
+            <line x1="223" y1="192" x2="223" y2="198"></line>
+            <line x1="299" y1="192" x2="299" y2="198"></line>
+            <line x1="376" y1="192" x2="376" y2="198"></line>
+            <line x1="452" y1="192" x2="452" y2="198"></line>
+            <line x1="529" y1="192" x2="529" y2="198"></line>
+            <line x1="605" y1="192" x2="605" y2="198"></line>
+            <line x1="682" y1="192" x2="682" y2="198"></line>
+          </g>
+          <g font-family="var(--font-mono)" font-size="10" fill="var(--muted)" text-anchor="middle">
+            <text x="70" y="214">0</text>
+            <text x="146" y="214">4</text>
+            <text x="223" y="214">8</text>
+            <text x="299" y="214">12</text>
+            <text x="376" y="214">16</text>
+            <text x="452" y="214">20</text>
+            <text x="529" y="214">24</text>
+            <text x="605" y="214">28</text>
+            <text x="682" y="214">32</text>
+          </g>
+          <text x="395" y="236" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--muted)">单份 X tile 字节数（KB）＝ BLOCK_SIZE_M × BLOCK_SIZE_N × itemsize</text>
+        </svg>
+      </div>
+      <figcaption>18 个有效数据点。6.0 KB 那一档由三条独立路径分别达到（砍 <code>BLOCK_SIZE_M</code>、砍 <code>BLOCK_SIZE_N</code>、砍 <code>itemsize</code>），全部正确，说明它们压的是同一个资源。8 KB 那一列是决定性对照：空心点是 <code>n_rows=8</code> 时通过，正下方的叉号是同一个 <code>BM=2/BN=1024</code> 配置把 <code>n_rows</code> 提到 64 后 abort。</figcaption>
+    </figure>
+    <h3>行数只影响是否显形，不影响安全性</h3>
+    <div class="prose">
+      <p>当 <code>ceil(n_rows / BLOCK_SIZE_M) ≤ grid</code> 时，每核最多跑一轮行循环，故障可能不出现。上图那三个空心点就是这种情况。</p>
+      <p>所以<strong>小规模用例通过不能作为安全依据</strong>——这一条值得写进测试规范，否则很容易得出「这个配置没问题」的错误结论。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">03</span><h2>影响范围</h2></div>
+    <div class="prose">
+      <p>按 6.5 KB 上限反推每个 <code>n_cols</code> 允许的 <code>BLOCK_SIZE_M</code>，与表值对比（<code>BN = next_power_of_2(n_cols)</code>，<code>n_cols &gt; 2048</code> 时钳到 2048）。</p>
+    </div>
+    <h3>fp32 —— 全部超线</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th class="num">n_cols</th><th class="num">BN</th><th class="num">表值 BM</th><th class="num">表值 tile</th><th class="num">超线倍数</th><th class="num">安全 BM 上限</th></tr></thead>
+        <tbody>
+          <tr><td class="num">128</td><td class="num">128</td><td class="num">24</td><td class="num">12.0 KB</td><td class="num">1.8×</td><td class="num">13</td></tr>
+          <tr><td class="num">256</td><td class="num">256</td><td class="num">18</td><td class="num">18.0 KB</td><td class="num">2.8×</td><td class="num">6</td></tr>
+          <tr><td class="num">512</td><td class="num">512</td><td class="num">10</td><td class="num">20.0 KB</td><td class="num">3.1×</td><td class="num">3</td></tr>
+          <tr><td class="num">1024</td><td class="num">1024</td><td class="num">8</td><td class="num">32.0 KB</td><td class="num">4.9×</td><td class="num">1</td></tr>
+          <tr><td class="num">2048</td><td class="num">2048</td><td class="num">4</td><td class="num">32.0 KB</td><td class="num">4.9×</td><td class="num">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>fp16／bf16 —— 只有 n_cols=128 安全</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th class="num">n_cols</th><th class="num">BN</th><th class="num">表值 BM</th><th class="num">表值 tile</th><th class="num">超线倍数</th><th class="num">安全 BM 上限</th></tr></thead>
+        <tbody>
+          <tr><td class="num">128</td><td class="num">128</td><td class="num">24</td><td class="num">6.0 KB</td><td class="num">0.9×</td><td class="num">26</td></tr>
+          <tr><td class="num">256</td><td class="num">256</td><td class="num">18</td><td class="num">9.0 KB</td><td class="num">1.4×</td><td class="num">13</td></tr>
+          <tr><td class="num">512</td><td class="num">512</td><td class="num">10</td><td class="num">10.0 KB</td><td class="num">1.5×</td><td class="num">6</td></tr>
+          <tr><td class="num">1024</td><td class="num">1024</td><td class="num">8</td><td class="num">16.0 KB</td><td class="num">2.5×</td><td class="num">3</td></tr>
+          <tr><td class="num">2048</td><td class="num">2048</td><td class="num">4</td><td class="num">16.0 KB</td><td class="num">2.5×</td><td class="num">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p><code>n_cols ≥ 2048</code> 的 fp32 即使 <code>BLOCK_SIZE_M = 1</code> 也超线（<code>BN=2048</code> 单独一行就 8 KB），单调 <code>BLOCK_SIZE_M</code> 救不了。原测试列表里 <code>4096</code>／<code>8192</code> 列都走 <code>BN=2048</code>，同属这一类。</p>
+      <p>同一张 <code>TOKEN_BLOCK_SIZE_TABLE</code> 还在另外三个文件里：<code>npu/rmsnorm.py</code>、<code>npu/fused_add_layernorm.py</code>、<code>npu/fused_add_rmsnorm.py</code>。后两个的 <code>@triton.heuristics</code> 是注释掉的，不吃这张表；<code>rmsnorm.py</code> 的训练前向 <code>rmsnorm_fwd_impl</code> 吃（表值 <code>128 → 48</code>，fp32 下 24 KB）。rmsnorm 这条线尚未在新脚本下测过。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">04</span><h2>修复建议</h2></div>
+    <h3>opset 侧 —— 立即可做，绕开问题</h3>
+    <div class="formula">BLOCK_SIZE_M = max(1, 6656 // (BLOCK_SIZE_N × itemsize))<br>若 BLOCK_SIZE_N × itemsize &gt; 6656，须先降 BLOCK_SIZE_N</div>
+    <div class="prose">
+      <p>约束必须同时管住两个块大小并把 <code>itemsize</code> 算进去。只按 <code>itemsize</code> 把表值砍半是不够的——那只对 <code>n_cols=128</code> 成立，<code>n_cols ≥ 256</code> 砍半后仍然超线。</p>
+      <p>代价是性能：<code>n_cols=1024</code> 的 fp32 从 BM=8 降到 1，行并行度降一个量级。所以这是止血，不是终局。</p>
+    </div>
+    <h3>工具链侧 —— 真正的修复</h3>
+    <div class="prose">
+      <p>需要向 triton-ascend 提单：同一份 kernel 源码，仅 <code>constexpr</code> 块大小变化，就会生成地址操作数取自张量数据的代码，且不报任何编译期错误。提单材料已齐：kernel 源码、各配置的 <code>kernel.o</code>、故障 PC 与地址、以及地址值可随输入数据变化的证据。</p>
+      <p>缺的一步是反汇编 <code>kernel.o</code>（对比 BM=13 正确与 BM=14 出错两份），指出那条 <code>VLDI</code> 的地址从哪来。仿真机上有 <code>msobjdump</code>，可以做。</p>
+    </div>
+    <h3>测试侧</h3>
+    <ul class="todo">
+      <li>精度测试不能只跑小 <code>n_rows</code>——行数不足会让这类故障完全不显形</li>
+      <li>仿真用例的 <code>timeout</code> 设成 180 秒级别，挂死是常见形态，默认 3600 会白等一小时</li>
+      <li>standalone 脚本必须与生产 impl 逐字对齐，否则测的是生产里不存在的配置（附录 A）</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">05</span><h2>证据</h2></div>
+    <ol class="chain">
+      <li>
+        <h3>故障地址是从内存读出的 X 数据</h3>
+        <div class="prose">
+          <p>把崩溃报的 <code>0x3EC7E035</code> 转成小端字节序列，在仿真器 dump 出的输入 <code>X_ptr.bin</code> 里搜，<strong>唯一命中</strong>，<code>byte_off=0x018714</code>，即 <code>X[195, 69]</code>；W／B／args 全部 0 命中。按 randn 在该处的概率密度与 fp32 量化间隔估算，偶然命中概率约 0.036%。</p>
+          <p>位置与分块几何吻合：BM=24 时 <code>row_task_id = 195 // 24 = 8</code>，tile 内局部坐标 (3, 69)，对应 pid=0 的第二次循环——与报错里的 <code>id=2302</code>（很早）一致。</p>
+        </div>
+      </li>
+      <li>
+        <h3>换输入不换 kernel，地址跟着变</h3>
+        <div class="tbl">
+          <table>
+            <thead><tr><th class="num">BM</th><th>输入</th><th class="num">致命 PC</th><th class="num">地址</th><th>按 fp32 读</th></tr></thead>
+            <tbody>
+              <tr><td class="num">24</td><td class="num">randn</td><td class="num">0x400173c</td><td class="num">0x3EC7E035</td><td><code>X[195,69]</code> = 0.390</td></tr>
+              <tr><td class="num">24</td><td class="num">全填 1.0</td><td class="num">0x4001800</td><td class="num">0x00000018</td><td>常数</td></tr>
+              <tr><td class="num">24</td><td class="num">全填 0.0</td><td class="num">0x4001800</td><td class="num">0x00000018</td><td>常数</td></tr>
+              <tr><td class="num">16</td><td class="num">randn</td><td class="num">0x4001e30</td><td class="num">0x3EBEA9F3</td><td>0.372</td></tr>
+              <tr><td class="num">16</td><td class="num">全填 0.0</td><td class="num">不 abort</td><td class="num">—</td><td>只是数值错</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">数据不影响 codegen，所以同 BM 的几次是同一份 <code>kernel.o</code>。1.0 的位型 <code>0x3F800000</code> 虽越界但 32 字节对齐，只打非致命 overflow；0.0 的 <code>0x00000000</code> 完全合法——两次都越过了 <code>0x400173c</code>，死在后面另一个点。早期脚本把输入缩放 0.1 倍时，日志里的「地址」也随之缩小一个数量级（0.039 对 0.390）。</p>
+      </li>
+      <li>
+        <h3>参数传递与 GM 布局没有问题</h3>
+        <div class="prose">
+          <p><code>mappings.tsv</code> 与 <code>abi.json</code> 交叉校验：6 个 buffer 的地址、大小、页对齐全部正确，<code>stride_x_row=128</code>、<code>n_rows=256</code>、<code>n_cols=128</code>、<code>eps</code> 的位型也都对。所以问题在 kernel 内部，不在 host 侧传参。</p>
+        </div>
+      </li>
+      <li>
+        <h3>地址值本身没有通用规律</h3>
+        <div class="prose">
+          <p>X 全填 0.0 时，BM=24 的故障地址是 <code>0x18</code>（＝24）、BM=18 的是 <code>0x12</code>（＝18），恰好等于 <code>BLOCK_SIZE_M</code>；但 BM=16 的地址若等于 <code>0x10</code> 同样不对齐、本该 abort，实际只是算错。<code>(64,1024)</code> BM=2 的地址是 <code>0x2024</code>，正好是 tile 大小 <code>0x2000</code> 加 36 字节。</p>
+          <p class="note">这些是各份编译产物的具体表现，不构成通用机理——这也是为什么还需要反汇编。</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">06</span><h2>结论的边界</h2></div>
+    <div class="prose">
+      <p>说清楚哪些已经坐实、哪些还没有：</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>命题</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>生产配置会出错（<code>n_cols=128</code>／<code>256</code> fp32）</td><td><span class="tag ok">已实测</span></td></tr>
+          <tr><td>阈值在 6.5 与 7.0 KB 之间</td><td><span class="tag ok">18 点可分</span></td></tr>
+          <tr><td>地址操作数读到的是 X 数据</td><td><span class="tag ok">字节比对证实</span></td></tr>
+          <tr><td>行数不足会掩盖故障</td><td><span class="tag ok">对照实验</span></td></tr>
+          <tr><td>fp16 从 <code>n_cols=256</code> 起同样受影响</td><td><span class="tag todo">按阈值推导，待实测</span></td></tr>
+          <tr><td><code>n_cols ≥ 2048</code> 无论 BM 都不安全</td><td><span class="tag todo">按阈值推导，待实测</span></td></tr>
+          <tr><td>阈值为何是 6.5 KB</td><td><span class="tag no">未知，需反汇编</span></td></tr>
+          <tr><td>rmsnorm 是否受影响</td><td><span class="tag no">未测</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>最后两格待实测的用例是 <code>(64,2048)</code> fp32 BM=1（预期出错）与 <code>(64,256)</code> fp16 BM=18（预期出错），再加一格 <code>(64,256)</code> fp32 BM=6 验证反推出的安全值（预期正确）。目前仿真环境有一个与本问题无关的故障挡着（附录 C）。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">07</span><h2>完整数据</h2></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th class="num">BM</th><th class="num">BN</th><th>dtype</th><th class="num">n_rows</th><th class="num">tile</th><th>结果</th></tr></thead>
+        <tbody>
+          <tr><td class="num">4</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">2.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">6</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">3.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">8</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">4.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">1</td><td class="num">1024</td><td>fp32</td><td class="num">8</td><td class="num">4.0 KB</td><td><span class="tag ok">正确</span> <span class="tag todo">未显形</span></td></tr>
+          <tr><td class="num">12</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">6.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">24</td><td class="num">64</td><td>fp32</td><td class="num">256</td><td class="num">6.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">24</td><td class="num">128</td><td>fp16</td><td class="num">256</td><td class="num">6.0 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">13</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">6.5 KB</td><td><span class="tag ok">正确</span></td></tr>
+          <tr><td class="num">14</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">7.0 KB</td><td><span class="tag warn">结果错</span></td></tr>
+          <tr><td class="num">15</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">7.5 KB</td><td><span class="tag warn">结果错</span></td></tr>
+          <tr><td class="num">16</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">8.0 KB</td><td><span class="tag warn">结果错</span>／<span class="tag no">abort</span></td></tr>
+          <tr><td class="num">2</td><td class="num">1024</td><td>fp32</td><td class="num">8</td><td class="num">8.0 KB</td><td><span class="tag ok">正确</span> <span class="tag todo">未显形</span></td></tr>
+          <tr><td class="num">2</td><td class="num">1024</td><td>fp32</td><td class="num">64</td><td class="num">8.0 KB</td><td><span class="tag no">abort</span> <span class="tag todo">决定性对照</span></td></tr>
+          <tr><td class="num">1</td><td class="num">2048</td><td>fp32</td><td class="num">4</td><td class="num">8.0 KB</td><td><span class="tag ok">正确</span> <span class="tag todo">未显形</span></td></tr>
+          <tr><td class="num">17</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">8.5 KB</td><td><span class="tag warn">结果错</span></td></tr>
+          <tr><td class="num">18</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">9.0 KB</td><td><span class="tag no">abort</span></td></tr>
+          <tr><td class="num">24</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">12.0 KB</td><td><span class="tag no">abort</span> <span class="tag todo">生产</span></td></tr>
+          <tr><td class="num">32</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">16.0 KB</td><td><span class="tag warn">结果错</span></td></tr>
+          <tr><td class="num">18</td><td class="num">256</td><td>fp32</td><td class="num">64</td><td class="num">18.0 KB</td><td><span class="tag no">超时挂死</span> <span class="tag todo">生产</span></td></tr>
+          <tr><td class="num">64</td><td class="num">128</td><td>fp32</td><td class="num">256</td><td class="num">32.0 KB</td><td><span class="tag no">超时挂死</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">「未显形」的三格每核只跑一轮行循环，不计入阈值判定。BM=16 在 <code>X_FILL=0.0</code> 下是结果错、在 randn 下 abort。</p>
+  </section>
+
+  <hr class="rule">
+
+  <section style="margin-top:0">
+    <div class="sechead"><span class="n">附录 A</span><h2>standalone 脚本与生产路径的差异</h2></div>
+    <div class="prose">
+      <p>最初的 standalone 脚本有几处与生产 impl 不一致，已按 <code>layernorm_infer_impl</code>／<code>rmsnorm_infer_impl</code> 改正。这是为何修正前采集的数据不能与修正后的放在一起比较。</p>
+    </div>
+    <h3>layernorm</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>原脚本</th><th>生产实际</th></tr></thead>
+        <tbody>
+          <tr><td><code>BLOCK_SIZE_N</code> 用 <code>align(n_cols, 256)</code></td><td>前向用 <code>triton.next_power_of_2</code>；<code>align</code> 只在<strong>反向</strong> <code>layernorm_bwd_impl</code> 里用。<code>n_cols=768</code> 时两者是 768 对 1024</td></tr>
+          <tr><td>weight／bias 跟随 x 的 dtype</td><td>它们是 <code>MojoLayerNorm</code> 的 <code>nn.Parameter</code>，<strong>恒为 fp32</strong></td></tr>
+          <tr><td>删掉了 variance 循环里两条「死」的 w／b load</td><td>生产代码里在；删掉会改变编译器看到的 IR</td></tr>
+          <tr><td>Mean／RSTD 用 <code>torch.zeros</code></td><td>生产用 <code>torch.empty</code></td></tr>
+          <tr><td>float64 参考 + 5e-2 容差</td><td>原测试用 <code>F.layer_norm</code> 参考，fp32 容差 atol=1e-4／rtol=1e-5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>rmsnorm —— 走错了 kernel</h3>
+    <div class="prose">
+      <p><code>rmsnorm_infer_impl</code> 里 <code>align()</code> 是向上取整，所以 <code>BLOCK_SIZE_N ≥ n_cols</code> 恒成立，只有 <code>n_cols &gt; 10240</code> 把它钳到 10240 时才会小于 <code>n_cols</code>。也就是说 <code>n_cols ≤ 10240</code> 一律走 <code>_rmsnorm_infer_kernel_single</code>（单次整行 load，W 在 row 循环外只 load 一次，<code>BLOCK_SIZE_M</code> 由 autotune 决定）。</p>
+      <p>而旧脚本一直在跑 <code>_rmsnorm_infer_kernel</code> 加表格 <code>BLOCK_SIZE_M</code>——生产里不会出现的组合。所以早期 rmsnorm 的全部结论（包括 fp32 <code>(128,128)</code> 输出全零）都不代表生产。weight 同样恒为 fp32；容差已按原测试改回 fp32 atol=1e-5／rtol=1e-6、半精度 3e-2／6e-3，参考实现用 <code>F.rms_norm</code>。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">附录 B</span><h2>排查过程中被推翻的模型</h2></div>
+    <p class="note" style="margin-bottom:12px">每一个都曾与当时全部数据相符，又被下一组实验打掉。记在这里以免重复走。</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>模型</th><th>推翻它的实验</th></tr></thead>
+        <tbody>
+          <tr><td>UB 总容量被打穿</td><td>致命地址 <code>0x18</code> 在 UB 范围内且无 <code>ub_addr_overflow</code>；BM=32（16 KB）比 BM=24（12 KB）更大却不 abort</td></tr>
+          <tr><td>向量寄存器份数 26 对 28 的边界</td><td>与字节阈值是同一个量，当时被三个 8 KB 的通过样本挡住</td></tr>
+          <tr><td><code>BM % 32 != 0</code> 才出错</td><td>BM=16（不是 32 的倍数）不 abort；BM=32（是 32 的倍数）照样算错</td></tr>
+          <tr><td>fp32 codegen 本身有问题</td><td>fp32 在 tile ≤ 6.5 KB 时全部正确且 bit-exact</td></tr>
+          <tr><td>失败只出现在「每行 512 字节」这一族</td><td><code>BN=256</code> fp32 BM=18（1024 B/行）超时挂死</td></tr>
+          <tr><td>字节阈值被 8 KB 的通过样本推翻</td><td>那三个样本 <code>n_rows ≤ 8</code>；把 <code>(8,1024)</code> BM=2 改成 <code>(64,1024)</code> BM=2 即 abort，阈值恢复</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><span class="n">附录 C</span><h2>仿真环境的两个坑</h2></div>
+    <div class="prose">
+      <p><strong>一、容器环境。</strong>两次 <code>(64,*)</code> 扫描是在没 source 过环境的容器里跑的，全部是编译期 <code>OSError</code>，仿真器一次都没启动——数据无效。探针脚本已加环境预检，并把异常分为 SIM／TIMEOUT／ACC／ENV 四类，ENV 不计入结论。另外仿真是 CPU-bound，多个 <code>pem_davinci_standalone</code> 并发会互相抢核、慢几十倍，必须串行。</p>
+      <p><strong>二、torch_npu 元数据与编译缓存。</strong>容器里的 <code>torch_npu</code> 是为仿真环境手搓的 stub（<code>__version__ = "2.6.0.fake"</code>），不是 pip 装的，所以没有 dist-info。而 <code>triton/backends/ascend/driver.py</code> 的 <code>NPUUtils.__init__</code> 会调 <code>importlib.metadata.version("torch_npu")</code> 给编译缓存做 key，缓存缺失时还会现场编译 <code>npu_utils.cpp</code>——那份源码 include 了 stub 里不存在的 C++ 头。平时能跑是因为缓存命中、不走编译。</p>
+      <p class="note">这个故障与 LayerNorm 的问题无关，只是挡在前面。已有的 18 个数据点全部采集于它出现之前，不受影响。</p>
+    </div>
+  </section>
+
+</div>
