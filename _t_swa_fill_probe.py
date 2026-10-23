@@ -8,7 +8,8 @@
 只跑第一个 Triton kernel (_swa_fwd_kernel), shape/参数与该用例完全一致:
     B=2 Q_H=16 KV_H=4 D=128 Q_LEN=1024 fp32, gqa_interleave=True, global=4, local=255, output_f32=True
 
-用法 (在仿真机 mojo_opset-hw-950-perf 根目录下, 环境与跑 pytest 时相同):
+用法 (cwd 留在 NPU-Sim 目录, 与跑 pytest 时相同; 脚本放进 mojo_opset 仓库任意子目录即可,
+会自动把仓库根加进 sys.path; 下面的 python _t_swa_fill_probe.py 换成脚本的实际路径):
     python _t_swa_fill_probe.py                  # 不填, 复现原始报错 (基线)
     SWA_FILL=q    python _t_swa_fill_probe.py    # 只把 query 填成 -1.0
     SWA_FILL=k    python _t_swa_fill_probe.py
@@ -28,6 +29,23 @@ import math
 import os
 import struct
 import sys
+
+
+def _add_repo_root_to_path():
+    """脚本放在仓库任意子目录都能 import mojo_opset; cwd 仍须留在 NPU-Sim (仿真器按 cwd 找 etc/*.toml)。"""
+    d = os.path.dirname(os.path.abspath(__file__))
+    while True:
+        if os.path.isfile(os.path.join(d, "mojo_opset", "__init__.py")):
+            if d not in sys.path:
+                sys.path.insert(0, d)
+            return
+        parent = os.path.dirname(d)
+        if parent == d:
+            return
+        d = parent
+
+
+_add_repo_root_to_path()
 
 import torch
 import torch_npu  # noqa: F401
