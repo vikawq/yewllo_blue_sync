@@ -40,11 +40,12 @@ import sys
 import threading
 import time
 
-MODES = ("aiv", "mix")
+MODES = ("aiv", "mix", "gm")
 DEFAULT_GRIDS = [1, 2, 4, 8]
 RE_PROGRAMS = re.compile(r"program pool: programs=(\d+) resident=(\d+)")
 RE_SUBCORE = re.compile(r"kicked program \d+ \(blk_id=\d+, (\d+) subcore")
-KERNEL_NAMES = {"aiv": "_probe_aiv", "mix": "_probe_mix"}
+KERNEL_NAMES = {"aiv": "_probe_aiv", "mix": "_probe_mix", "gm": "_probe_gm"}
+GM_BOUNDS = [0, 128, 256]   # 模仿 cu_q_lens: bsz=2, 每段 128
 
 
 def _ts():
@@ -66,6 +67,27 @@ def child(mode, grid, block):
         tl.store(out_ptr + pid, (pid + 1).to(tl.float32))
 
     @triton.jit
+    def _probe_gm(bounds_ptr, out_ptr, n_iter, BLOCK: tl.constexpr):
+        """把 SWA 的三个结构特征浓缩进来, 其余什么都不做:
+
+        1. 外层 for 的上界 n_iter 是运行期 i32 参数 (SWA 那边是 bsz)
+        2. 循环边界从 GM 标量读出来 (SWA 那边是 cu_q_lens / cu_total_seq_lens)
+        3. 内层 for 的步长 = tl.num_programs(0) (SWA 那边 `scf.for step %arg24`)
+
+        第 3 条正好会生成 `remsi block_idx, %arg24` 和以 %arg24 为步长的循环 ——
+        也就是 SWA 报 `scalar_rem div by 0` 的那两处。
+        """
+        pid = tl.program_id(0)
+        n_progs = tl.num_programs(0)
+        total = 0
+        for i in range(n_iter):
+            lo = tl.load(bounds_ptr + i)
+            hi = tl.load(bounds_ptr + i + 1)
+            for t in range(pid, hi - lo, n_progs):
+                total += t
+        tl.store(out_ptr + pid, total)
+
+    @triton.jit
     def _probe_mix(a_ptr, b_ptr, out_ptr, BLOCK: tl.constexpr):
         pid = tl.program_id(0)
         offs = tl.arange(0, BLOCK)
@@ -75,12 +97,24 @@ def child(mode, grid, block):
         c = tl.dot(a, b)                      # 这一句把 kernel 逼成 mix (AIC+AIV)
         tl.store(out_ptr + pid, tl.sum(c) + (pid + 1).to(tl.float32))
 
-    out = torch.zeros(grid, dtype=torch.float32).npu()
+    out_dtype = torch.int32 if mode == "gm" else torch.float32
+    out = torch.zeros(grid, dtype=out_dtype).npu()
     torch.npu.synchronize()
     print(f"[CHILD] mode={mode} grid={grid} BLOCK={block}", flush=True)
 
     t0 = time.perf_counter()
-    if mode == "aiv":
+    if mode == "gm":
+        bounds = torch.tensor(GM_BOUNDS, dtype=torch.int32).npu()
+        torch.npu.synchronize()
+        n_iter = len(GM_BOUNDS) - 1
+        _probe_gm[(grid,)](bounds, out, n_iter, BLOCK=block)
+        expect = []
+        for pid in range(grid):
+            total = 0
+            for i in range(n_iter):
+                total += sum(range(pid, GM_BOUNDS[i + 1] - GM_BOUNDS[i], grid))
+            expect.append(total)
+    elif mode == "aiv":
         _probe_aiv[(grid,)](out, BLOCK=block)
         expect = [float(i + 1) for i in range(grid)]
     else:
