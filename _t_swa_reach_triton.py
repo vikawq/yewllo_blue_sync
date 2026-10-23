@@ -26,6 +26,9 @@ swa_fwd_impl 在启动 kernel 之前有四处拦路者, 本脚本分两招处理
     SWA_SHAPE=full python _t_swa_reach_triton.py   # 原测试的 M_F32 shape
     SWA_OUTPUT_F32=0 python _t_swa_reach_triton.py # 少一处 o_f32 分配
     SWA_NO_MODE=1 python _t_swa_reach_triton.py    # 不装拦截层, 对照用 (应挂在 1785)
+    SWA_TILING=64,64 python _t_swa_reach_triton.py # 换 tiling (默认 128,128 = 原 Config 的值)
+    SWA_MULTIBUFFER=1 python _t_swa_reach_triton.py
+    SWA_NO_TILING=1 python _t_swa_reach_triton.py  # 不注入 tiling (autotune 还在时用)
 
 判读 —— 看日志最后停在哪:
   * 打完 3 条 [mode] 拦截记录后卡住      -> 已经进 Triton kernel (或 autotune), 拦截成功,
@@ -125,6 +128,45 @@ class CpuAllocMode(TorchFunctionMode):
         return func(*args, **kwargs)
 
 
+class _KernelWithTiling:
+    """给已经去掉 @triton.autotune 的 kernel 补回 Config 里那几个值, 不改 swa.py。
+
+    swa.py 原本是 `@triton.autotune(configs=[Config({"BLOCK_M":128,"BLOCK_N":128,
+    "multibuffer":False})], key=["HEAD_DIM"])`, 三层推导式展开只有 1 个 config。
+    BLOCK_M / BLOCK_N 是 kernel 签名末尾的 tl.constexpr 形参, swa_fwd_impl 的
+    launch 里没传, 全靠 Config 注入; 一旦把装饰器注释掉就会报
+        TypeError: dynamic_func() missing 2 required positional arguments
+    这个代理在 `kernel[grid](...)` 时把它们补上。
+    """
+
+    def __init__(self, kernel, **fixed):
+        self._kernel = kernel
+        self._fixed = fixed
+
+    def __getitem__(self, grid):
+        inner = self._kernel[grid]
+        fixed = self._fixed
+
+        def launch(*args, **kwargs):
+            for key, value in fixed.items():
+                kwargs.setdefault(key, value)
+            try:
+                return inner(*args, **kwargs)
+            except TypeError as error:
+                # multibuffer 不是 kernel 形参, 而是编译选项; 万一这个 triton
+                # 版本不认, 去掉它再来一次, 免得白跑一趟。
+                if "multibuffer" in str(error) and "multibuffer" in kwargs:
+                    kwargs.pop("multibuffer")
+                    print(f"[info] launch 不认 multibuffer ({error}), 去掉后重试", flush=True)
+                    return inner(*args, **kwargs)
+                raise
+
+        return launch
+
+    def __getattr__(self, name):
+        return getattr(self._kernel, name)
+
+
 class _Null:
     """SWA_NO_MODE=1 时顶替拦截层, 什么都不做。"""
 
@@ -159,6 +201,21 @@ def main():
         print(f"[info] Triton 正向 kernel 的 grid 将是 ({get_num_cores('cube')},)", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[info] 取 cube 核数失败: {e!r}", flush=True)
+
+    # @triton.autotune 被注释掉之后, Config 里的 BLOCK_M/BLOCK_N 没人提供 -> 代理补上
+    kern = swa_mod._swa_fwd_kernel
+    n_cfg = len(getattr(kern, "configs", []) or [])
+    if os.environ.get("SWA_NO_TILING", "") not in ("", "0"):
+        print("[info] SWA_NO_TILING 已设, 不注入 tiling", flush=True)
+    elif n_cfg:
+        print(f"[info] _swa_fwd_kernel 仍带 autotune (configs={n_cfg}), 不注入 tiling", flush=True)
+    else:
+        bm, bn = (int(x) for x in os.environ.get("SWA_TILING", "128,128").split(","))
+        mb = os.environ.get("SWA_MULTIBUFFER", "0") not in ("0", "false", "False")
+        swa_mod._swa_fwd_kernel = _KernelWithTiling(
+            kern, BLOCK_M=bm, BLOCK_N=bn, multibuffer=mb)
+        print(f"[info] _swa_fwd_kernel 没有 autotune -> 注入 BLOCK_M={bm} BLOCK_N={bn} "
+              f"multibuffer={mb}", flush=True)
 
     # 输入全部 CPU 建好再 .npu() —— 本机 torch.tensor(..., device='npu') 不可用
     torch.manual_seed(43)
