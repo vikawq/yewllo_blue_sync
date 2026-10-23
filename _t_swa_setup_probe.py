@@ -20,7 +20,12 @@ mask 预热的原理: get_mask_causal_with_window 开头有一段 global 缓存�
     python _t_swa_setup_probe.py                 # 全部步骤
     python _t_swa_setup_probe.py --list
     python _t_swa_setup_probe.py swa_fwd_primed  # 只跑最后那个
-    SWEEP_TIMEOUT=1800 python _t_swa_setup_probe.py swa_fwd_primed   # 真 kernel 慢, 给足超时
+    SWEEP_TIMEOUT=60 python _t_swa_setup_probe.py      # 单步超时秒数, 默认 300
+    SWEEP_ECHO=1 python _t_swa_setup_probe.py          # 把子进程(含仿真器)所有输出实时转发出来
+
+子进程的 [CHILD]/[RESULT] 行实时转发, 另外每 20 秒打一次心跳 (已跑多少秒、收到多少行、
+programs、invalid_addr 累计), 所以不会再出现"卡着不动看不出在干什么"。超时后自动杀掉整个
+子进程组并继续下一步, 不用手动 Ctrl-C。
 
 判读:
   * zeros_like_q / zeros_lse  programs=- 且 ok  -> 它们是 memset, 不用管
@@ -34,6 +39,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 
 # M_F32 用例: B=2 Q_LEN=1024 -> 2048 tokens, 16 q heads, 4 kv heads, D=128, fp32
@@ -70,6 +76,7 @@ def child(step):
     if step == "zeros_like_q":
         q = torch.empty(TOT_Q, Q_H, D, dtype=torch.float32).to(dev)
         torch.npu.synchronize()
+        print("[CHILD] H2D 16MB 完成, 开始 zeros_like", flush=True)
         t0 = time.perf_counter()
         out = torch.zeros_like(q, memory_format=torch.contiguous_format)
         torch.npu.synchronize()
@@ -160,21 +167,60 @@ def _build_mask_cpu(torch):
 
 # ---------------- 父进程 (只用标准库) ----------------
 
-def spawn(step, timeout):
+def spawn(step, timeout, echo=False, beat=20.0):
+    """边跑边把子进程输出收下来: [CHILD] 行实时转发, 每 beat 秒打一次心跳, 不再盲等超时。"""
     cmd = [sys.executable, os.path.abspath(__file__), "--one", step]
     if shutil.which("stdbuf"):
         cmd = ["stdbuf", "-oL", "-eL"] + cmd
     t0 = time.perf_counter()
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=True, errors="replace", start_new_session=True)
+                            text=True, errors="replace", bufsize=1, start_new_session=True)
+    lines = []
+
+    def reader():
+        for line in proc.stdout:
+            line = line.rstrip("\n")
+            lines.append(line)
+            if echo or line.startswith("[CHILD]") or line.startswith("[RESULT]"):
+                print(f"   | {line}", flush=True)
+
+    thread = threading.Thread(target=reader, daemon=True)
+    thread.start()
+
+    deadline = t0 + timeout
+    last = t0
+    timed_out = False
+    while proc.poll() is None:
+        now = time.perf_counter()
+        if now >= deadline:
+            print(f"   ... 到 {timeout:.0f}s 超时, 杀掉子进程组", flush=True)
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, AttributeError):
+                proc.kill()
+            timed_out = True
+            if shutil.which("stdbuf"):
+                # 杀的是 stdbuf, 真正的 python 子孙靠进程组一起带走 (POSIX)
+                pass
+            break
+        if now - last >= beat:
+            last = now
+            invalid = sum(1 for x in lines if "Scalar: invalid addr" in x)
+            m = RE_PROGRAMS.search("\n".join(lines))
+            print(f"   ... 已跑 {now - t0:.0f}s (还剩 {deadline - now:.0f}s), 输出 {len(lines)} 行, "
+                  f"programs={m.group(1) + '/' + m.group(2) if m else '-'}, invalid_addr={invalid}", flush=True)
+        time.sleep(1.0)
+    # 被杀之后别无限期等: 没有进程组的平台上可能还有孙进程捏着管道
+    thread.join(timeout=3)
     try:
-        out, _ = proc.communicate(timeout=timeout)
-        timed_out = False
+        proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
-        out, _ = proc.communicate()
-        timed_out = True
-    return out or "", timed_out, proc.returncode, time.perf_counter() - t0
+        print("   ... 子进程未在 10s 内回收, 继续下一步", flush=True)
+    try:
+        proc.stdout.close()
+    except Exception:  # noqa: BLE001
+        pass
+    return "\n".join(lines), timed_out, proc.returncode, time.perf_counter() - t0
 
 
 def main():
@@ -189,13 +235,14 @@ def main():
     if bad:
         sys.exit(f"未知步骤 {bad}, 用 --list 查看")
     steps = args or STEP_NAMES
-    timeout = float(os.environ.get("SWEEP_TIMEOUT", "900"))
-    print(f"[probe] repo_root={_repo_root()} steps={steps} timeout={timeout:.0f}s", flush=True)
+    timeout = float(os.environ.get("SWEEP_TIMEOUT", "300"))
+    echo = os.environ.get("SWEEP_ECHO", "") not in ("", "0")
+    print(f"[probe] repo_root={_repo_root()} steps={steps} timeout={timeout:.0f}s echo={echo}", flush=True)
 
     rows = []
     for step in steps:
-        print(f"[probe] {step} ...", end=" ", flush=True)
-        out, timed_out, rc, wall = spawn(step, timeout)
+        print(f"[probe] {step} ...", flush=True)
+        out, timed_out, rc, wall = spawn(step, timeout, echo=echo)
         m = RE_PROGRAMS.search(out)
         programs = f"{m.group(1)}/{m.group(2)}" if m else "-"
         r = re.search(r"\[RESULT\] (ok|FAIL) ([\d.]+)", out)
@@ -204,11 +251,8 @@ def main():
                "sec": r.group(2) if r else "-",
                "invalid": out.count("Scalar: invalid addr"), "unmapped": out.count("unmapped")}
         rows.append(row)
-        print(f"{status}  kernel_launched={'no' if programs == '-' else programs}  "
+        print(f"[probe] {step} -> {status}  kernel_launched={'no' if programs == '-' else programs}  "
               f"invalid_addr={row['invalid']}  unmapped={row['unmapped']}  wall={wall:.0f}s", flush=True)
-        for line in out.splitlines():
-            if line.startswith("[CHILD] o:") or line.startswith("[CHILD] mask primed"):
-                print("   " + line, flush=True)
         if status.startswith("CRASH"):
             print("   ---- 子进程尾部 ----\n   " + "\n   ".join(out.splitlines()[-20:]), flush=True)
 
