@@ -30,6 +30,7 @@ swa_fwd_impl 在启动 kernel 之前有四处拦路者, 本脚本分两招处理
     SWA_MULTIBUFFER=1 python _t_swa_reach_triton.py
     SWA_NO_TILING=1 python _t_swa_reach_triton.py  # 不注入 tiling (autotune 还在时用)
     SWA_DTYPE=bf16 python _t_swa_reach_triton.py   # f32 / bf16 / f16; 原测试另两档是 bf16
+    SWA_DUMP_META=1 python _t_swa_reach_triton.py  # 只读: 翻出上次编译写下的 grid_offset, 不碰 NPU
 
 已知卡点 (2026-10-23): BLOCK_M=BLOCK_N=128 + fp32 + HEAD_DIM=128 编译不过, bishengir 报
     ub overflow, requires 3715072 bits while 2031616 bits available
@@ -187,8 +188,60 @@ class _Null:
         return False
 
 
+def dump_meta():
+    """只读模式: 把 hal_policy 为 Triton kernel 写下的 metadata.json 翻出来看。
+
+    hal_policy.py 在编译成功时会把 grid_offset 注册给 HAL, 并落一份
+        <NPUSIM_SESSION_DIR>/native-triton/<sha256>/metadata.json
+    里面有 grid_offset / resources / kernel.metadata。grid_offset 是
+    「grid 在参数块里的字节偏移」, HAL 靠它去读 grid; 偏移不对, kernel 里
+    `block_idx % num_programs(0)` 就会拿到 0 -> scalar_rem div by 0。
+    本模式不碰 NPU, 不起仿真器。
+    """
+    import glob
+    import json
+
+    roots = []
+    if os.environ.get("NPUSIM_SESSION_DIR"):
+        roots.append(os.environ["NPUSIM_SESSION_DIR"])
+    roots += glob.glob(os.path.join(os.getcwd(), "build", "sessions", "*"))
+    pats = [os.path.join(r, "**", "native-triton", "*", "metadata.json") for r in roots]
+    files = sorted({p for pat in pats for p in glob.glob(pat, recursive=True)},
+                   key=lambda p: os.path.getmtime(p), reverse=True)
+    if not files:
+        print("[meta] 没找到 native-triton/*/metadata.json", flush=True)
+        print(f"[meta] 找过: NPUSIM_SESSION_DIR={os.environ.get('NPUSIM_SESSION_DIR')!r} "
+              f"和 {os.path.join(os.getcwd(), 'build/sessions/*')}", flush=True)
+        return
+    for path in files[:int(os.environ.get("SWA_META_N", "4"))]:
+        try:
+            data = json.loads(open(path, encoding="utf-8").read())
+        except (OSError, ValueError) as error:
+            print(f"[meta] 读不了 {path}: {error}", flush=True)
+            continue
+        age = time.time() - os.path.getmtime(path)
+        print(f"\n[meta] {path}  ({age/60:.1f} 分钟前)", flush=True)
+        print(f"   kernel      = {data.get('kernel')}", flush=True)
+        print(f"   grid_offset = {data.get('grid_offset')}   <-- HAL 按这个偏移去参数块里读 grid",
+              flush=True)
+        print(f"   resources   = {data.get('resources')}", flush=True)
+        md = data.get("metadata") or {}
+        for key in ("name", "num_warps", "shared", "mix_mode", "kernel_arg_size",
+                    "BLOCK_M", "BLOCK_N", "multibuffer"):
+            if key in md:
+                print(f"   metadata.{key} = {md[key]}", flush=True)
+        extra = {k: v for k, v in md.items()
+                 if k not in ("name", "num_warps", "shared", "mix_mode", "kernel_arg_size")}
+        if extra:
+            print(f"   metadata 其余键 = {sorted(extra)}", flush=True)
+
+
 def main():
     import math
+
+    if os.environ.get("SWA_DUMP_META", "") not in ("", "0"):
+        dump_meta()
+        return
 
     if REPO is None:
         sys.exit("没找到仓库根 (需要能看到 mojo_opset/__init__.py)")
