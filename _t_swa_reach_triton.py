@@ -31,6 +31,7 @@ swa_fwd_impl 在启动 kernel 之前有四处拦路者, 本脚本分两招处理
     SWA_NO_TILING=1 python _t_swa_reach_triton.py  # 不注入 tiling (autotune 还在时用)
     SWA_DTYPE=bf16 python _t_swa_reach_triton.py   # f32 / bf16 / f16; 原测试另两档是 bf16
     SWA_DUMP_META=1 python _t_swa_reach_triton.py  # 只读: 翻出上次编译写下的 grid_offset, 不碰 NPU
+    SWA_GRID=8 python _t_swa_reach_triton.py       # 强制 grid=8 (默认取 cube 核数 32)
 
 已知卡点 (2026-10-23): BLOCK_M=BLOCK_N=128 + fp32 + HEAD_DIM=128 编译不过, bishengir 报
     ub overflow, requires 3715072 bits while 2031616 bits available
@@ -265,9 +266,20 @@ def main():
     print(f"[info] default device 没有设置 -> mask 会在 CPU 上构造 "
           f"(torch.empty(0).device = {torch.empty(0).device})", flush=True)
     try:
-        print(f"[info] Triton 正向 kernel 的 grid 将是 ({get_num_cores('cube')},)", flush=True)
+        print(f"[info] get_num_cores('cube') = {get_num_cores('cube')}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[info] 取 cube 核数失败: {e!r}", flush=True)
+
+    # SWA_GRID: 强行换掉 swa.py:1800 那句 get_num_cores("cube"), 用来把 grid 这个变量
+    # 单独拎出来试。已验: Triton 的 aiv / mix 最小 kernel 在 grid=1/2/4/5/8 下全过,
+    # 而 SWA 用的是 grid=32 —— 32 从没在 Triton 侧验过。
+    if os.environ.get("SWA_GRID"):
+        forced = int(os.environ["SWA_GRID"])
+        swa_mod.get_num_cores = lambda op_type="vector", _n=forced: _n
+        print(f"[info] SWA_GRID={forced} -> 已把 swa.get_num_cores 换成常量, grid 将是 ({forced},)",
+              flush=True)
+    else:
+        print(f"[info] grid 将是 ({get_num_cores('cube')},)  (SWA_GRID=N 可强制改成 N)", flush=True)
 
     # @triton.autotune 被注释掉之后, Config 里的 BLOCK_M/BLOCK_N 没人提供 -> 代理补上
     kern = swa_mod._swa_fwd_kernel
