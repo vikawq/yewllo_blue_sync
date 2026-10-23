@@ -29,6 +29,13 @@ swa_fwd_impl 在启动 kernel 之前有四处拦路者, 本脚本分两招处理
     SWA_TILING=64,64 python _t_swa_reach_triton.py # 换 tiling (默认 128,128 = 原 Config 的值)
     SWA_MULTIBUFFER=1 python _t_swa_reach_triton.py
     SWA_NO_TILING=1 python _t_swa_reach_triton.py  # 不注入 tiling (autotune 还在时用)
+    SWA_DTYPE=bf16 python _t_swa_reach_triton.py   # f32 / bf16 / f16; 原测试另两档是 bf16
+
+已知卡点 (2026-10-23): BLOCK_M=BLOCK_N=128 + fp32 + HEAD_DIM=128 编译不过, bishengir 报
+    ub overflow, requires 3715072 bits while 2031616 bits available
+即需要 453.5 KiB 而 UB 只有 248 KiB。这是**正式编译器**在 --target=Ascend950PR_9589 下报的,
+不是仿真器的执行引擎。绕法两条: SWA_TILING=64,64 把分块砍小, 或 SWA_DTYPE=bf16 (粗算约 227 KiB,
+刚好装得下)。注意两者都偏离了原 Config 的生产配置。
 
 判读 —— 看日志最后停在哪:
   * 打完 3 条 [mode] 拦截记录后卡住      -> 已经进 Triton kernel (或 autotune), 拦截成功,
@@ -62,9 +69,12 @@ from torch.overrides import TorchFunctionMode
 
 # 原测试 M_F32: B=2 Q_LEN=1024 -> 2048 tokens, 16 q heads, 4 kv heads, D=128, fp32
 SHAPES = {
-    "small": dict(tot_q=256, q_h=4, kv_h=1, d=128, dtype=torch.float32, splits=[0, 128, 256]),
-    "full": dict(tot_q=2048, q_h=16, kv_h=4, d=128, dtype=torch.float32, splits=[0, 1024, 2048]),
+    "small": dict(tot_q=256, q_h=4, kv_h=1, d=128, splits=[0, 128, 256]),
+    "full": dict(tot_q=2048, q_h=16, kv_h=4, d=128, splits=[0, 1024, 2048]),
+    # 原测试的另两档是 bf16; BF16_PADDIM 的 head_dim 是 96
+    "paddim": dict(tot_q=2048, q_h=16, kv_h=4, d=96, splits=[0, 1024, 2048]),
 }
+DTYPES = {"f32": torch.float32, "bf16": torch.bfloat16, "f16": torch.float16}
 LOCAL, GLOBAL_W = 255, 4
 GQA_INTERLEAVE = True
 
@@ -185,7 +195,11 @@ def main():
     shape_name = os.environ.get("SWA_SHAPE", "small")
     if shape_name not in SHAPES:
         sys.exit(f"SWA_SHAPE 只能是 {list(SHAPES)}")
-    cfg = SHAPES[shape_name]
+    cfg = dict(SHAPES[shape_name])
+    dtype_name = os.environ.get("SWA_DTYPE", "f32")
+    if dtype_name not in DTYPES:
+        sys.exit(f"SWA_DTYPE 只能是 {list(DTYPES)}")
+    cfg["dtype"] = DTYPES[dtype_name]
     output_f32 = os.environ.get("SWA_OUTPUT_F32", "1") not in ("0", "false", "False")
     use_mode = os.environ.get("SWA_NO_MODE", "") in ("", "0")
 
