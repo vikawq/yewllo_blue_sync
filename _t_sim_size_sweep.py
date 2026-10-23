@@ -19,6 +19,11 @@
     python _t_sim_size_sweep.py clone_f32                # 只扫一个算子
     python _t_sim_size_sweep.py clone_f32 8192 32768     # 指定尺寸
     SWEEP_TIMEOUT=600 python _t_sim_size_sweep.py        # 单个尺寸的超时秒数, 默认 300
+    SWEEP_NO_STOP=1 python _t_sim_size_sweep.py ...      # 出问题后不跳过更大尺寸 (看 invalid 数随 block 数怎么涨)
+
+第一轮结果 (2026-10-23): 分界线不在 32 —— ones_f32 programs=2 过、programs=8 挂;
+ones_bool 同样 2 过 8 挂; clone_f32 <=32768 元素根本不起 kernel (走 D2D 拷贝), 131072 起 64 block 即坏。
+fill 类算子每 block 正好 4KB (f32 1024 元素 / bool 4096 元素), 所以 ones_f32 n=1024*k 就是 k 个 block。
 
 子进程用 stdbuf -oL 跑 (若存在), 这样被杀之前仿真器打的 programs=N 也能抓到。
 """
@@ -110,6 +115,7 @@ def main():
     if bad:
         sys.exit(f"不认识的参数 {bad}; 算子只能是 {OPS}")
     timeout = float(os.environ.get("SWEEP_TIMEOUT", "300"))
+    no_stop = os.environ.get("SWEEP_NO_STOP", "") not in ("", "0")
 
     print(f"[sweep] ops={ops} sizes={sizes} timeout={timeout:.0f}s stdbuf={'yes' if shutil.which('stdbuf') else 'no'}",
           flush=True)
@@ -121,7 +127,7 @@ def main():
             rows.append(row)
             print(f"{row['status']}  programs={row['programs']}  invalid_addr={row['invalid']}  "
                   f"unmapped={row['unmapped']}  wall={row['wall_s']}s", flush=True)
-            if row["status"] != "ok":
+            if row["status"] != "ok" and not no_stop:
                 print(f"[sweep] {op} 在 n={n} 出问题, 跳过更大的尺寸", flush=True)
                 break
 
