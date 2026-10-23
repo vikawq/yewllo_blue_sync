@@ -40,12 +40,14 @@ import sys
 import threading
 import time
 
-MODES = ("aiv", "mix", "gm")
+MODES = ("aiv", "mix", "gm", "gmmix")
 DEFAULT_GRIDS = [1, 2, 4, 8]
 RE_PROGRAMS = re.compile(r"program pool: programs=(\d+) resident=(\d+)")
 RE_SUBCORE = re.compile(r"kicked program \d+ \(blk_id=\d+, (\d+) subcore")
-KERNEL_NAMES = {"aiv": "_probe_aiv", "mix": "_probe_mix", "gm": "_probe_gm"}
-GM_BOUNDS = [0, 128, 256]   # 模仿 cu_q_lens: bsz=2, 每段 128
+KERNEL_NAMES = {"aiv": "_probe_aiv", "mix": "_probe_mix", "gm": "_probe_gm",
+                "gmmix": "_probe_gmmix"}
+GM_BOUNDS = [0, 128, 256]       # 模仿 cu_q_lens: bsz=2, 每段 128
+GMMIX_BOUNDS = [0, 8, 16]       # gmmix 每轮内层都要做一次 dot, 段长收小免得仿真跑太久
 
 
 def _ts():
@@ -88,6 +90,30 @@ def child(mode, grid, block):
         tl.store(out_ptr + pid, total)
 
     @triton.jit
+    def _probe_gmmix(bounds_ptr, a_ptr, b_ptr, out_ptr, n_iter, BLOCK: tl.constexpr):
+        """gm + mix 同时出现 —— 这是特征矩阵里唯一没测过的那一格。
+
+        关键是 tl.dot **放在以 num_programs(0) 为步长的循环里面**: 这样 AIC 那一侧
+        也必须依赖 %arg24 (grid[0]) 才知道自己该做几轮。_probe_mix 的 dot 在循环外,
+        AIC 侧压根不需要 arg24; _probe_gm 需要 arg24 但是纯 AIV。SWA 两样都有。
+        """
+        pid = tl.program_id(0)
+        n_progs = tl.num_programs(0)
+        offs = tl.arange(0, BLOCK)
+        idx = offs[:, None] * BLOCK + offs[None, :]
+        a = tl.load(a_ptr + idx)
+        b = tl.load(b_ptr + idx)
+        acc = tl.zeros([BLOCK, BLOCK], dtype=tl.float32)
+        total = 0
+        for i in range(n_iter):
+            lo = tl.load(bounds_ptr + i)
+            hi = tl.load(bounds_ptr + i + 1)
+            for t in range(pid, hi - lo, n_progs):
+                acc += tl.dot(a, b)
+                total += t
+        tl.store(out_ptr + pid, tl.sum(acc) + total.to(tl.float32))
+
+    @triton.jit
     def _probe_mix(a_ptr, b_ptr, out_ptr, BLOCK: tl.constexpr):
         pid = tl.program_id(0)
         offs = tl.arange(0, BLOCK)
@@ -103,7 +129,23 @@ def child(mode, grid, block):
     print(f"[CHILD] mode={mode} grid={grid} BLOCK={block}", flush=True)
 
     t0 = time.perf_counter()
-    if mode == "gm":
+    if mode == "gmmix":
+        bounds = torch.tensor(GMMIX_BOUNDS, dtype=torch.int32).npu()
+        a = torch.ones(block, block, dtype=torch.float32).npu()
+        b = torch.ones(block, block, dtype=torch.float32).npu()
+        torch.npu.synchronize()
+        n_iter = len(GMMIX_BOUNDS) - 1
+        _probe_gmmix[(grid,)](bounds, a, b, out, n_iter, BLOCK=block)
+        expect = []
+        for pid in range(grid):
+            n_dots, total = 0, 0
+            for i in range(n_iter):
+                steps = list(range(pid, GMMIX_BOUNDS[i + 1] - GMMIX_BOUNDS[i], grid))
+                n_dots += len(steps)
+                total += sum(steps)
+            # a,b 全 1 -> dot 每个元素 = block; acc 求和 = n_dots * block**3
+            expect.append(float(n_dots * block ** 3 + total))
+    elif mode == "gm":
         bounds = torch.tensor(GM_BOUNDS, dtype=torch.int32).npu()
         torch.npu.synchronize()
         n_iter = len(GM_BOUNDS) - 1
