@@ -49,6 +49,36 @@ KERNEL_NAMES = {"aiv": "_probe_aiv", "mix": "_probe_mix", "gm": "_probe_gm",
 GM_BOUNDS = [0, 128, 256]       # 模仿 cu_q_lens: bsz=2, 每段 128
 GMMIX_BOUNDS = [0, 8, 16]       # gmmix 每轮内层都要做一次 dot, 段长收小免得仿真跑太久
 
+# SWA 的 launch 末尾带着这 4 个非默认编译选项 (swa.py:1843-1846), 我的探针一个都没传。
+# 它们直接改 codegen: IR 里 ssbuffer.inter_core_buf_count=2 / intra_buf_count=3,
+# 以及那两块带 cv_pipelined_multi_buffer 的 2x 缓冲, 都是它们带出来的。
+SWA_LAUNCH_OPTS = {
+    "limit_auto_multi_buffer_buffer": "no-limit",
+    "hfusion_enable_multiple_consumer_fusion": True,
+    "intra_cache_num": 3,
+    "inter_cache_num": 2,
+}
+
+
+def parse_opts():
+    """MIX_OPTS=swa 用 SWA 那一套; 也可以写成 a=1,b=True,c=no-limit; 空则不传。"""
+    raw = os.environ.get("MIX_OPTS", "").strip()
+    if not raw:
+        return {}
+    if raw == "swa":
+        return dict(SWA_LAUNCH_OPTS)
+    opts = {}
+    for item in raw.split(","):
+        key, _, value = item.partition("=")
+        key, value = key.strip(), value.strip()
+        if value in ("True", "False"):
+            opts[key] = value == "True"
+        elif value.lstrip("-").isdigit():
+            opts[key] = int(value)
+        else:
+            opts[key] = value
+    return opts
+
 
 def _ts():
     return time.strftime("%H:%M:%S")
@@ -126,7 +156,8 @@ def child(mode, grid, block):
     out_dtype = torch.int32 if mode == "gm" else torch.float32
     out = torch.zeros(grid, dtype=out_dtype).npu()
     torch.npu.synchronize()
-    print(f"[CHILD] mode={mode} grid={grid} BLOCK={block}", flush=True)
+    opts = parse_opts()
+    print(f"[CHILD] mode={mode} grid={grid} BLOCK={block} opts={opts or '(无)'}", flush=True)
 
     t0 = time.perf_counter()
     if mode == "gmmix":
@@ -135,7 +166,7 @@ def child(mode, grid, block):
         b = torch.ones(block, block, dtype=torch.float32).npu()
         torch.npu.synchronize()
         n_iter = len(GMMIX_BOUNDS) - 1
-        _probe_gmmix[(grid,)](bounds, a, b, out, n_iter, BLOCK=block)
+        _probe_gmmix[(grid,)](bounds, a, b, out, n_iter, BLOCK=block, **opts)
         expect = []
         for pid in range(grid):
             n_dots, total = 0, 0
@@ -149,7 +180,7 @@ def child(mode, grid, block):
         bounds = torch.tensor(GM_BOUNDS, dtype=torch.int32).npu()
         torch.npu.synchronize()
         n_iter = len(GM_BOUNDS) - 1
-        _probe_gm[(grid,)](bounds, out, n_iter, BLOCK=block)
+        _probe_gm[(grid,)](bounds, out, n_iter, BLOCK=block, **opts)
         expect = []
         for pid in range(grid):
             total = 0
@@ -157,13 +188,13 @@ def child(mode, grid, block):
                 total += sum(range(pid, GM_BOUNDS[i + 1] - GM_BOUNDS[i], grid))
             expect.append(total)
     elif mode == "aiv":
-        _probe_aiv[(grid,)](out, BLOCK=block)
+        _probe_aiv[(grid,)](out, BLOCK=block, **opts)
         expect = [float(i + 1) for i in range(grid)]
     else:
         a = torch.ones(block, block, dtype=torch.float32).npu()
         b = torch.ones(block, block, dtype=torch.float32).npu()
         torch.npu.synchronize()
-        _probe_mix[(grid,)](a, b, out, BLOCK=block)
+        _probe_mix[(grid,)](a, b, out, BLOCK=block, **opts)
         expect = [float(block ** 3 + i + 1) for i in range(grid)]
     torch.npu.synchronize()
     dt = time.perf_counter() - t0

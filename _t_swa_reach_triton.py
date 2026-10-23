@@ -162,6 +162,17 @@ class _KernelWithTiling:
         def launch(*args, **kwargs):
             for key, value in fixed.items():
                 kwargs.setdefault(key, value)
+            # SWA_DROP_OPTS: 把 swa.py:1843-1846 那几个非默认编译选项剔掉, 看故障是否跟着消失。
+            # 它们直接改 codegen (ssbuffer 的 inter/intra buf count、cv_pipelined_multi_buffer),
+            # 而所有跑通的最小探针都没传过它们。SWA_DROP_OPTS=swa 表示把那 4 个全剔掉。
+            drop = os.environ.get("SWA_DROP_OPTS", "").strip()
+            if drop:
+                keys = (["limit_auto_multi_buffer_buffer",
+                         "hfusion_enable_multiple_consumer_fusion",
+                         "intra_cache_num", "inter_cache_num"]
+                        if drop == "swa" else [k.strip() for k in drop.split(",")])
+                gone = [k for k in keys if kwargs.pop(k, None) is not None]
+                print(f"[info] SWA_DROP_OPTS -> 已剔掉 {gone or '(没有命中)'}", flush=True)
             try:
                 return inner(*args, **kwargs)
             except TypeError as error:
