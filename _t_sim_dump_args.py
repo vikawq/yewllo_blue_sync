@@ -55,19 +55,49 @@ def find_dirs(limit):
     return sorted(found, key=os.path.getmtime, reverse=True)[:limit]
 
 
+def entry_of(directory):
+    """从 trace.jsonl 的 launch.start 里取 kernel 名 (它不是严格 JSON, 直接正则抓)。"""
+    path = os.path.join(directory, "trace.jsonl")
+    if not os.path.isfile(path):
+        return None
+    import re
+    text = open(path, encoding="utf-8", errors="replace").read()
+    m = re.search(r'"entry"\s*:\s*"?([A-Za-z_][A-Za-z0-9_]*)', text)
+    return m.group(1) if m else None
+
+
+def meta_for(kernel_name):
+    """metadata.json 在 native-triton/<digest>/ 下, 不和 hal-launch-N 同级, 所以按 kernel 名全局找。"""
+    if kernel_name is None:
+        return None, None
+    roots = [os.path.join(os.getcwd(), "build", "sessions")]
+    if os.environ.get("NPUSIM_SESSION_DIR"):
+        roots.insert(0, os.environ["NPUSIM_SESSION_DIR"])
+    for root in roots:
+        for path in sorted(glob.glob(os.path.join(root, "**", "native-triton", "*",
+                                                  "metadata.json"), recursive=True),
+                           key=os.path.getmtime, reverse=True):
+            try:
+                data = json.loads(open(path, encoding="utf-8").read())
+            except (OSError, ValueError):
+                continue
+            if data.get("kernel") == kernel_name:
+                return data, path
+    return None, None
+
+
 def grid_offset_for(directory):
     if os.environ.get("ARGS_OFFSET"):
         return int(os.environ["ARGS_OFFSET"]), "ARGS_OFFSET"
-    for cand in (os.path.join(directory, "metadata.json"),
-                 os.path.join(os.path.dirname(directory), "metadata.json")):
-        if os.path.isfile(cand):
-            try:
-                data = json.loads(open(cand, encoding="utf-8").read())
-            except (OSError, ValueError):
-                continue
-            if data.get("grid_offset") is not None:
-                return int(data["grid_offset"]), f"{cand} 的 kernel={data.get('kernel')}"
-    return None, "没找到 metadata.json, 用 ARGS_OFFSET=N 指定"
+    # HAL 自己落的 grid-offset.bin 最权威: 4 字节 u32
+    path = os.path.join(directory, "grid-offset.bin")
+    if os.path.isfile(path) and os.path.getsize(path) >= 4:
+        (value,) = struct.unpack("<I", open(path, "rb").read(4))
+        return value, "grid-offset.bin"
+    data, where = meta_for(entry_of(directory))
+    if data and data.get("grid_offset") is not None:
+        return int(data["grid_offset"]), f"{where} 的 kernel={data.get('kernel')}"
+    return None, "没找到 grid-offset.bin / metadata.json, 用 ARGS_OFFSET=N 指定"
 
 
 def hexdump(blob, start=0, length=None):
@@ -130,6 +160,29 @@ def report(directory):
             mark = "   <== grid" if name.startswith("grid") else ""
             print(f"     {pos:>4} {name:<18} {kind:<4} = {shown}{mark}", flush=True)
             pos += size
+
+    # 两个隐藏指针 (SyncBlockLockArgIdx=0 / WorkspaceArgIdx=1) 是不是 NULL
+    if len(blob) >= 16:
+        lock, workspace = struct.unpack_from("<2Q", blob, 0)
+        print(f"\n   隐藏指针: sync_block_lock=0x{lock:x}  workspace=0x{workspace:x}")
+        nulls = [n for n, v in (("sync_block_lock", lock), ("workspace", workspace)) if v == 0]
+        if nulls:
+            print(f"   >>> {' 和 '.join(nulls)} 是 NULL —— 若 kernel 真的用到它们"
+                  f"(跨核 sync / 标量 spill / SIMT 栈), 读出来就是 0,"
+                  f" 既能解释 div by 0 也能解释 invalid addr", flush=True)
+
+    entry = entry_of(directory)
+    data, where = meta_for(entry)
+    if data:
+        md = data.get("metadata") or {}
+        keys = [k for k in md
+                if any(t in k.lower() for t in ("workspace", "stack", "shared", "sync"))]
+        print(f"\n   entry={entry}, metadata 来自 {where}")
+        print(f"   mix_mode={md.get('mix_mode')}  grid_offset={data.get('grid_offset')}")
+        for k in sorted(keys):
+            print(f"     {k} = {md[k]!r}", flush=True)
+        if not keys:
+            print("     (metadata 里没有 workspace/stack/sync 相关键)", flush=True)
 
     mappings = os.path.join(directory, "mappings.tsv")
     if os.path.isfile(mappings):
