@@ -11,6 +11,11 @@ diagnosing repeated-launch failures. TOPP_PERF_STACK_TIMEOUT (default: 60 second
 0 to disable) periodically dumps Python stacks during traced calls.
 Stage timings include synchronization overhead. Normal warmup/repeat calls use
 the original implementation; TRACE_ALL measurements include diagnostic overhead.
+
+TOPP_PERF_BATCHES=32 (or a comma-separated list) selects diagnostic performance
+cases with vocab=92544, topk=1000, topp=0.75 and min_tokens_to_keep=1. The default
+case list and accuracy cases are unchanged. Run each batch in a fresh process
+when comparing memory/layout effects.
 """
 
 import ast
@@ -46,6 +51,22 @@ CASES = [
 ]
 NUM_SAMPLES = 400
 KS_D_CRIT = 3.04 * (2 / NUM_SAMPLES) ** 0.5
+
+
+def _perf_cases():
+    batches = os.environ.get("TOPP_PERF_BATCHES")
+    if batches is None:
+        return CASES
+    try:
+        values = list(dict.fromkeys(int(value.strip()) for value in batches.split(",")))
+    except ValueError:
+        raise ValueError("TOPP_PERF_BATCHES must contain comma-separated positive integers") from None
+    if not values or any(batch <= 0 for batch in values):
+        raise ValueError("TOPP_PERF_BATCHES must contain comma-separated positive integers")
+    return [
+        pytest.param((batch, 92544), 1000, 0.75, 1, id=f"{batch}x92544")
+        for batch in values
+    ]
 
 
 def _sampling(backend, topp, min_tokens_to_keep, topk):
@@ -235,7 +256,7 @@ def _measure(executor, label, synchronize=None, first_executor=None):
 
 
 @pytest.mark.parametrize("dtype", DTYPES)
-@pytest.mark.parametrize("shape, topk, topp, min_tokens_to_keep", CASES)
+@pytest.mark.parametrize("shape, topk, topp, min_tokens_to_keep", _perf_cases())
 @pytest.mark.parametrize("backend", ["cpu", "triton"])
 @torch.inference_mode()
 def test_topp_sampling_perf(shape, topk, topp, min_tokens_to_keep, dtype, backend, monkeypatch):
