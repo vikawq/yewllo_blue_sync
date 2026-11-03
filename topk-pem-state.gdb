@@ -1,6 +1,10 @@
 # Read-only state decoder for the exact AArch64 PEM disassembly supplied in
 # this chat. It reads registers/memory; it never calls target functions or
 # changes target state. Code fingerprints guard the decoded structure offsets.
+# The extended offsets below follow the candidate PEM layout supplied by the
+# other investigation: 0x408=hold_id_, 0x40c=wait_id_, 0x438=pc_. The fingerprint
+# checks are not a complete ABI/build-ID check; preserve raw offset names so
+# these values can be checked against the deployed source/binary layout.
 set pagination off
 set print thread-events off
 python
@@ -34,7 +38,7 @@ print(json.dumps({
     "pid": inferior.pid,
     "driver_code_matches": driver_verified,
     "scheduler_code_matches": scheduler_verified,
-    "note": "Raw field names are offsets, not confirmed source field names. loop_w24 is a host polling count, not retired instructions.",
+    "note": "Raw offset names retained. Candidate layout: 0x408=hold_id_, 0x40c=wait_id_, 0x438=pc_; 0x5a is the reported unset-ID sentinel. Validate deployed ABI. loop_w24 is host polling, not retired instructions.",
 }))
 
 counts = collections.Counter()
@@ -66,6 +70,9 @@ for thread in inferior.threads():
                             flag_0x430=read_uint(core + 0x430, 1),
                             flag_0x431=read_uint(core + 0x431, 1),
                             flag_0x432=read_uint(core + 0x432, 1),
+                            u32_at_0x408=read_uint(core + 0x408, 4),
+                            u32_at_0x40c=read_uint(core + 0x40c, 4),
+                            u64_at_0x438=hex(read_uint(core + 0x438, 8)),
                             rvecpv_pointer_0x160=hex(read_uint(core + 0x160, 8)),
                             simdpv_pointer_0x170=hex(read_uint(core + 0x170, 8)),
                         )
