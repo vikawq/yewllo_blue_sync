@@ -143,6 +143,7 @@ small { display: block; font-size: 11px; color: var(--muted); overflow-wrap: any
   <p class="note" id="warning" hidden></p>
   <div class="controls">
     <label>图形<select id="view"><option value="heatmap">热力图</option><option value="bars">横向条形图</option></select></label>
+    <label>视角<select id="scope"><option value="phase">单阶段</option><option value="case">跨阶段 · 按用例</option><option value="global">全局 · 合并用例</option></select></label>
     <label>阶段<select id="phase"></select></label>
     <label>记录类型<select id="kind"></select></label>
     <label>指标<select id="metric">
@@ -173,7 +174,15 @@ const format = new Intl.NumberFormat("zh-CN", {maximumFractionDigits: 3});
 const integer = new Intl.NumberFormat("zh-CN", {maximumFractionDigits: 0});
 const percent = new Intl.NumberFormat("zh-CN", {style: "percent", maximumFractionDigits: 2});
 const stageKind = "stage_with_probes";
+const detailKinds = "@details";
+const allPhases = "@all";
+const phaseGroups = [
+  {key: "@perf", name: "性能诊断阶段", includes: phase => phase.startsWith("perf_")},
+  {key: "@accuracy", name: "精度主实现与校验阶段", includes: phase => phase.startsWith("accuracy_")},
+  {key: "@reference", name: "Torch 参考阶段", includes: phase => phase.startsWith("torch_reference_")}
+];
 const kindNames = new Map([
+  [detailKinds, "全部逐算子记录"],
   ["dispatcher_op", "计算算子"],
   ["torch_api", "Torch / Tensor API"],
   [stageKind, "整段调用（含打点开销）"]
@@ -199,9 +208,28 @@ function unique(values) {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
+function matchesPhase(phase, selection) {
+  if (selection === allPhases) return true;
+  const group = phaseGroups.find(group => group.key === selection);
+  return group ? group.includes(phase) : phase === selection;
+}
+
+function updatePhases() {
+  const phases = unique(data.cells.map(cell => cell.phase));
+  if (get("scope").value === "phase") {
+    options(get("phase"), phases, "perf_forward");
+    return;
+  }
+  const groups = phaseGroups.filter(group => phases.some(group.includes));
+  const names = new Map([[allPhases, "全部阶段"], ...groups.map(group => [group.key, group.name])]);
+  options(get("phase"), [allPhases, ...groups.map(group => group.key), ...phases], allPhases, names);
+}
+
 function updateKinds() {
-  const kinds = unique(data.cells.filter(cell => cell.phase === get("phase").value).map(cell => cell.kind));
-  options(get("kind"), kinds, kinds.includes("dispatcher_op") ? "dispatcher_op" : kinds.find(kind => kind !== stageKind), kindNames);
+  const kinds = unique(data.cells.filter(cell => matchesPhase(cell.phase, get("phase").value)).map(cell => cell.kind));
+  if (get("scope").value !== "phase" && kinds.some(kind => kind !== stageKind)) kinds.unshift(detailKinds);
+  const preferred = [detailKinds, "dispatcher_op", ...kinds].find(kind => kinds.includes(kind));
+  options(get("kind"), kinds, preferred, kindNames);
 }
 
 function shareOf(timing, total) {
@@ -247,18 +275,43 @@ function paint(cell, value, max, scale) {
   cell.style.color = weight > 0.61 ? "#17110c" : "#fff";
 }
 
-function collectCases(phase, kind, caseFilter) {
+function collectCases(scope, phase, kind, caseFilter) {
   const cases = new Map();
+  const matchedCases = new Set();
+  const matchedPhases = new Set();
   for (const cell of data.cells) {
-    if (cell.phase !== phase || cell.kind !== kind) continue;
+    if (!matchesPhase(cell.phase, phase)) continue;
+    if (kind === detailKinds ? cell.kind === stageKind : cell.kind !== kind) continue;
     if (!(cell.script + " " + cell.test + " " + cell.case).toLowerCase().includes(caseFilter)) continue;
-    const key = JSON.stringify([cell.script, cell.test, cell.case]);
-    if (!cases.has(key)) cases.set(key, {key, info: cell, cells: [], total: 0});
+    const caseKey = JSON.stringify([cell.script, cell.test, cell.case]);
+    matchedCases.add(caseKey);
+    matchedPhases.add(cell.phase);
+    const key = scope === "global" ? "@global" : caseKey;
+    if (!cases.has(key)) cases.set(key, {key, info: cell, timings: new Map(), total: 0});
     const group = cases.get(key);
-    group.cells.push(cell);
+    const op = scope !== "phase" && kind === stageKind ? cell.phase : cell.op;
+    const opKey = JSON.stringify([op, cell.device]);
+    if (!group.timings.has(opKey)) {
+      group.timings.set(opKey, {op, device: cell.device, count: 0, elapsed: 0, host: 0, hostCount: 0});
+    }
+    addTiming(group.timings.get(opKey), cell);
     group.total += cell.elapsed;
   }
-  return [...cases.values()].sort((a, b) => a.key.localeCompare(b.key, "en", {numeric: true}));
+  const global = cases.get("@global");
+  if (global) {
+    global.info = {
+      case: "全局汇总",
+      test: matchedCases.size + " 个用例 · " + matchedPhases.size + " 个阶段",
+      script: data.source
+    };
+  }
+  return [...cases.values()]
+    .sort((a, b) => a.key.localeCompare(b.key, "en", {numeric: true}))
+    .map(({key, info, timings, total}) => ({key, info, cells: [...timings.values()], total}));
+}
+
+function addTiming(target, timing) {
+  for (const field of ["count", "elapsed", "host", "hostCount"]) target[field] += timing[field];
 }
 
 function matchesOperator(cell, filter) {
@@ -286,7 +339,7 @@ function renderHeatmap(cases, kind, metric, limit, opFilter) {
       const group = groups.get(rowKey);
       group.cells.set(key, cell);
       group.peakShare = Math.max(group.peakShare, shareOf(cell, total) ?? -1);
-      for (const field of ["count", "elapsed", "host", "hostCount"]) group[field] += cell[field];
+      addTiming(group, cell);
     }
   }
   const rankOf = group => metric === "share" ? group.peakShare : valueOf(group, metric) ?? -1;
@@ -297,7 +350,7 @@ function renderHeatmap(cases, kind, metric, limit, opFilter) {
   get("legend").hidden = !shown.length;
   const ranking = metric === "share" ? "按各算子的最高用例占比排序" : "按当前指标排序";
   get("selection").textContent = shown.length
-    ? "显示 " + shown.length + " / " + ranked.length + " 行 · " + cases.length + " 个用例 · " + ranking
+    ? "显示 " + shown.length + " / " + ranked.length + " 行 · " + cases.length + " 组 · " + ranking
     : "没有匹配的记录。";
   if (!shown.length) return;
 
@@ -390,16 +443,17 @@ function renderBars(cases, kind, metric, limit, opFilter) {
     container.append(group);
   }
   container.hidden = !visibleCases;
-  get("selection").textContent = visibleCases ? "显示 " + visibleCases + " 个用例 · 每个用例独立缩放" : "没有匹配的记录。";
+  get("selection").textContent = visibleCases ? "显示 " + visibleCases + " 组 · 每组独立缩放" : "没有匹配的记录。";
 }
 
 function render() {
   const bars = get("view").value === "bars";
+  const scope = get("scope").value;
   const kind = get("kind").value;
   const metricControl = get("metric");
   get("share-option").disabled = kind === stageKind;
   if (kind === stageKind && metricControl.value === "share") metricControl.value = "elapsed";
-  const cases = collectCases(get("phase").value, kind, get("case").value.trim().toLowerCase());
+  const cases = collectCases(scope, get("phase").value, kind, get("case").value.trim().toLowerCase());
   const opFilter = get("operator").value.trim().toLowerCase();
   const limit = get("limit").value;
   get("heading").textContent = bars ? "算子耗时条形图" : "算子耗时热力图";
@@ -410,12 +464,13 @@ function render() {
   }
   get("legend").hidden = true;
   const scaleHint = bars
-    ? "条长按该用例当前指标的最大值线性缩放。组内最大值对应满宽，跨用例请比较标注数值。"
+    ? "条长按该组当前指标的最大值线性缩放。组内最大值对应满宽，跨组请比较标注数值。"
     : "颜色按当前视图中最大的单元格值缩放。";
   const shareHint = kind === stageKind
-    ? "整段耗时包含打点开销，单独查看。"
-    : "占比 = 算子累计耗时 ÷ 同一用例、阶段及记录类型下所有算子的累计耗时。搜索和行数限制不改变分母。";
-  get("hint").textContent = scaleHint + shareHint;
+    ? "整段耗时包含打点开销，与逐算子记录分开统计。"
+    : "占比 = 算子累计耗时 ÷ 当前组内全部算子累计耗时。算子搜索和行数限制不改变分母。";
+  const scopeHint = scope === "phase" ? "" : "汇总按日志实际记录的调用次数累加；各阶段可能采用不同的采样次数。";
+  get("hint").textContent = scaleHint + shareHint + scopeHint;
   if (bars) renderBars(cases, kind, metricControl.value, limit, opFilter);
   else renderHeatmap(cases, kind, metricControl.value, limit, opFilter);
 }
@@ -425,9 +480,17 @@ if (data.invalid) {
   get("warning").hidden = false;
   get("warning").textContent = "跳过 " + data.invalid + " 条格式异常的记录，首批异常行号 " + data.badLines.join("、") + "。";
 }
-options(get("phase"), unique(data.cells.map(cell => cell.phase)), "perf_forward");
 get("view").value = data.initialView ?? "heatmap";
+get("scope").value = data.initialScope ?? "phase";
+updatePhases();
 updateKinds();
+get("scope").addEventListener("change", () => {
+  get("phase").value = "";
+  get("kind").value = "";
+  updatePhases();
+  updateKinds();
+  render();
+});
 get("phase").addEventListener("change", () => { updateKinds(); render(); });
 for (const id of ["view", "kind", "metric", "scale", "limit"]) get(id).addEventListener("change", render);
 for (const id of ["operator", "case"]) get(id).addEventListener("input", render);
@@ -441,6 +504,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("log", type=Path, help="input pytest log containing OP_TIME JSON lines")
     parser.add_argument("--view", choices=("heatmap", "bars"), default="heatmap", help="initial chart view")
+    parser.add_argument("--scope", choices=("phase", "case", "global"), default="phase", help="initial aggregation scope")
     parser.add_argument("-o", "--output", type=Path, help="HTML output path")
     args = parser.parse_args()
     default_name = args.log.stem + ("_bars.html" if args.view == "bars" else ".html")
@@ -452,6 +516,7 @@ def main():
         if not data["valid"]:
             parser.error(f"no valid OP_TIME records in {args.log} ({data['invalid']} invalid)")
         data["initialView"] = args.view
+        data["initialScope"] = args.scope
         payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         payload = payload.replace("<", r"\u003c")
         target.write_text(HTML.replace("__DATA__", payload), encoding="utf-8")
