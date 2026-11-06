@@ -6,6 +6,10 @@ instruments the first seed and its first KS row.
 """
 
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
+from functools import wraps
+from uuid import uuid4
 from pathlib import Path
 from time import perf_counter_ns
 
@@ -18,6 +22,76 @@ from torch.utils._python_dispatch import TorchDispatchMode
 from mojo_opset import MojoTopPSampling
 from mojo_opset.tests.utils import auto_switch_platform
 from mojo_opset.tests.utils import bypass_not_implemented
+
+
+# Phase accounting uses non-overlapping wall intervals, separate from OP_TIME.
+_case_clock = ContextVar("case_clock", default=None)
+_collection_id = uuid4().hex
+
+
+def _wall_log(marker, row):
+    print(marker + " " + json.dumps({"script": Path(__file__).name, "run": _collection_id, **row}), flush=True)
+
+
+def _sync_wall():
+    npu = getattr(torch, "npu", None)
+    if getattr(npu, "is_initialized", lambda: False)():
+        npu.synchronize()
+
+
+class _CaseClock:
+    def __init__(self, request):
+        self.test = request.node.originalname
+        self.case = getattr(getattr(request.node, "callspec", None), "id", self.test)
+        self.setup_case = self.case
+        self.phases = {}
+        self.accounted_us = 0.0
+        self.suppress_nested = False
+
+
+def _timed_case(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        clock = _CaseClock(kwargs["request"])
+        token = _case_clock.set(clock)
+        try:
+            _sync_wall()
+            start = perf_counter_ns()
+            result = func(*args, **kwargs)
+            _sync_wall()
+            elapsed_us = (perf_counter_ns() - start) / 1_000
+        finally:
+            _case_clock.reset(token)
+        _wall_log("CASE_TIME", {
+            "test": clock.test,
+            "case": clock.case,
+            "setup_case": clock.setup_case,
+            "elapsed_us": elapsed_us,
+            "phases": clock.phases,
+        })
+        return result
+    return wrapped
+
+
+@contextmanager
+def _phase_wall(phase, *, split_nested=False):
+    clock = _case_clock.get()
+    if clock is None or clock.suppress_nested:
+        yield
+        return
+    _sync_wall()
+    start = perf_counter_ns()
+    accounted_before = clock.accounted_us
+    clock.suppress_nested = not split_nested
+    try:
+        yield
+        _sync_wall()
+        elapsed_us = (perf_counter_ns() - start) / 1_000
+        own_us = max(0.0, elapsed_us - (clock.accounted_us - accounted_before))
+        clock.phases[phase] = clock.phases.get(phase, 0) + own_us
+        clock.accounted_us += own_us
+    finally:
+        clock.suppress_nested = False
 
 
 # Keep the timing helper local so this copy can run beside its original test.
@@ -42,11 +116,25 @@ class _Times:
         self.rows = []
 
     def __enter__(self):
+        self.wall = _phase_wall(self.tags["phase"])
+        self.wall.__enter__()
+        self.collection_start = (
+            perf_counter_ns() if self.tags["phase"] == "setup" and _case_clock.get() is None else None
+        )
         return self
 
-    def __exit__(self, *_exc):
-        if self.rows:
-            print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+    def __exit__(self, *exc):
+        try:
+            if self.rows:
+                print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+            if self.collection_start is not None and exc[0] is None:
+                _wall_log("CASE_SETUP", {
+                    "test": self.tags["test"],
+                    "case": self.tags["case"],
+                    "elapsed_us": (perf_counter_ns() - self.collection_start) / 1_000,
+                })
+        finally:
+            self.wall.__exit__(*exc)
 
     def measure(self, kind, op, func, args, kwargs, device_hint=None):
         requested = kwargs.get("device")
@@ -197,11 +285,13 @@ dtypes = [torch.float16, torch.bfloat16, torch.float32]
     ((16, 92544), 1000, 0.75, 1),
 ])
 @auto_switch_platform(set_perf=True)
+@_timed_case
 def test_topp_sampling(shape, topk, topp, min_tokens_to_keep, dtype, request):
     tags = (request.node.originalname, request.node.callspec.id)
     logits = _setup_logits(*tags, shape, dtype)
     top_p_sampling = MojoTopPSampling(top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
-    perf(lambda: top_p_sampling(logits))  # noqa: F821
+    with _phase_wall("perf_benchmark"):
+        perf(lambda: top_p_sampling(logits))  # noqa: F821
     _trace_call(*tags, "perf_forward", top_p_sampling, logits)
 
 
@@ -220,6 +310,7 @@ def test_topp_sampling(shape, topk, topp, min_tokens_to_keep, dtype, request):
 ])
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_topp_sampling_accuracy(shape, topk, topp, min_tokens_to_keep, dtype, request):
     tags = (request.node.originalname, request.node.callspec.id)
     logits = _setup_logits(*tags, shape, dtype)
@@ -227,9 +318,10 @@ def test_topp_sampling_accuracy(shape, topk, topp, min_tokens_to_keep, dtype, re
         top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
     top_p_sampling = MojoTopPSampling(
         top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
-    ref_probs_list, npu_probs_list = _collect_probs(
-        top_p_sampling_ref, top_p_sampling, logits, NUM_SAMPLES, tags,
-    )
+    with _phase_wall("accuracy_sampling"):
+        ref_probs_list, npu_probs_list = _collect_probs(
+            top_p_sampling_ref, top_p_sampling, logits, NUM_SAMPLES, tags,
+        )
     ref_all, npu_all = _trace_call(*tags, "accuracy_join_probs", _join_probs, ref_probs_list, npu_probs_list)
     row, max_d = _trace_call(*tags, "accuracy_ks", _max_ks, npu_all, ref_all)
     lam = max_d * math.sqrt((NUM_SAMPLES * NUM_SAMPLES) / (2 * NUM_SAMPLES))
@@ -245,6 +337,7 @@ new_dtypes = [torch.float16]
 ])
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_topp_sampling_accuracy_kstest(shape, topk, topp, min_tokens_to_keep, dtype, request):
     tags = (request.node.originalname, request.node.callspec.id)
     batch_size = shape[0]
@@ -257,33 +350,37 @@ def test_topp_sampling_accuracy_kstest(shape, topk, topp, min_tokens_to_keep, dt
     num_pass = 0
     for seed_index, seed in enumerate(_random_seeds(num_seeds)):
         sample_tags = tags if seed_index == 0 else None
-        if sample_tags is not None:
-            logits = _setup_logits(*sample_tags, shape, dtype, seed=seed)
-        else:
-            torch.manual_seed(seed)
-            logits = torch.randn(shape, dtype=dtype).npu()
-        top_p_sampling_ref = MojoTopPSampling._registry.get("torch")(
-            top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
-        top_p_sampling = MojoTopPSampling(
-            top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
-        ref_probs_list, npu_probs_list = _collect_probs(
-            top_p_sampling_ref, top_p_sampling, logits, num_samples, sample_tags,
-        )
-        if sample_tags is not None:
-            ref_all, npu_all = _trace_call(
-                *sample_tags, "accuracy_join_probs", _join_probs, ref_probs_list, npu_probs_list,
-            )
-        else:
-            ref_all, npu_all = _join_probs(ref_probs_list, npu_probs_list)
-        for i in range(batch_size):
-            if sample_tags is not None and i == 0:
-                d = _trace_call(*sample_tags, "accuracy_ks", _row_ks, npu_all, ref_all, i)
+        with _phase_wall("setup"):
+            if sample_tags is not None:
+                logits = _setup_logits(*sample_tags, shape, dtype, seed=seed)
             else:
-                d = _row_ks(npu_all, ref_all, i)
-            pval = _ks_two_sample_pvalue(d, num_samples, num_samples)
-            num_tests += 1
-            if pval >= alpha:
-                num_pass += 1
+                torch.manual_seed(seed)
+                logits = torch.randn(shape, dtype=dtype).npu()
+            top_p_sampling_ref = MojoTopPSampling._registry.get("torch")(
+                top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
+            top_p_sampling = MojoTopPSampling(
+                top_p=topp, min_tokens_to_keep=min_tokens_to_keep, rand_top_k=topk)
+        with _phase_wall("accuracy_sampling"):
+            ref_probs_list, npu_probs_list = _collect_probs(
+                top_p_sampling_ref, top_p_sampling, logits, num_samples, sample_tags,
+            )
+        with _phase_wall("accuracy_join_probs"):
+            if sample_tags is not None:
+                ref_all, npu_all = _trace_call(
+                    *sample_tags, "accuracy_join_probs", _join_probs, ref_probs_list, npu_probs_list,
+                )
+            else:
+                ref_all, npu_all = _join_probs(ref_probs_list, npu_probs_list)
+        with _phase_wall("accuracy_ks"):
+            for i in range(batch_size):
+                if sample_tags is not None and i == 0:
+                    d = _trace_call(*sample_tags, "accuracy_ks", _row_ks, npu_all, ref_all, i)
+                else:
+                    d = _row_ks(npu_all, ref_all, i)
+                pval = _ks_two_sample_pvalue(d, num_samples, num_samples)
+                num_tests += 1
+                if pval >= alpha:
+                    num_pass += 1
 
     pass_rate = num_pass / num_tests
     print(f"pass_rate={pass_rate:.4f}")

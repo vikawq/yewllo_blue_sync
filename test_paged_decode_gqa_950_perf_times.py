@@ -6,6 +6,9 @@ stage_with_probes includes measurement overhead and must not be summed with op r
 """
 
 import json
+from contextvars import ContextVar
+from functools import wraps
+from uuid import uuid4
 from pathlib import Path
 from time import perf_counter_ns
 from contextlib import contextmanager
@@ -30,6 +33,76 @@ from mojo_opset.tests.utils import auto_switch_platform
 from mojo_opset.tests.utils import bypass_not_implemented
 
 
+# Phase accounting uses non-overlapping wall intervals, separate from OP_TIME.
+_case_clock = ContextVar("case_clock", default=None)
+_collection_id = uuid4().hex
+
+
+def _wall_log(marker, row):
+    print(marker + " " + json.dumps({"script": Path(__file__).name, "run": _collection_id, **row}), flush=True)
+
+
+def _sync_wall():
+    npu = getattr(torch, "npu", None)
+    if getattr(npu, "is_initialized", lambda: False)():
+        npu.synchronize()
+
+
+class _CaseClock:
+    def __init__(self, request):
+        self.test = request.node.originalname
+        self.case = getattr(getattr(request.node, "callspec", None), "id", self.test)
+        self.setup_case = self.case
+        self.phases = {}
+        self.accounted_us = 0.0
+        self.suppress_nested = False
+
+
+def _timed_case(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        clock = _CaseClock(kwargs["request"])
+        token = _case_clock.set(clock)
+        try:
+            _sync_wall()
+            start = perf_counter_ns()
+            result = func(*args, **kwargs)
+            _sync_wall()
+            elapsed_us = (perf_counter_ns() - start) / 1_000
+        finally:
+            _case_clock.reset(token)
+        _wall_log("CASE_TIME", {
+            "test": clock.test,
+            "case": clock.case,
+            "setup_case": clock.setup_case,
+            "elapsed_us": elapsed_us,
+            "phases": clock.phases,
+        })
+        return result
+    return wrapped
+
+
+@contextmanager
+def _phase_wall(phase, *, split_nested=False):
+    clock = _case_clock.get()
+    if clock is None or clock.suppress_nested:
+        yield
+        return
+    _sync_wall()
+    start = perf_counter_ns()
+    accounted_before = clock.accounted_us
+    clock.suppress_nested = not split_nested
+    try:
+        yield
+        _sync_wall()
+        elapsed_us = (perf_counter_ns() - start) / 1_000
+        own_us = max(0.0, elapsed_us - (clock.accounted_us - accounted_before))
+        clock.phases[phase] = clock.phases.get(phase, 0) + own_us
+        clock.accounted_us += own_us
+    finally:
+        clock.suppress_nested = False
+
+
 # Keep the timing helper local so this copy can run beside its original test.
 def _npu_device(value):
     if isinstance(value, torch.Tensor):
@@ -52,11 +125,25 @@ class _Times:
         self.rows = []
 
     def __enter__(self):
+        self.wall = _phase_wall(self.tags["phase"])
+        self.wall.__enter__()
+        self.collection_start = (
+            perf_counter_ns() if self.tags["phase"] == "setup" and _case_clock.get() is None else None
+        )
         return self
 
-    def __exit__(self, *_exc):
-        if self.rows:
-            print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+    def __exit__(self, *exc):
+        try:
+            if self.rows:
+                print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+            if self.collection_start is not None and exc[0] is None:
+                _wall_log("CASE_SETUP", {
+                    "test": self.tags["test"],
+                    "case": self.tags["case"],
+                    "elapsed_us": (perf_counter_ns() - self.collection_start) / 1_000,
+                })
+        finally:
+            self.wall.__exit__(*exc)
 
     def measure(self, kind, op, func, args, kwargs, device_hint=None):
         requested = kwargs.get("device")
@@ -225,6 +312,7 @@ test_configs_decode = [
 @pytest.mark.parametrize("gqa_layout", ["AABB"])
 @auto_switch_platform(set_perf=True)
 @bypass_not_implemented
+@_timed_case
 def test_paged_decode_gqa(
     query: torch.Tensor,
     k_cache: torch.Tensor,
@@ -242,16 +330,17 @@ def test_paged_decode_gqa(
         gqa_layout=gqa_layout,
     )
 
-    perf(  # noqa: F821
-        lambda: paged_attn_decode(
-            query,
-            k_cache,
-            v_cache,
-            total_seq_lens,
-            block_tables,
-            softmax_scale=softmax_scale,
+    with _phase_wall("perf_benchmark"):
+        perf(  # noqa: F821
+            lambda: paged_attn_decode(
+                query,
+                k_cache,
+                v_cache,
+                total_seq_lens,
+                block_tables,
+                softmax_scale=softmax_scale,
+            )
         )
-    )
     _trace_call(
         request.node.originalname,
         request.node.callspec.id,
@@ -288,6 +377,7 @@ def test_paged_decode_gqa(
 )
 @pytest.mark.parametrize("gqa_layout", ["AABB"])
 @bypass_not_implemented
+@_timed_case
 def test_paged_decode_gqa_accuracy(
     query: torch.Tensor,
     k_cache: torch.Tensor,
@@ -312,17 +402,18 @@ def test_paged_decode_gqa_accuracy(
 
     atol, rtol = (3e-2, 6e-3) if query.dtype != torch.float32 else (1e-5, 1e-6)
 
-    with _accuracy_forwards(
-        request.node.originalname, request.node.callspec.id, paged_attn_decode, paged_attn_decode_ref,
-    ):
-        paged_attn_decode.forward_diff_with(
-            paged_attn_decode_ref,
-            query,
-            k_cache,
-            v_cache,
-            total_seq_lens,
-            block_tables,
-            softmax_scale=softmax_scale,
-            atol=atol,
-            rtol=rtol,
-        )
+    with _phase_wall("accuracy_compare", split_nested=True):
+        with _accuracy_forwards(
+            request.node.originalname, request.node.callspec.id, paged_attn_decode, paged_attn_decode_ref,
+        ):
+            paged_attn_decode.forward_diff_with(
+                paged_attn_decode_ref,
+                query,
+                k_cache,
+                v_cache,
+                total_seq_lens,
+                block_tables,
+                softmax_scale=softmax_scale,
+                atol=atol,
+                rtol=rtol,
+            )

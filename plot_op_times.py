@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a self-contained HTML timing chart from the OP_TIME records in a pytest log."""
+"""Build a self-contained HTML chart from operator and case timings in a pytest log."""
 
 import argparse
 import codecs
@@ -7,11 +7,11 @@ import json
 import math
 import re
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-MARKER = re.compile(r"(?<!\w)OP_TIME[ \t]+(?=\{)")
+MARKER = re.compile(r"(?<!\w)(OP_TIME|CASE_TIME|CASE_SETUP)[ \t]+(?=\{)")
 STAGE_KIND = "stage_with_probes"
 
 
@@ -54,8 +54,45 @@ def log_encoding(path):
     return "utf-8-sig"
 
 
+def wall_identity(row):
+    return tuple(label(row, key) for key in ("run", "script", "test", "case"))
+
+
+def wall_phases(row, elapsed):
+    phases = row.get("phases")
+    if not isinstance(phases, dict):
+        raise ValueError("missing phase durations")
+    phases = {phase: duration(value) for phase, value in phases.items() if phase.strip()}
+    if math.fsum(phases.values()) > elapsed + 0.001:
+        raise ValueError("phase durations exceed case duration")
+    return phases
+
+
+def summarize_wall(runs, setups):
+    shared_counts = Counter(setup_key for _, setup_key, _, _ in runs)
+    groups = {}
+    for identity, setup_key, body, phases in runs:
+        _, script, test, case = identity
+        key = script, test, case
+        group = groups.setdefault(key, {
+            "script": script, "test": test, "case": case, "runs": 0, "elapsed": 0.0, "phases": {},
+        })
+        setup = setups.get(setup_key, 0.0) / shared_counts[setup_key]
+        group["runs"] += 1
+        group["elapsed"] += body + setup
+        parts = dict(phases)
+        if setup_key in setups:
+            parts["setup"] = parts.get("setup", 0.0) + setup
+        parts["__other__"] = max(0.0, body - math.fsum(phases.values()))
+        for phase, value in parts.items():
+            group["phases"][phase] = group["phases"].get(phase, 0.0) + value
+    return list(groups.values())
+
+
 def read_timings(path):
     totals = defaultdict(Timing)
+    setups = defaultdict(float)
+    runs = []
     decoder = json.JSONDecoder()
     valid = invalid = 0
     bad_lines = []
@@ -66,6 +103,16 @@ def read_timings(path):
                 cursor = match.end()
                 try:
                     row, cursor = decoder.raw_decode(line, cursor)
+                    marker = match.group(1)
+                    elapsed = duration(row["elapsed_us"])
+                    if marker == "CASE_SETUP":
+                        setups[wall_identity(row)] += elapsed
+                        continue
+                    if marker == "CASE_TIME":
+                        identity = wall_identity(row)
+                        setup_key = (*identity[:-1], label(row, "setup_case", identity[-1]))
+                        runs.append((identity, setup_key, elapsed, wall_phases(row, elapsed)))
+                        continue
                     op = label(row, "op")
                     phase = label(row, "phase")
                     kind = label(row, "kind", "unknown")
@@ -76,7 +123,6 @@ def read_timings(path):
                         label(row, "script", "unknown"), label(row, "test", "unknown"),
                         label(row, "case"),
                     )
-                    elapsed = duration(row["elapsed_us"])
                     host = None if row.get("host_us") is None else duration(row["host_us"])
                 except (KeyError, TypeError, ValueError, OverflowError):
                     invalid += 1
@@ -94,7 +140,8 @@ def read_timings(path):
         }
         for (phase, kind, op, device, script, test, case), timing in totals.items()
     ]
-    return {"source": path.name, "valid": valid, "invalid": invalid, "badLines": bad_lines, "cells": cells}
+    return {"source": path.name, "valid": valid, "invalid": invalid, "badLines": bad_lines, "cells": cells,
+            "wall": summarize_wall(runs, setups)}
 
 
 HTML = r"""<!doctype html>
@@ -142,11 +189,11 @@ small { display: block; font-size: 11px; color: var(--muted); overflow-wrap: any
   <p class="meta" id="source"></p>
   <p class="note" id="warning" hidden></p>
   <div class="controls">
-    <label>图形<select id="view"><option value="heatmap">热力图</option><option value="bars">横向条形图</option></select></label>
+    <label>图形<select id="view"><option value="heatmap">热力图</option><option value="bars">横向条形图</option><option value="stages">阶段耗时占总时长</option></select></label>
     <label>视角<select id="scope"><option value="phase">单阶段</option><option value="case">跨阶段 · 按用例</option><option value="global">全局 · 合并用例</option></select></label>
-    <label>阶段<select id="phase"></select></label>
-    <label>记录类型<select id="kind"></select></label>
-    <label>指标<select id="metric">
+    <label id="phase-control">阶段<select id="phase"></select></label>
+    <label id="kind-control">记录类型<select id="kind"></select></label>
+    <label id="metric-control">指标<select id="metric">
       <option value="elapsed">累计耗时 (µs)</option>
       <option value="share" id="share-option">累计耗时占比 (%)</option>
       <option value="mean">平均单次耗时 (µs)</option>
@@ -154,8 +201,8 @@ small { display: block; font-size: 11px; color: var(--muted); overflow-wrap: any
       <option value="host">Host 调用累计 (µs)</option>
     </select></label>
     <label id="scale-control">色阶<select id="scale"><option value="log">对数</option><option value="linear">线性</option></select></label>
-    <label>显示行数<select id="limit"><option>30</option><option>100</option><option value="all">全部</option></select></label>
-    <label>搜索算子 / 设备<input type="search" id="operator"></label>
+    <label id="limit-control">显示行数<select id="limit"><option>30</option><option>100</option><option value="all">全部</option></select></label>
+    <label id="operator-control">搜索算子 / 设备<input type="search" id="operator"></label>
     <label>搜索脚本 / 用例<input type="search" id="case"></label>
   </div>
   <p id="selection" aria-live="polite"></p>
@@ -186,6 +233,16 @@ const kindNames = new Map([
   ["dispatcher_op", "计算算子"],
   ["torch_api", "Torch / Tensor API"],
   [stageKind, "整段调用（含打点开销）"]
+]);
+const stageNames = new Map([
+  ["setup", "Setup · 输入准备"],
+  ["perf_benchmark", "原性能测试 / Profiler"],
+  ["accuracy_sampling", "精度测试 · 全部采样"],
+  ["accuracy_join_probs", "精度测试 · 汇总概率"],
+  ["accuracy_ks", "精度测试 · KS 校验"],
+  ["accuracy_check", "精度断言"],
+  ["accuracy_compare", "精度对比 · 克隆与结果校验"],
+  ["__other__", "其他 · 未单列的测试体耗时"]
 ]);
 
 function node(tag, text) {
@@ -446,23 +503,85 @@ function renderBars(cases, kind, metric, limit, opFilter) {
   get("selection").textContent = visibleCases ? "显示 " + visibleCases + " 组 · 每组独立缩放" : "没有匹配的记录。";
 }
 
+function renderStageTimes() {
+  const filter = get("case").value.trim().toLowerCase();
+  const cases = (data.wall ?? []).filter(row =>
+    (row.script + " " + row.test + " " + row.case).toLowerCase().includes(filter));
+  get("hint").textContent = "总时长 = 测试体墙钟时间 + 归属该用例的收集期 Setup。共享 Setup 在本次日志中关联的已完成用例间均摊；汇总时只计一次。墙钟时间包含探针和同步开销。";
+  if (!cases.length) {
+    get("selection").textContent = data.wall?.length
+      ? "没有匹配的阶段计时用例。"
+      : "此日志没有阶段总计时。请用新版 _times.py 重新采集。";
+    return;
+  }
+  const global = get("scope").value === "global";
+  const combined = {case: "全局汇总", test: cases.length + " 个用例", script: data.source,
+    runs: 0, elapsed: 0, phases: new Map()};
+  for (const item of cases) {
+    combined.elapsed += item.elapsed;
+    combined.runs += item.runs;
+    for (const [phase, elapsed] of Object.entries(item.phases)) {
+      combined.phases.set(phase, (combined.phases.get(phase) ?? 0) + elapsed);
+    }
+  }
+  const shown = global ? [combined] : cases.map(row => ({...row, phases: new Map(Object.entries(row.phases))}));
+  const container = get("bars");
+  container.hidden = false;
+  get("selection").textContent = cases.length + " 个用例 · " + combined.runs + " 次已完成执行"
+    + (global ? " · 全局总时长为用例时长之和" : "");
+  const priority = phase => phase === "setup" ? -1 : phase === "__other__" ? 1 : 0;
+  for (const item of shown) {
+    const group = node("section");
+    group.className = "bar-group";
+    group.append(node("h2", item.case), node("div", item.script + " · " + item.test));
+    group.append(node("p", "总时长 " + formatValue(item.elapsed, "elapsed", true) + " · " + item.runs + " 次执行"));
+    const phases = [...item.phases].sort(([a], [b]) => priority(a) - priority(b));
+    for (const [phase, elapsed] of phases) {
+      const ratio = item.elapsed > 0 ? elapsed / item.elapsed : null;
+      const row = node("div");
+      row.className = "bar-row";
+      const label = node("div");
+      label.className = "bar-label";
+      const detail = node("span", formatValue(elapsed, "elapsed", true) + " · " + formatValue(ratio, "share"));
+      detail.className = "bar-value";
+      label.append(node("span", stageNames.get(phase) ?? phase), detail);
+      const track = node("div");
+      track.className = "bar-track";
+      const fill = node("div");
+      fill.className = "bar-fill";
+      fill.style.width = 100 * Math.min(1, ratio ?? 0) + "%";
+      track.append(fill);
+      row.append(label, track);
+      group.append(row);
+    }
+    container.append(group);
+  }
+}
+
 function render() {
-  const bars = get("view").value === "bars";
+  const view = get("view").value;
+  const bars = view === "bars";
+  const stages = view === "stages";
   const scope = get("scope").value;
   const kind = get("kind").value;
   const metricControl = get("metric");
   get("share-option").disabled = kind === stageKind;
   if (kind === stageKind && metricControl.value === "share") metricControl.value = "elapsed";
-  const cases = collectCases(scope, get("phase").value, kind, get("case").value.trim().toLowerCase());
-  const opFilter = get("operator").value.trim().toLowerCase();
-  const limit = get("limit").value;
-  get("heading").textContent = bars ? "算子耗时条形图" : "算子耗时热力图";
-  get("scale-control").hidden = bars;
+  get("heading").textContent = stages ? "阶段耗时占总时长" : bars ? "算子耗时条形图" : "算子耗时热力图";
+  for (const id of ["phase", "kind", "metric", "limit", "operator"]) get(id + "-control").hidden = stages;
+  get("scale-control").hidden = view !== "heatmap";
   for (const id of ["matrix", "bars"]) {
     get(id).replaceChildren();
     get(id).hidden = true;
   }
   get("legend").hidden = true;
+  if (stages) {
+    renderStageTimes();
+    return;
+  }
+  const cases = collectCases(scope, get("phase").value, kind, get("case").value.trim().toLowerCase());
+  const opFilter = get("operator").value.trim().toLowerCase();
+  const limit = get("limit").value;
   const scaleHint = bars
     ? "条长按该组当前指标的最大值线性缩放。组内最大值对应满宽，跨组请比较标注数值。"
     : "颜色按当前视图中最大的单元格值缩放。";
@@ -475,7 +594,8 @@ function render() {
   else renderHeatmap(cases, kind, metricControl.value, limit, opFilter);
 }
 
-get("source").textContent = data.source + " · " + integer.format(data.valid) + " 条有效计时记录";
+get("source").textContent = data.source + " · " + integer.format(data.valid) + " 条逐算子 / 整段记录"
+  + " · " + (data.wall?.length ?? 0) + " 个用例有阶段总计时";
 if (data.invalid) {
   get("warning").hidden = false;
   get("warning").textContent = "跳过 " + data.invalid + " 条格式异常的记录，首批异常行号 " + data.badLines.join("、") + "。";
@@ -502,20 +622,21 @@ render();
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("log", type=Path, help="input pytest log containing OP_TIME JSON lines")
-    parser.add_argument("--view", choices=("heatmap", "bars"), default="heatmap", help="initial chart view")
+    parser.add_argument("log", type=Path, help="input pytest log containing OP_TIME or CASE_TIME JSON lines")
+    parser.add_argument("--view", choices=("heatmap", "bars", "stages"), default="heatmap", help="initial chart view")
     parser.add_argument("--scope", choices=("phase", "case", "global"), default="phase", help="initial aggregation scope")
     parser.add_argument("-o", "--output", type=Path, help="HTML output path")
     args = parser.parse_args()
-    default_name = args.log.stem + ("_bars.html" if args.view == "bars" else ".html")
+    suffix = ".html" if args.view == "heatmap" else f"_{args.view}.html"
+    default_name = args.log.stem + suffix
     target = args.output or args.log.with_name(default_name)
     if args.log.resolve() == target.resolve():
         parser.error("output must be a different file from the input log")
     try:
         data = read_timings(args.log)
-        if not data["valid"]:
-            parser.error(f"no valid OP_TIME records in {args.log} ({data['invalid']} invalid)")
-        data["initialView"] = args.view
+        if not data["valid"] and not data["wall"]:
+            parser.error(f"no valid OP_TIME or CASE_TIME records in {args.log} ({data['invalid']} invalid)")
+        data["initialView"] = args.view if data["valid"] else "stages"
         data["initialScope"] = args.scope
         payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         payload = payload.replace("<", r"\u003c")
@@ -523,8 +644,8 @@ def main():
     except (OSError, ValueError) as error:
         parser.error(str(error))
     if data["invalid"]:
-        print(f"Skipped {data['invalid']} malformed OP_TIME records.", file=sys.stderr)
-    print(f"Wrote {target} ({data['valid']} OP_TIME records)")
+        print(f"Skipped {data['invalid']} malformed timing records.", file=sys.stderr)
+    print(f"Wrote {target} ({data['valid']} OP_TIME records, {len(data['wall'])} cases with wall timings)")
 
 
 if __name__ == "__main__":

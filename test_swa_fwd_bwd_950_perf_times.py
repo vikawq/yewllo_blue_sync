@@ -6,6 +6,10 @@ stage_with_probes includes measurement overhead and must not be summed with op r
 """
 
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
+from functools import wraps
+from uuid import uuid4
 from pathlib import Path
 from time import perf_counter_ns
 
@@ -21,6 +25,76 @@ from mojo_opset.tests.utils import assert_close
 from mojo_opset.tests.utils import auto_switch_platform
 from mojo_opset.tests.utils import bypass_not_implemented
 from mojo_opset.tests.utils import write_profile_caseid
+
+
+# Phase accounting uses non-overlapping wall intervals, separate from OP_TIME.
+_case_clock = ContextVar("case_clock", default=None)
+_collection_id = uuid4().hex
+
+
+def _wall_log(marker, row):
+    print(marker + " " + json.dumps({"script": Path(__file__).name, "run": _collection_id, **row}), flush=True)
+
+
+def _sync_wall():
+    npu = getattr(torch, "npu", None)
+    if getattr(npu, "is_initialized", lambda: False)():
+        npu.synchronize()
+
+
+class _CaseClock:
+    def __init__(self, request):
+        self.test = request.node.originalname
+        self.case = getattr(getattr(request.node, "callspec", None), "id", self.test)
+        self.setup_case = self.case
+        self.phases = {}
+        self.accounted_us = 0.0
+        self.suppress_nested = False
+
+
+def _timed_case(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        clock = _CaseClock(kwargs["request"])
+        token = _case_clock.set(clock)
+        try:
+            _sync_wall()
+            start = perf_counter_ns()
+            result = func(*args, **kwargs)
+            _sync_wall()
+            elapsed_us = (perf_counter_ns() - start) / 1_000
+        finally:
+            _case_clock.reset(token)
+        _wall_log("CASE_TIME", {
+            "test": clock.test,
+            "case": clock.case,
+            "setup_case": clock.setup_case,
+            "elapsed_us": elapsed_us,
+            "phases": clock.phases,
+        })
+        return result
+    return wrapped
+
+
+@contextmanager
+def _phase_wall(phase, *, split_nested=False):
+    clock = _case_clock.get()
+    if clock is None or clock.suppress_nested:
+        yield
+        return
+    _sync_wall()
+    start = perf_counter_ns()
+    accounted_before = clock.accounted_us
+    clock.suppress_nested = not split_nested
+    try:
+        yield
+        _sync_wall()
+        elapsed_us = (perf_counter_ns() - start) / 1_000
+        own_us = max(0.0, elapsed_us - (clock.accounted_us - accounted_before))
+        clock.phases[phase] = clock.phases.get(phase, 0) + own_us
+        clock.accounted_us += own_us
+    finally:
+        clock.suppress_nested = False
 
 
 # Keep the timing helper local so this copy can run beside its original test.
@@ -45,11 +119,25 @@ class _Times:
         self.rows = []
 
     def __enter__(self):
+        self.wall = _phase_wall(self.tags["phase"])
+        self.wall.__enter__()
+        self.collection_start = (
+            perf_counter_ns() if self.tags["phase"] == "setup" and _case_clock.get() is None else None
+        )
         return self
 
-    def __exit__(self, *_exc):
-        if self.rows:
-            print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+    def __exit__(self, *exc):
+        try:
+            if self.rows:
+                print("\n".join("OP_TIME " + json.dumps(row) for row in self.rows), flush=True)
+            if self.collection_start is not None and exc[0] is None:
+                _wall_log("CASE_SETUP", {
+                    "test": self.tags["test"],
+                    "case": self.tags["case"],
+                    "elapsed_us": (perf_counter_ns() - self.collection_start) / 1_000,
+                })
+        finally:
+            self.wall.__exit__(*exc)
 
     def measure(self, kind, op, func, args, kwargs, device_hint=None):
         requested = kwargs.get("device")
@@ -193,6 +281,7 @@ test_configs_swa = [
 ])
 @bypass_not_implemented
 @auto_switch_platform()
+@_timed_case
 def test_swa_function(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -206,6 +295,7 @@ def test_swa_function(
     request,
 ):
     test, case = request.node.originalname, request.node.callspec.id
+    _case_clock.get().setup_case = next(config[-1] for config in test_configs_swa if case.endswith("-" + config[-1]))
     swa_func = MojoSWAFunction.apply
 
     swa_func_ref = MojoSWAFunction._registry.get("torch").apply
@@ -247,14 +337,16 @@ def test_swa_function(
     )
     _trace_call(test, case, "torch_reference_backward", o_ref.backward, grad_out)
 
-    assert_close(o, o_ref)
-    assert_close(q.grad, q_ref.grad)
-    assert_close(k.grad, k_ref.grad)
-    assert_close(v.grad, v_ref.grad)
+    with _phase_wall("accuracy_check"):
+        assert_close(o, o_ref)
+        assert_close(q.grad, q_ref.grad)
+        assert_close(k.grad, k_ref.grad)
+        assert_close(v.grad, v_ref.grad)
 
 
 def _run_swa_perf(input_shape, gqa_interleave, global_window, local_window, trace_dir, test):
     case = Path(trace_dir).name
+    _case_clock.get().case = case
     B, Q_H, KV_H, D, Q_LEN, KV_COMPUTED_LEN, dtype = input_shape
     query, key, value, grad_out, cu_q_lens, cu_total_seq_lens \
         = generate_sdpa_data(
@@ -288,34 +380,35 @@ def _run_swa_perf(input_shape, gqa_interleave, global_window, local_window, trac
             True,
         )
 
-    experimental_config = torch_npu.profiler._ExperimentalConfig(
-        aic_metrics=torch_npu.profiler.AiCMetrics.PipeUtilization,
-        profiler_level=torch_npu.profiler.ProfilerLevel.Level2,
-        l2_cache=False,
-        data_simplification=False,
-    )
+    with _phase_wall("perf_benchmark"):
+        experimental_config = torch_npu.profiler._ExperimentalConfig(
+            aic_metrics=torch_npu.profiler.AiCMetrics.PipeUtilization,
+            profiler_level=torch_npu.profiler.ProfilerLevel.Level2,
+            l2_cache=False,
+            data_simplification=False,
+        )
 
-    with torch_npu.profiler.profile(
-            activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU],
-            schedule=torch_npu.profiler.schedule(wait=0, warmup=5, active=5, repeat=1, skip_first=0),
-            on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(trace_dir),
-            record_shapes=True,
-            profile_memory=True,
-            with_stack=True,
-            with_flops=False,
-            with_modules=False,
-            experimental_config=experimental_config,
-    ) as prof:
-        for _ in range(10):
-            q = query.clone().detach().requires_grad_(True)
-            k = key.clone().detach().requires_grad_(True)
-            v = value.clone().detach().requires_grad_(True)
-            o = forward(q, k, v)
-            o.backward(grad_out)
-            prof.step()
-            torch.npu.synchronize()
+        with torch_npu.profiler.profile(
+                activities=[torch_npu.profiler.ProfilerActivity.CPU, torch_npu.profiler.ProfilerActivity.NPU],
+                schedule=torch_npu.profiler.schedule(wait=0, warmup=5, active=5, repeat=1, skip_first=0),
+                on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(trace_dir),
+                record_shapes=True,
+                profile_memory=True,
+                with_stack=True,
+                with_flops=False,
+                with_modules=False,
+                experimental_config=experimental_config,
+        ) as prof:
+            for _ in range(10):
+                q = query.clone().detach().requires_grad_(True)
+                k = key.clone().detach().requires_grad_(True)
+                v = value.clone().detach().requires_grad_(True)
+                o = forward(q, k, v)
+                o.backward(grad_out)
+                prof.step()
+                torch.npu.synchronize()
 
-    write_profile_caseid(prof)
+        write_profile_caseid(prof)
 
     # Release the last profiler iteration before the extra diagnostic iteration.
     del q, k, v, o
@@ -326,6 +419,7 @@ def _run_swa_perf(input_shape, gqa_interleave, global_window, local_window, trac
 
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_swa_function_perf_m_f32(request):
     input_shape = (2, 16, 4, 128, 1024, 0, torch.float32)
     _run_swa_perf(input_shape, True, 4, 255, "./npu_profiling/M_F32", request.node.originalname)
@@ -333,6 +427,7 @@ def test_swa_function_perf_m_f32(request):
 
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_swa_function_perf_m_bf16_paddim(request):
     input_shape = (2, 16, 4, 96, 1024, 0, torch.bfloat16)
     _run_swa_perf(input_shape, True, 4, 255, "./npu_profiling/M_BF16_PADDIM", request.node.originalname)
@@ -340,6 +435,7 @@ def test_swa_function_perf_m_bf16_paddim(request):
 
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_swa_function_perf_m_bf16_long(request):
     input_shape = (2, 16, 4, 128, 4096, 0, torch.bfloat16)
     _run_swa_perf(input_shape, True, 4, 255, "./npu_profiling/M_BF16_LONG", request.node.originalname)
@@ -347,12 +443,14 @@ def test_swa_function_perf_m_bf16_long(request):
 
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_swa_function_perf_m_f32_no_interleave(request):
     input_shape = (2, 16, 4, 128, 1024, 0, torch.float32)
     _run_swa_perf(input_shape, False, 4, 1023, "./npu_profiling/M_F32_NO_INTERLEAVE", request.node.originalname)
 
 @auto_switch_platform()
 @bypass_not_implemented
+@_timed_case
 def test_swa_function_perf_m_bf16_no_interleave(request):
     input_shape = (1, 12, 4, 128, 131072, 0, torch.bfloat16)
     _run_swa_perf(input_shape, False, 4, 1023, "./npu_profiling/M_BF16_NO_INTERLEAVE", request.node.originalname)
