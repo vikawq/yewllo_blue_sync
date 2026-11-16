@@ -39,8 +39,13 @@ def probe_group_gemm_cpu(op, reference, x, group_list, *, atol, rtol):
     x_cpu = x.detach().cpu()
     actual_cpu = actual.detach().cpu()
     ref_cpu = ref.detach().cpu()
+    smallest_nonempty_group = min(
+        (group for group, count in enumerate(row_counts) if count > 0),
+        key=row_counts.__getitem__,
+        default=None,
+    )
     start = 0
-    sampled = False
+    sampled = set()
     for group, count in enumerate(row_counts):
         if count == 0:
             continue
@@ -59,8 +64,9 @@ def probe_group_gemm_cpu(op, reference, x, group_list, *, atol, rtol):
         actual_group = actual_cpu[start:stop].float()
         ref_group = ref_cpu[start:stop].float()
         baseline_mask = _mismatch(actual_group, ref_group, atol, rtol)
+        actual_mask = _mismatch(actual_group, expected, atol, rtol)
         baseline_count = int(baseline_mask.sum())
-        actual_count = int(_mismatch(actual_group, expected, atol, rtol).sum())
+        actual_count = int(actual_mask.sum())
         ref_count = int(_mismatch(ref_group, expected, atol, rtol).sum())
         print(
             f"[group-gemm] group={group} rows=[{start},{stop}) "
@@ -69,20 +75,42 @@ def probe_group_gemm_cpu(op, reference, x, group_list, *, atol, rtol):
             flush=True,
         )
 
-        if baseline_count and not sampled:
-            row, col = _first_mismatch(baseline_mask)
+        if group == smallest_nonempty_group and a.dtype == b.dtype == torch.bfloat16:
+            try:
+                with torch.autocast(device_type="cpu", enabled=False):
+                    native_bf16 = torch.mm(a, b)
+            except (RuntimeError, NotImplementedError) as error:
+                print(f"[group-gemm] group={group} native_cpu_error={error}", flush=True)
+            else:
+                native = native_bf16.float()
+                native_count = int(_mismatch(native, expected, atol, rtol).sum())
+                native_ref_count = int(_mismatch(ref_group, native, atol, rtol).sum())
+                print(
+                    f"[group-gemm] group={group} native_cpu_dtype={native_bf16.dtype} "
+                    f"native_cpu_vs_cpu_fp32={native_count} "
+                    f"ref_vs_native_cpu={native_ref_count}",
+                    flush=True,
+                )
+
+        for comparison, mask, count in (
+            ("actual_vs_ref", baseline_mask, baseline_count),
+            ("actual_vs_cpu_fp32", actual_mask, actual_count),
+        ):
+            if not count or comparison in sampled:
+                continue
+            row, col = _first_mismatch(mask)
             with torch.autocast(device_type="cpu", enabled=False):
                 fp64 = torch.dot(a[row].double(), b[:, col].double())
             print(
-                f"[group-gemm] row={start + row} col={col} "
+                f"[group-gemm] sample={comparison} row={start + row} col={col} "
                 f"actual={actual_group[row, col].item()} ref={ref_group[row, col].item()} "
                 f"cpu_fp32={fp32[row, col].item()} cpu_fp64={fp64.item()} "
                 f"rounded_fp64={fp64.to(x.dtype).item()}",
                 flush=True,
             )
-            sampled = True
+            sampled.add(comparison)
 
         start = stop
-        del fp32, expected, actual_group, ref_group, baseline_mask
+        del fp32, expected, actual_group, ref_group, baseline_mask, actual_mask, mask
 
     check_tol_diff(actual, ref, atol, rtol)
